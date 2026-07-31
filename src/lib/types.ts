@@ -1,0 +1,395 @@
+export type ProviderKind = "openai-compatible" | "anthropic";
+
+export interface Provider {
+  id: string;
+  name: string;
+  kind: ProviderKind;
+  baseUrl: string; // e.g. http://localhost:1234/v1 or https://api.anthropic.com
+  apiKey: string;
+  models: string[];
+  /**
+   * Extra top-level fields merged into every chat/completions request body.
+   * For backends that need non-standard options (thinking switches, sampler
+   * params, routing hints) without waiting for a dedicated setting.
+   */
+  extraBody?: Record<string, unknown>;
+}
+
+export interface Chunk {
+  text: string;
+  source: string;
+  vector: number[];
+}
+
+export interface MemoryEntry {
+  text: string;
+  ts: number; // saved-at (ms)
+  vector?: number[]; // optional embedding for semantic recall
+}
+
+export interface KnowledgeBase {
+  id: string;
+  name: string;
+  /** provider + model used to embed (and to embed queries at retrieval time). */
+  embedProviderId: string;
+  embedModel: string;
+  chunks: Chunk[];
+}
+
+export interface Settings {
+  providers: Provider[];
+  globalInstructions: string;
+  theme: "dark" | "light" | "system";
+  /** Optional self-hosted gateway server; general APIs proxy through it when set. */
+  serverUrl?: string;
+  /** Artificial Analysis API key (only used when no serverUrl). */
+  aaApiKey?: string;
+  /** Auto-summarize old turns when a chat grows past compactThreshold tokens. */
+  autoCompact?: boolean;
+  compactThreshold?: number; // approx tokens
+  /** Keep the model working across many tool rounds without a manual "continue". */
+  autoContinue?: boolean;
+  /** Let the model switch on tools it finds itself, as long as they need no credentials. */
+  autoEnableTools?: boolean;
+  /** Name new chats from the first exchange. Costs a few tokens per chat; default on. */
+  autoTitle?: boolean;
+  /** Talking avatar (speech-to-speech) settings. */
+  voice?: VoiceSettings;
+  /** Stop starting requests once today's estimated spend reaches this many USD. */
+  dailyCapUsd?: number;
+  /** Same, for the calendar month. */
+  monthlyCapUsd?: number;
+  /** Keep running in the tray when the window is closed. */
+  backgroundMode?: boolean;
+  /** Remember facts across every chat automatically, with no memory tool calls. */
+  passiveMemory?: boolean;
+  /** How many recalled facts to inject per turn. */
+  memoryK?: number;
+  /** Embedding provider/model used for agent memory + knowledge (semantic recall). */
+  embedProviderId?: string;
+  embedModel?: string;
+  /** Image/voice/video generation models the chat can call as tools. */
+  mediaModels?: MediaModel[];
+  /** Default media model id per kind, used by the generate_* tools. */
+  defaultMediaIds?: { image?: string; audio?: string; video?: string; "3d"?: string };
+}
+
+export interface ToolCall {
+  id: string;
+  name: string;
+  arguments: string; // JSON string
+}
+
+export interface Attachment {
+  kind: "image" | "text" | "audio" | "video";
+  name: string;
+  mime: string;
+  /** For image/audio/video: data URL. For text: the extracted text content. */
+  data: string;
+}
+
+/** How the talking avatar decides when to listen. */
+export type VoiceMode = "ptt" | "auto";
+
+export interface VoiceSettings {
+  /** Provider/model for spoken replies ("" = use the current chat's). */
+  providerId?: string;
+  model?: string;
+  mode?: VoiceMode;
+  /** Windows SAPI voice name; blank = system default. Ignored when a media TTS model is set. */
+  winVoice?: string;
+  /** Windows SAPI speaking rate, -10..10. */
+  rate?: number;
+  /** Extra persona/instructions layered onto the spoken-reply system prompt. */
+  instructions?: string;
+  /** Mic RMS above which speech is detected (auto mode). */
+  threshold?: number;
+  /** Trailing silence (ms) that ends an utterance in auto mode. */
+  silenceMs?: number;
+  /** Speak replies aloud. */
+  speakReplies?: boolean;
+  /** Agent whose instructions, tools, knowledge and memory the avatar uses. */
+  agentId?: string;
+  /** Tool ids the avatar may call when no agent is selected. */
+  toolIds?: string[];
+  /** Working directory for file/terminal tools. */
+  workingDir?: string;
+  /** Say a short filler ("one moment") while tools run, and announce each action. */
+  narrateActions?: boolean;
+  /** Input device name; blank = system default. */
+  micDevice?: string;
+  /** Whisper model size used for speech-to-text ("tiny" | "base" | "small"). */
+  sttModel?: string;
+  /** Only respond when addressed with this phrase (always-listening mode). */
+  wakeWord?: string;
+  /** Seconds after a reply during which follow-ups skip the wake word. */
+  followUpSeconds?: number;
+  /** Interrupt the avatar by talking over it (headphones recommended). */
+  bargeIn?: boolean;
+  /** Which voice engine to speak with: auto (media model → Windows), Windows, or Piper. */
+  ttsEngine?: "auto" | "windows" | "piper";
+  /** VRM avatar file under ~/.harnessx/avatars. Blank = the plain orb. */
+  avatarFile?: string;
+  /** Piper voice id, e.g. en_US-amy-medium. */
+  piperVoice?: string;
+  /** Wait for you to finish a half-spoken sentence instead of cutting in at the first pause. */
+  smartEndpoint?: boolean;
+  /** Extra grace (ms) given when the sentence sounds unfinished. */
+  holdMs?: number;
+  /** Speak like a person: contractions, breath pauses, pitch movement. */
+  humanDelivery?: boolean;
+  /** How much pitch/rate movement to add. 0 = flat, 1 = natural, 2 = animated. */
+  expressiveness?: number;
+  /** Conversational persona applied to spoken replies. */
+  persona?: "friendly" | "calm" | "upbeat" | "professional" | "none";
+  /** Language you speak, as an ISO code — or "auto" to detect each utterance. */
+  language?: string;
+  /** Transcribe your speech straight into English text regardless of what you speak. */
+  translateToEnglish?: boolean;
+  /** Language of spoken replies: "match" follows you, or pin an ISO code. */
+  replyLanguage?: string;
+  /** Turn off reasoning/thinking on every model the avatar uses, for faster replies. */
+  noThinking?: boolean;
+  /** Run each utterance through a small model that rewrites it for speech. */
+  speechRewrite?: boolean;
+  /** Provider/model for that rewrite — use the smallest, fastest one you have. */
+  speechProviderId?: string;
+  speechModel?: string;
+}
+
+export type MediaKind = "image" | "audio" | "video" | "3d";
+
+/** How a media model's request/response is shaped. */
+export type MediaEngine =
+  | "openai-image" // POST /images/generations, b64_json (OpenAI + compatible local)
+  | "a1111" // local Stable Diffusion webui: POST /sdapi/v1/txt2img
+  | "openai-speech" // POST /audio/speech, binary audio (OpenAI + compatible local TTS)
+  | "replicate"; // generic async cloud (image / audio / video) via model version
+
+/** A configured image/voice/video generation model the chat can call as a tool. */
+export interface MediaModel {
+  id: string;
+  name: string;
+  kind: MediaKind;
+  engine: MediaEngine;
+  baseUrl: string; // e.g. https://api.openai.com/v1 or http://localhost:7860
+  apiKey?: string;
+  model: string; // model id / replicate version / TTS voice+model
+  /** extra hint: image size (1024x1024) or TTS voice, engine-dependent. */
+  options?: string;
+}
+
+export interface Message {
+  role: "user" | "assistant" | "tool";
+  content: string;
+  reasoning?: string;
+  attachments?: Attachment[];
+  toolCalls?: ToolCall[];
+  toolCallId?: string;
+  promptTokens?: number;
+  completionTokens?: number;
+}
+
+export interface Chat {
+  id: string;
+  title: string;
+  /** "voice" chats are spoken sessions; they persist and resume like any other. */
+  kind?: "voice";
+  pinned?: boolean;
+  folder?: string;
+  createdAt: string;
+  updatedAt: string;
+  providerId: string;
+  model: string;
+  systemPrompt: string;
+  styleId: string;
+  temperature: number;
+  maxTokens: number;
+  enabledTools?: string[]; // tool ids usable by the model in this chat
+  jsonSchema?: string; // optional JSON schema string; constrains responses when set
+  knowledgeBaseId?: string; // legacy single source — migrated into knowledgeBaseIds
+  knowledgeBaseIds?: string[]; // knowledge bases to retrieve relevant chunks from
+  workingDir?: string; // absolute path for file/terminal tools (empty = home)
+  agentId?: string; // the agent applied to this chat, if any
+  summary?: string; // rolling summary of messages before summaryUpto
+  summaryUpto?: number; // messages[0..summaryUpto) are covered by summary
+  messages: Message[];
+}
+
+export interface Preset {
+  id: string;
+  name: string;
+  systemPrompt: string;
+  styleId: string;
+  temperature: number;
+  maxTokens: number;
+}
+
+export interface StylePreset {
+  id: string;
+  name: string;
+  snippet: string;
+}
+
+/** A named system-instruction template, saveable/importable as a JSON file. */
+export interface Template {
+  id: string;
+  name: string;
+  content: string;
+}
+
+/** A user tool: JS async function body executed with (args, ctx), or a Python function run via the system Python. */
+export interface Tool {
+  id: string;
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>; // JSON schema
+  code: string;
+  runtime?: "js" | "python"; // default js
+  builtin?: boolean;
+  group?: string; // display group (MCP server name, "Agents", "Workflows"...)
+}
+
+/** A named set of enabled tool ids, applyable to any chat. */
+export interface ToolSet {
+  id: string;
+  name: string;
+  toolIds: string[];
+}
+
+export type CondOp =
+  | "contains"
+  | "not_contains"
+  | "eq"
+  | "neq"
+  | "gt"
+  | "lt"
+  | "gte"
+  | "lte"
+  | "starts"
+  | "ends"
+  | "empty"
+  | "not_empty"
+  | "regex";
+
+export interface Condition {
+  left: string; // value/template to test (e.g. {{prev}}, {{steps.NAME}}, a literal)
+  op: CondOp;
+  right: string; // value to compare against (template allowed)
+  goto: string; // step name or "end"
+}
+
+export type WorkflowStep =
+  | {
+      type: "prompt";
+      name: string;
+      instructions: string; // system prompt for this step
+      prompt: string; // template: {{input}}, {{prev}}, {{steps.NAME}}
+      useTools: boolean;
+    }
+  | {
+      type: "function";
+      name: string;
+      toolId: string;
+      args: string; // JSON template: {{input}}, {{prev}}, {{steps.NAME}}
+    }
+  | {
+      type: "switch";
+      name: string;
+      cases: Condition[];
+      defaultGoto: string; // step name, or "end"
+    }
+  | {
+      type: "agent";
+      name: string;
+      agentId: string; // one of the user's agents
+      input: string; // template passed to the agent (default {{prev}})
+    }
+  | {
+      type: "parallel";
+      name: string;
+      lanes: ParallelLane[]; // run concurrently, outputs merged into this step's result
+    };
+
+/** One concurrent lane of a parallel step — either a prompt or an agent call. */
+export interface ParallelLane {
+  label: string; // heading used when merging lane outputs
+  kind: "prompt" | "agent";
+  instructions?: string; // prompt lane: system prompt
+  prompt?: string; // prompt lane: template (default {{prev}})
+  useTools?: boolean; // prompt lane: allow tool calling
+  agentId?: string; // agent lane
+  agentInput?: string; // agent lane: template (default {{prev}})
+}
+
+export interface Workflow {
+  id: string;
+  name: string;
+  description: string;
+  steps: WorkflowStep[];
+}
+
+export type Cadence =
+  | { type: "interval"; minutes: number }
+  | { type: "hourly"; minute: number }
+  | { type: "daily"; time: string } // "HH:MM"
+  | { type: "weekly"; day: number; time: string } // day 0-6 (Sun-Sat)
+  | { type: "once"; at: string }; // ISO datetime
+
+export interface Schedule {
+  id: string;
+  name: string;
+  enabled: boolean;
+  targetType: "agent" | "workflow";
+  targetId: string;
+  input: string;
+  providerId: string; // for workflow runs / agent fallback
+  model: string;
+  cadence: Cadence;
+  saveToChat: boolean; // append the run's output as a new chat
+  nextRun: number; // ms timestamp
+  lastRun?: number;
+  lastResult?: string;
+  lastError?: string;
+}
+
+export interface EvalCase {
+  id: string;
+  prompt: string;
+  expected: string; // target text/regex, or rubric for the judge
+}
+
+export interface EvalModel {
+  providerId: string;
+  model: string;
+}
+
+export type EvalScoring = "none" | "contains" | "regex" | "equals" | "judge";
+
+export interface Eval {
+  id: string;
+  name: string;
+  system: string;
+  cases: EvalCase[];
+  models: EvalModel[];
+  scoring: EvalScoring;
+  judgeProviderId?: string;
+  judgeModel?: string;
+}
+
+/** An agent: a reusable preset of instructions + tools + workflows + sub-agents it can call. */
+export interface Agent {
+  id: string;
+  name: string;
+  description: string;
+  instructions: string; // system prompt
+  providerId: string; // "" = use the chat's current provider
+  model: string; // "" = use the chat's current model
+  temperature: number;
+  maxTokens: number;
+  toolIds: string[]; // real tool ids this agent may call
+  workflowIds: string[]; // workflows exposed as callable tools
+  subAgentIds: string[]; // other agents this agent may call
+  knowledgeBaseIds?: string[]; // knowledge bases retrieved into the agent's context
+  autoMemory?: boolean; // auto-extract durable facts after each run
+}

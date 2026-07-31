@@ -1,0 +1,43 @@
+[
+  {
+    "name": "Filesystem",
+    "description": "Read/write files in allowed directories (official reference server).",
+    "transport": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:\\Users"]
+  },
+  {
+    "name": "Fetch",
+    "description": "Fetch web pages and convert to markdown (official reference server).",
+    "transport": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-fetch"]
+  },
+  {
+    "name": "Memory",
+    "description": "Knowledge-graph memory the model can read/write (official reference server).",
+    "transport": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-memory"]
+  },
+  {
+    "name": "Sequential Thinking",
+    "description": "Structured step-by-step reasoning tool (official reference server).",
+    "transport": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+  },
+  {
+    "name": "GitHub",
+    "description": "GitHub official remote MCP (needs OAuth/PAT token).",
+    "transport": "http",
+    "url": "https://api.githubcopilot.com/mcp/",
+    "needsAuth": true
+  },
+  {
+    "name": "Hugging Face",
+    "description": "Hugging Face official remote MCP (models, datasets, Spaces).",
+    "transport": "http",
+    "url": "https://huggingface.co/mcp"
+  }
+]
