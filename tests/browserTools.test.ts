@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const invoke = vi.fn();
 vi.mock("@tauri-apps/api/core", () => ({ invoke: (...a: unknown[]) => invoke(...(a as [])) }));
 
-const { BROWSER_TOOLS, BROWSER_TOOL_IDS, isBrowserTool, lastScreenshot, runBrowserTool } =
+const { BROWSER_TOOLS, BROWSER_TOOL_IDS, browserTarget, isBrowserTool, lastScreenshot, runBrowserTool, setBrowserTarget } =
   await import("../src/lib/browserTools");
 
 /** The bridge call arguments, for asserting what was sent to the extension. */
@@ -11,6 +11,8 @@ const sent = () => invoke.mock.calls.map((c) => c[1] as { action: string; args: 
 
 beforeEach(() => {
   invoke.mockReset();
+  // These exercise the extension path; the in-app pane has its own file.
+  setBrowserTarget("extension");
 });
 
 describe("the tool group", () => {
@@ -170,5 +172,48 @@ describe("tab actions pass through unchanged", () => {
     const out = await runBrowserTool("close_browser", {});
     expect(sent()[0].action).toBe("close_browser");
     expect(out).toContain("closed");
+  });
+});
+
+
+describe("choosing which browser to drive", () => {
+  it("defaults to the in-app pane", async () => {
+    vi.resetModules();
+    const fresh = await import("../src/lib/browserTools");
+    expect(fresh.browserTarget()).toBe("inapp");
+  });
+
+  it("routes through the extension bridge when that target is picked", async () => {
+    setBrowserTarget("extension");
+    invoke.mockResolvedValue({ count: 0, items: [] });
+
+    await runBrowserTool("list_buttons", {});
+
+    expect(invoke.mock.calls[0][0]).toBe("browser_call");
+    expect(browserTarget()).toBe("extension");
+  });
+
+  it("drives the pane directly when in-app is picked", async () => {
+    setBrowserTarget("inapp");
+    invoke.mockResolvedValue({ count: 0, items: [] });
+
+    await runBrowserTool("list_buttons", {});
+
+    // No bridge hop: the app evaluates in its own webview.
+    expect(invoke.mock.calls[0][0]).toBe("inapp_eval");
+  });
+
+  it("says plainly that the pane has no tabs, rather than failing obscurely", async () => {
+    setBrowserTarget("inapp");
+    const out = await runBrowserTool("change_tab", { match: "x" });
+    expect(out).toMatch(/no tabs/);
+    expect(out).toMatch(/Switch the target/);
+  });
+
+  it("explains that the pane can't be captured yet", async () => {
+    setBrowserTarget("inapp");
+    const out = await runBrowserTool("take_screenshot", {});
+    expect(out).toMatch(/can't be captured yet/);
+    expect(out).toMatch(/read_all_text/);
   });
 });

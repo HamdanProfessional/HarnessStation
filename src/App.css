@@ -3926,3 +3926,51 @@ select:focus {
   border-radius: 10px;
   margin-top: 6px;
 }
+
+/* Browser view: a native webview is positioned over .browser-slot. */
+.browser-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 10px;
+}
+
+.browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+}
+
+.browser-bar .grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.browser-slot {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.browser-empty {
+  max-width: 380px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 13px;
+  padding: 20px;
+}
+
+.browser-ext {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}

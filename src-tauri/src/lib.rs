@@ -1,5 +1,6 @@
 mod audio;
 mod browser;
+mod inapp_browser;
 mod local;
 mod mcp;
 mod oauth;
@@ -193,6 +194,14 @@ pub fn run() {
             audio::mic_snapshot,
             browser::browser_call,
             browser::browser_status,
+            inapp_browser::inapp_open,
+            inapp_browser::inapp_bounds,
+            inapp_browser::inapp_hide,
+            inapp_browser::inapp_show,
+            inapp_browser::inapp_close,
+            inapp_browser::inapp_status,
+            inapp_browser::inapp_eval,
+            inapp_browser::inapp_navigate,
             audio::mic_level,
             audio::mic_active,
             audio::mic_devices,

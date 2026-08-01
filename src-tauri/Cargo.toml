@@ -18,7 +18,10 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["tray-icon", "image-png"] }
+# "unstable" unlocks multi-webview, which the in-app browser pane needs. Tauri
+# marks it unstable because the API may change across minor versions — the
+# version is pinned tightly below so an upgrade is a deliberate act.
+tauri = { version = "2.11", features = ["tray-icon", "image-png", "unstable"] }
 tauri-plugin-opener = "2"
 tauri-plugin-http = "2"
 tauri-plugin-fs = "2"
@@ -40,6 +43,7 @@ flate2 = "1"
 tar = "0.4"
 rand = "0.8"
 open = "5"
+url = "2"
 
 # Local WebSocket bridge to the browser extension. The extension runs inside the
 # user's real browser, so automation reuses their existing logins instead of a

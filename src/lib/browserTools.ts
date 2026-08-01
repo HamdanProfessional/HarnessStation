@@ -134,9 +134,129 @@ export const BROWSER_TOOLS: Tool[] = [
   ),
 ];
 
-/** Run one browser action through the extension bridge. */
+/**
+ * Which browser the tools drive.
+ *
+ *   "inapp"     a webview inside the app window — the default. The user watches
+ *               it, and its logins live in the app's own session store.
+ *   "extension" the user's real Chrome/Edge via the bridge extension, for when a
+ *               task needs a session they're already signed in to there.
+ */
+export type BrowserTarget = "inapp" | "extension";
+
+let target: BrowserTarget = "inapp";
+
+export function browserTarget(): BrowserTarget {
+  return target;
+}
+
+export function setBrowserTarget(t: BrowserTarget): void {
+  target = t;
+}
+
+/** Run one browser action, against whichever browser is selected. */
 async function call(action: string, args: Record<string, unknown>): Promise<unknown> {
+  if (target === "inapp") return callInApp(action, args);
   return invoke("browser_call", { action, args });
+}
+
+/**
+ * The in-app pane is driven by evaluating JavaScript in it. These snippets
+ * mirror what the extension's content scripts do, so both targets return the
+ * same shapes and the tool layer above doesn't care which is in use.
+ */
+const PAGE_TEXT = `
+  const drop = ["script","style","noscript","svg","template"];
+  const clone = document.body && document.body.cloneNode(true);
+  if (!clone) return { title: document.title, url: location.href, text: "", chars: 0, truncated: false };
+  drop.forEach(sel => clone.querySelectorAll(sel).forEach(n => n.remove()));
+  const text = (clone.innerText || "").replace(/\\n{3,}/g, "\\n\\n").trim();
+  return { title: document.title, url: location.href, text, chars: text.length };
+`;
+
+const CLICKABLE_SELECTOR =
+  "button, a[href], input[type=submit], input[type=button], [role=button], summary";
+
+const LIST_BUTTONS = `
+  const els = [...document.querySelectorAll(${JSON.stringify(CLICKABLE_SELECTOR)})];
+  const items = [];
+  els.forEach((el, i) => {
+    const r = el.getBoundingClientRect();
+    if (!(r.width > 0 && r.height > 0)) return;
+    const label = (el.innerText || el.value || el.getAttribute("aria-label") || el.title || "")
+      .trim().replace(/\\s+/g, " ");
+    if (!label) return;
+    items.push({ index: i, label: label.slice(0, 80), tag: el.tagName.toLowerCase() });
+  });
+  return { count: items.length, items: items.slice(0, 120) };
+`;
+
+async function evalPage(expr: string): Promise<unknown> {
+  return invoke("inapp_eval", { expr });
+}
+
+async function callInApp(action: string, args: Record<string, unknown>): Promise<unknown> {
+  switch (action) {
+    case "open_url": {
+      await invoke("inapp_navigate", { url: String(args.url) });
+      // Give the navigation a moment before anything reads the page.
+      await new Promise((r) => setTimeout(r, 1200));
+      return evalPage("return { tabId: 0, title: document.title, url: location.href, active: true };");
+    }
+    case "read_all_text": {
+      const res = (await evalPage(PAGE_TEXT)) as {
+        title: string;
+        url: string;
+        text: string;
+        chars: number;
+      };
+      const limit = Number(args.maxChars ?? 12000);
+      return { ...res, truncated: res.chars > limit, text: (res.text ?? "").slice(0, limit) };
+    }
+    case "find_text": {
+      const q = JSON.stringify(String(args.query ?? ""));
+      return evalPage(`
+        const text = (document.body ? document.body.innerText : "").replace(/\\s+/g, " ");
+        const hay = text.toLowerCase(); const q = ${q}.toLowerCase();
+        const hits = []; let i = hay.indexOf(q);
+        while (i !== -1 && hits.length < 20) {
+          hits.push(text.slice(Math.max(0, i - 90), i + q.length + 90).trim());
+          i = hay.indexOf(q, i + q.length);
+        }
+        return { count: hits.length, matches: hits };
+      `);
+    }
+    case "list_buttons":
+      return evalPage(LIST_BUTTONS);
+    case "click_button": {
+      const by =
+        args.index != null
+          ? `document.querySelectorAll(${JSON.stringify(CLICKABLE_SELECTOR)})[${Number(args.index)}]`
+          : `els.find(e => labelOf(e).toLowerCase() === q) || els.find(e => labelOf(e).toLowerCase().includes(q))`;
+      const q = JSON.stringify(String(args.label ?? "").toLowerCase());
+      return evalPage(`
+        const sel = ${JSON.stringify(CLICKABLE_SELECTOR)};
+        const labelOf = (el) => (el.innerText || el.value || el.getAttribute("aria-label") || el.title || "").trim().replace(/\\s+/g, " ");
+        const els = [...document.querySelectorAll(sel)].filter(el => {
+          const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0;
+        });
+        const q = ${q};
+        const el = ${by};
+        if (!el) return { clicked: false, reason: "no matching clickable element" };
+        el.scrollIntoView({ block: "center" });
+        el.click();
+        return { clicked: true, label: labelOf(el).slice(0, 80), url: location.href, title: document.title };
+      `);
+    }
+    case "close_browser":
+    case "close_tab":
+      await invoke("inapp_close");
+      return { closed: true, note: "closed the in-app browser pane" };
+    default:
+      throw new Error(
+        `"${action}" needs the browser extension — the in-app pane is a single view, so it has no tabs. Switch the target in the Browser panel.`,
+      );
+  }
 }
 
 const pretty = (v: unknown) => JSON.stringify(v, null, 2);
@@ -161,6 +281,9 @@ export async function runBrowserTool(
       }
 
       case "take_screenshot": {
+        if (target === "inapp") {
+          return "The in-app pane can't be captured yet — read_all_text and list_buttons cover most of what a screenshot would show. Switch to the extension target if you need an image.";
+        }
         const res = (await call("take_screenshot", args)) as {
           dataUrl: string;
           url: string;

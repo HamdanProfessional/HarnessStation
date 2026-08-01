@@ -1821,6 +1821,7 @@ dependencies = [
  "tauri-plugin-updater",
  "tokio",
  "tokio-tungstenite",
+ "url",
  "zip 2.4.2",
 ]
 
