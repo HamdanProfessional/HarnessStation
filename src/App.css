@@ -3672,13 +3672,23 @@ select:focus {
   gap: 6px;
 }
 
+/* Both need the flex row themselves — .btn only sets cursor, so without this the
+   icon and label stack instead of sitting side by side. */
 .new-row .btn {
-  flex: 1;
+  display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 6px;
+  flex: 1 1 0;
   min-width: 0;
-  padding-left: 8px;
-  padding-right: 8px;
+  width: auto;
+  padding: 9px 6px;
+  border-radius: 10px;
   white-space: nowrap;
+}
+
+.new-row .btn svg {
+  flex: none;
 }
 
 .new-call-btn {

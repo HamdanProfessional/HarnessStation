@@ -294,7 +294,6 @@ export function Sidebar() {
         </button>
         {!collapsed.library && (
           <>
-            {navBtn("voice", "Voice Avatar", <IconSpeaker size={15} />)}
             {navBtn("discover", "Discover", <IconCompass size={15} />)}
             {navBtn("models", "My Models", <IconBox size={15} />)}
             {navBtn("compare", "Compare", <IconColumns size={15} />)}
