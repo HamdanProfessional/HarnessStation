@@ -120,6 +120,66 @@ async function speakWithPiper(text: string, voiceId: string, human: boolean): Pr
   }
 }
 
+/**
+ * Speak through a cloud service. Returns false so the caller can fall back —
+ * a network blip or an expired key should degrade to a local voice, not silence.
+ */
+async function speakWithCloud(text: string, settings: Settings): Promise<boolean> {
+  const cfg = settings.voice?.cloud;
+  try {
+    const { cloudSynthesize, speechConfigured } = await import("./speechProviders");
+    if (!speechConfigured(cfg)) return false;
+    const url = await cloudSynthesize(cfg, text, personaInstruction(settings));
+    if (cancelled) return true;
+    await playDataUrl(url);
+    // Blob URLs are held until the document unloads; a long call would otherwise
+    // accumulate one per sentence.
+    URL.revokeObjectURL(url);
+    return true;
+  } catch (e) {
+    // Say why once — a silently-ignored billing failure is baffling.
+    const message = (e as Error).message || "";
+    if (message && lastCloudError !== message) {
+      lastCloudError = message;
+      toast.error(message);
+    }
+    return false;
+  }
+}
+
+let lastCloudError: string | null = null;
+
+/** Speak through Kokoro. Returns false so the caller can fall back. */
+async function speakWithKokoro(text: string, settings: Settings): Promise<boolean> {
+  try {
+    const { kokoroSynthesize } = await import("./kokoro");
+    const url = await kokoroSynthesize(text, settings.voice?.kokoroVoice || undefined);
+    if (cancelled) return true;
+    await playDataUrl(url);
+    URL.revokeObjectURL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** The persona, phrased as a delivery note for engines that accept one. */
+function personaInstruction(settings: Settings): string {
+  const persona = settings.voice?.persona;
+  const extra = settings.voice?.instructions?.trim();
+  const base =
+    persona === "calm"
+      ? "Speak calmly and unhurriedly."
+      : persona === "upbeat"
+        ? "Speak brightly and with energy."
+        : persona === "professional"
+          ? "Speak clearly and precisely, like a briefing."
+          : persona === "friendly"
+            ? "Speak warmly, like a friend talking."
+            : "";
+  return [base, extra].filter(Boolean).join(" ");
+}
+
 async function speakOnce(raw: string, settings: Settings): Promise<void> {
   const engine = settings.voice?.ttsEngine ?? "auto";
   const human = settings.voice?.humanDelivery ?? true;
@@ -129,6 +189,19 @@ async function speakOnce(raw: string, settings: Settings): Promise<void> {
   const piperVoiceId = settings.voice?.piperVoice || "";
   // Piper's bundled voices are English-only; anything else needs a system voice.
   const english = detectLang(text, preferredLang(settings) || "en") === "en";
+
+  // Explicitly chosen engines get first refusal, in quality order. Each returns
+  // false rather than throwing, so a failure moves down the list instead of
+  // leaving the avatar mute.
+  if (engine === "cloud") {
+    if (await speakWithCloud(text, settings)) return;
+  }
+
+  // Kokoro is English-only in this build; handed another script it produces
+  // confident nonsense rather than failing, so the check has to happen here.
+  if (engine === "kokoro" && english) {
+    if (await speakWithKokoro(text, settings)) return;
+  }
 
   // Offline neural voice, chosen explicitly — download it if this is the first use.
   if (engine === "piper" && english) {
@@ -147,11 +220,17 @@ async function speakOnce(raw: string, settings: Settings): Promise<void> {
     }
   }
 
-  // "Auto" should mean the best voice available, and the SAPI voices are markedly
-  // flatter than Piper. Use the neural voice when it's already installed — never
-  // trigger an ~80 MB download from a setting the user didn't explicitly pick.
-  if (engine === "auto" && english && (await neuralReady(piperVoiceId))) {
-    if (await speakWithPiper(text, piperVoiceId, human)) return;
+  // "Auto" means the best voice already available, in quality order — and only
+  // ever something already present. Nothing here may trigger a model download or
+  // spend the user's money from a setting they didn't explicitly choose.
+  if (engine === "auto" && english) {
+    const { kokoroCached } = await import("./kokoro");
+    if (await kokoroCached()) {
+      if (await speakWithKokoro(text, settings)) return;
+    }
+    if (await neuralReady(piperVoiceId)) {
+      if (await speakWithPiper(text, piperVoiceId, human)) return;
+    }
   }
   // Route to a voice that can actually read this script. An English SAPI voice
   // handed Urdu or Arabic just produces silence, so we detect the language and

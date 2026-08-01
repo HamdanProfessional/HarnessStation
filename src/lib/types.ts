@@ -128,8 +128,19 @@ export interface VoiceSettings {
   followUpSeconds?: number;
   /** Interrupt the avatar by talking over it (headphones recommended). */
   bargeIn?: boolean;
-  /** Which voice engine to speak with: auto (media model → Windows), Windows, or Piper. */
-  ttsEngine?: "auto" | "windows" | "piper";
+  /** Which voice engine to speak with. "auto" picks the best already available. */
+  ttsEngine?: "auto" | "windows" | "piper" | "kokoro" | "cloud";
+  /** Kokoro voice id, e.g. af_heart. */
+  kokoroVoice?: string;
+  /** Cloud speech service, used when ttsEngine is "cloud". */
+  cloud?: {
+    engine: "openai" | "elevenlabs" | "cartesia" | "groq";
+    apiKey: string;
+    baseUrl?: string;
+    model?: string;
+    voice?: string;
+    speed?: number;
+  };
   /** VRM avatar file under ~/.harnessx/avatars. Blank = the plain orb. */
   avatarFile?: string;
   /** Piper voice id, e.g. en_US-amy-medium. */

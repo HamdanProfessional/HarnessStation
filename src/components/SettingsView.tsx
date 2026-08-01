@@ -14,6 +14,8 @@ import { testRewrite, type RewriteTestResult } from "../lib/speechRewrite";
 import { formatCost } from "../lib/cost";
 import { hasBuiltInGateway } from "../lib/gateway";
 import { PIPER_VOICES, DEFAULT_PIPER_VOICE, piperReady, piperVoice } from "../lib/piper";
+import { KOKORO_VOICES, DEFAULT_KOKORO_VOICE, kokoroVoice } from "../lib/kokoro";
+import { SPEECH_ENGINES, engineInfo, type SpeechEngine } from "../lib/speechProviders";
 import { listMicDevices, micLevel, startRecording, type Recorder } from "../lib/audio";
 import { STT_MODELS, DEFAULT_STT } from "../lib/whisper";
 import type {
@@ -171,6 +173,14 @@ export function SettingsView() {
         await ensurePiper((s) => setPreviewing(s), draft.voice?.piperVoice || DEFAULT_PIPER_VOICE);
         invalidateNeuralVoice(); // so "Auto" starts using it right away
         setNeuralReady(true);
+      }
+      if ((draft.voice?.ttsEngine ?? "auto") === "kokoro") {
+        // The first preview is a ~90 MB download. Show it moving, or the button
+        // just sits there saying "Preparing…" for a couple of minutes.
+        const { loadKokoro } = await import("../lib/kokoro");
+        await loadKokoro((percent, label) =>
+          setPreviewing(percent >= 100 ? "Warming up…" : `${label} ${percent}%`),
+        );
       }
       setPreviewing("Speaking…");
       await speakNow("Hi, this is how I'll sound when we talk.", draft);
@@ -848,13 +858,18 @@ export function SettingsView() {
               onChange={(e) =>
                 setDraft({
                   ...draft,
-                  voice: { ...draft.voice, ttsEngine: e.target.value as "auto" | "windows" | "piper" },
+                  voice: {
+                    ...draft.voice,
+                    ttsEngine: e.target.value as NonNullable<Settings["voice"]>["ttsEngine"],
+                  },
                 })
               }
             >
-              <option value="auto">Auto — audio model, then neural, else Windows</option>
-              <option value="piper">Neural (Piper) — offline, natural</option>
-              <option value="windows">Windows built-in — fastest</option>
+              <option value="auto">Auto — the best voice already installed</option>
+              <option value="kokoro">Kokoro — local AI voice, best free quality</option>
+              <option value="cloud">Cloud service — best quality, your key</option>
+              <option value="piper">Piper — offline, lighter than Kokoro</option>
+              <option value="windows">Windows built-in — fastest, flattest</option>
             </select>
           </label>
           {(draft.voice?.ttsEngine ?? "auto") === "piper" && (
@@ -874,7 +889,147 @@ export function SettingsView() {
               </select>
             </label>
           )}
+          {(draft.voice?.ttsEngine ?? "auto") === "kokoro" && (
+            <label className="field grow">
+              <span>Kokoro voice</span>
+              <select
+                value={draft.voice?.kokoroVoice ?? DEFAULT_KOKORO_VOICE}
+                onChange={(e) =>
+                  setDraft({ ...draft, voice: { ...draft.voice, kokoroVoice: e.target.value } })
+                }
+              >
+                {KOKORO_VOICES.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
+
+        {(draft.voice?.ttsEngine ?? "auto") === "kokoro" && (
+          <p className="hint" style={{ marginTop: 4, marginBottom: 12 }}>
+            {kokoroVoice(draft.voice?.kokoroVoice ?? DEFAULT_KOKORO_VOICE).note} Runs on this
+            machine — no key, no per-word cost, works offline once fetched. The first Preview
+            downloads the model (~90 MB, one time); after that "Auto" uses it too. English only,
+            and synthesis is CPU-bound, so a long reply takes a moment to start.
+          </p>
+        )}
+
+        {(draft.voice?.ttsEngine ?? "auto") === "cloud" && (
+          <div className="cloud-tts">
+            <div className="provider-row">
+              <label className="field grow">
+                <span>Service</span>
+                <select
+                  value={draft.voice?.cloud?.engine ?? "openai"}
+                  onChange={(e) => {
+                    const engine = e.target.value as SpeechEngine;
+                    const info = engineInfo(engine);
+                    setDraft({
+                      ...draft,
+                      voice: {
+                        ...draft.voice,
+                        cloud: {
+                          // Switching service must reset the model and voice: an
+                          // ElevenLabs voice id means nothing to Cartesia, and the
+                          // resulting 404 looks like a broken key.
+                          ...draft.voice?.cloud,
+                          engine,
+                          apiKey: draft.voice?.cloud?.engine === engine ? (draft.voice?.cloud?.apiKey ?? "") : "",
+                          model: info.defaultModel,
+                          voice: info.defaultVoice,
+                        },
+                      },
+                    });
+                  }}
+                >
+                  {SPEECH_ENGINES.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field grow">
+                <span>Voice</span>
+                <select
+                  value={draft.voice?.cloud?.voice ?? engineInfo(draft.voice?.cloud?.engine ?? "openai").defaultVoice}
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      voice: {
+                        ...draft.voice,
+                        cloud: {
+                          engine: draft.voice?.cloud?.engine ?? "openai",
+                          apiKey: draft.voice?.cloud?.apiKey ?? "",
+                          ...draft.voice?.cloud,
+                          voice: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                >
+                  {engineInfo(draft.voice?.cloud?.engine ?? "openai").voices.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="provider-row">
+              <label className="field grow">
+                <span>API key</span>
+                <input
+                  type="password"
+                  placeholder="Your own key — it stays on this machine"
+                  value={draft.voice?.cloud?.apiKey ?? ""}
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      voice: {
+                        ...draft.voice,
+                        cloud: {
+                          engine: draft.voice?.cloud?.engine ?? "openai",
+                          ...draft.voice?.cloud,
+                          apiKey: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                />
+              </label>
+              <label className="field grow">
+                <span>Model</span>
+                <input
+                  value={draft.voice?.cloud?.model ?? engineInfo(draft.voice?.cloud?.engine ?? "openai").defaultModel}
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      voice: {
+                        ...draft.voice,
+                        cloud: {
+                          engine: draft.voice?.cloud?.engine ?? "openai",
+                          apiKey: draft.voice?.cloud?.apiKey ?? "",
+                          ...draft.voice?.cloud,
+                          model: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                />
+              </label>
+            </div>
+            <p className="hint">
+              {engineInfo(draft.voice?.cloud?.engine ?? "openai").note} Billed per character by{" "}
+              {engineInfo(draft.voice?.cloud?.engine ?? "openai").label}, not by us — get a key at{" "}
+              <code>{engineInfo(draft.voice?.cloud?.engine ?? "openai").keyUrl}</code>. If a request
+              fails, the avatar falls back to a local voice rather than going quiet.
+            </p>
+          </div>
+        )}
         {neuralEngine && (
           <p className="hint" style={{ marginTop: 4, marginBottom: 12 }}>
             {neuralReady === null
