@@ -4326,3 +4326,35 @@ textarea {
 .ok-note {
   color: var(--ok);
 }
+
+/* Sidebar scrolling.
+   The sidebar itself never scrolls — the header, the new-chat row, the search
+   box and Settings stay put, and only the middle moves. Without this the
+   sections sized themselves, and expanding all of them pushed Settings off the
+   bottom of the window with nothing to scroll. */
+.sidebar {
+  overflow: hidden;
+}
+
+.sidebar-scroll {
+  flex: 1;
+  min-height: 0; /* the whole point: a flex child won't shrink below its content without it */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+
+/* The chat list keeps its own scroll inside that region, capped, so a long
+   history doesn't push Library and Automation out of reach. */
+.sidebar-scroll .chat-list {
+  flex: 0 1 auto;
+  max-height: 46vh;
+}
+
+.sidebar-foot {
+  flex: none;
+}

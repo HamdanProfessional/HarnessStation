@@ -265,6 +265,11 @@ export function Sidebar() {
         />
       </div>
 
+      {/* Everything between the search box and Settings scrolls as one region.
+          Previously each part sized itself, so with every section expanded the
+          list simply grew past the bottom of the window and Settings went with
+          it — unreachable, with nothing to scroll. */}
+      <div className="sidebar-scroll">
       <div className="nav-section">
         <button
           className="nav-section-title"
@@ -333,12 +338,21 @@ export function Sidebar() {
         )}
       </div>
 
-      <div className="nav-section-title">
+      <button
+        className="nav-section-title"
+        onClick={() => toggleSection("chats")}
+        aria-expanded={!collapsed.chats}
+      >
+        <span className={`nav-caret ${collapsed.chats ? "closed" : ""}`} aria-hidden="true">
+          ▾
+        </span>
         {activeProjectId
           ? `Chats in ${projects.find((p) => p.id === activeProjectId)?.name ?? "project"}`
           : "Chats"}
-      </div>
-      <div className="chat-list">
+        <span className="grow" />
+        <span className="tool-group-count">{filtered.length}</span>
+      </button>
+      <div className="chat-list" hidden={collapsed.chats}>
         {filtered.length === 0 && <div className="hint chat-empty">No chats found.</div>}
         {rootChats.map(chatItem)}
         {folderNames.map((f) => {
@@ -448,7 +462,10 @@ export function Sidebar() {
           </>
         )}
       </div>
-      <div className="nav-section">
+      </div>
+
+      {/* Pinned below the scroll region, so it's always one click away. */}
+      <div className="nav-section sidebar-foot">
         {navBtn("settings", "Settings", <IconGear size={15} />)}
       </div>
 
