@@ -372,10 +372,10 @@ export function ChatWindow() {
             </button>
           </div>
         )}
-        {/* The browser lives in the conversation, after the last message, so the
-            model's browsing reads as part of the thread rather than beside it. */}
-        {browserDock && <InlineBrowser />}
       </div>
+      {/* Below the thread and above the composer — inside the conversation, but
+          deliberately *not* inside the scrolling list. See InlineBrowser. */}
+      {browserDock && <InlineBrowser />}
       {voiceState && <div className="voice-state">{voiceState}</div>}
       {attachments.length > 0 && (
         <div className="att-tray">

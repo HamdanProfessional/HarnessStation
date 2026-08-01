@@ -4411,10 +4411,12 @@ textarea {
    ========================================================================= */
 
 .inline-browser {
-  /* .messages is a column flex container, and flex items shrink by default. A
-     `height` is only a starting size there, so once the conversation overflowed
-     the card was squashed to nothing — a browser 0 px tall. */
+  /* A child of .chat-main (a column flex container), between the thread and the
+     composer. `flex: 0 0 auto` because flex items shrink by default and a
+     `height` is only a starting size — that squashed the panel to 0 px when the
+     conversation was long. */
   flex: 0 0 auto;
+  margin: 0 clamp(18px, 6vw, 90px) 10px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   background: var(--bg-2);

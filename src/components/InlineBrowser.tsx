@@ -13,11 +13,20 @@ import { Spinner } from "./Loading";
  * automating refuse to be framed at all. So it's a native child webview owned by
  * the app window, positioned over the placeholder below.
  *
- * That's also the hard part. A native webview is an OS-level overlay: it floats
- * above the page and the scroll container cannot clip it. So as the card scrolls
- * this measures the intersection of the card and the message list and resizes the
- * webview to match — otherwise the page would slide up over the header on its way
- * out of view.
+ * It deliberately sits *below* the scrolling message list rather than inside it,
+ * and that is a correctness decision, not a layout preference.
+ *
+ * Moving a child webview means SetWindowPos on a window owned by another
+ * process. That call blocks until the owning thread services the message — and
+ * a heavy page (an ad-laden site, anything with anti-bot script) stops pumping
+ * for seconds at a time. Inside the scroll container the app issued one of those
+ * per scroll frame, from the UI thread, and froze twice: every thread parked in
+ * EventPairLow, the wait state for exactly that cross-process message.
+ *
+ * Out of the scroll flow the rectangle only changes when the window or the panel
+ * is resized, which takes it from hundreds of blocking calls a second to a
+ * handful an hour. It also means the page stays put while you read back through
+ * the conversation, which is the better behaviour anyway.
  */
 export function InlineBrowser() {
   const setBrowserDock = useStore((s) => s.setBrowserDock);
@@ -28,24 +37,14 @@ export function InlineBrowser() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /** Card rect clipped to the visible part of the message list. */
+  /** Where the page should sit. Null while the panel has no usable size. */
   const visibleRect = useCallback(() => {
     const el = slotRef.current;
     if (!el) return null;
     const r = el.getBoundingClientRect();
-    const scroller = el.closest(".messages");
-    const s = scroller?.getBoundingClientRect();
-    const top = Math.max(r.top, s?.top ?? 0);
-    const bottom = Math.min(r.bottom, s?.bottom ?? window.innerHeight);
-    const height = bottom - top;
-    // Below a usable minimum, hide rather than shrink. A browser squeezed into a
-    // sliver shows one line of a page and reads as a rendering fault, so the
-    // floor scales with the card — which itself scales with the window — instead
-    // of being a fixed number that's generous on a monitor and absurd on a
-    // laptop.
-    const floor = Math.max(140, r.height * 0.35);
-    if (height < floor || r.width < 120) return null;
-    return { x: r.left, y: top, width: r.width, height };
+    // A collapsed or off-screen panel gets nothing rather than a sliver of page.
+    if (r.height < 80 || r.width < 120) return null;
+    return { x: r.left, y: r.top, width: r.width, height: r.height };
   }, []);
 
   const show = useCallback(
@@ -77,16 +76,14 @@ export function InlineBrowser() {
   // Let the browser tools drive this card while it's on screen.
   useEffect(() => {
     registerPane(async (to) => {
-      // The card sits at the end of the thread; if the user is reading further
-      // up, bring it into view — "I opened the page" should come with the page.
-      slotRef.current?.scrollIntoView({ block: "nearest" });
       await show(to);
       await new Promise((r) => setTimeout(r, 200));
     });
     return () => registerPane(null);
   }, [show]);
 
-  // Follow the card as the conversation scrolls, streams and reflows.
+  // Follow the panel when the layout actually changes — a window resize, the
+  // sidebar collapsing. Not on scroll: the panel doesn't scroll any more.
   useEffect(() => {
     if (!open) return;
     let last = "";
@@ -136,18 +133,16 @@ export function InlineBrowser() {
     };
 
     void apply();
-    const scroller = slotRef.current?.closest(".messages");
-    scroller?.addEventListener("scroll", sync, { passive: true });
     window.addEventListener("resize", sync);
     document.addEventListener("visibilitychange", onVisibility);
     const ro = new ResizeObserver(sync);
     if (slotRef.current) ro.observe(slotRef.current);
-    if (scroller) ro.observe(scroller);
-    // Streaming text reflows the list without either event firing.
-    const tick = setInterval(sync, 400);
+    // A slow backstop for layout the observer can't see (a panel opening
+    // elsewhere). Deliberately lazy — apply() is a no-op unless the rectangle
+    // genuinely moved, and each real call can block on the page's own process.
+    const tick = setInterval(sync, 2000);
     return () => {
       if (frame) cancelAnimationFrame(frame);
-      scroller?.removeEventListener("scroll", sync);
       window.removeEventListener("resize", sync);
       document.removeEventListener("visibilitychange", onVisibility);
       ro.disconnect();
