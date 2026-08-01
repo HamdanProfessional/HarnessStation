@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   addPeerByAddress,
+  addressExposure,
   armPairing,
   callPeer,
   deviceName,
   disarmPairing,
+  exposureNote,
   forgetPeer,
   looksLikeCode,
   meshStatus,
+  needsWarning,
   newPairingCode,
   pairWith,
   setDeviceName,
@@ -56,6 +59,8 @@ export function DevicesPanel() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  /** A warning the user must acknowledge before an unencrypted link goes out. */
+  const [pending, setPending] = useState<string | null>(null);
   const timer = useRef<number | null>(null);
 
   const refresh = useCallback(async () => {
@@ -110,8 +115,16 @@ export function DevicesPanel() {
       setNote("Type this code on the other device within 5 minutes.");
     });
 
-  const join = () =>
+  const join = (force = false) =>
     run("join", async () => {
+      // Warn before the first byte goes out, not after — by the time a pairing
+      // has happened over the open internet, the handshake has already crossed it.
+      const warning = exposureNote(addressExposure(joinAddr));
+      if (warning && !force) {
+        setPending(warning);
+        return;
+      }
+      setPending(null);
       const peer = await pairWith(joinAddr, joinCode);
       setJoinCode("");
       setNote(`Paired with ${peer.name}.`);
@@ -173,6 +186,24 @@ export function DevicesPanel() {
           Reachable on port {status.port}, announcing on {status.discoveryPort}.{" "}
           {status.peers.length} device(s) known.
         </p>
+      )}
+
+      {status?.exposure && (
+        <div className="warn-banner" role="alert">
+          <div>
+            <b>This device is reachable from the internet.</b>
+            <p>
+              {status.exposure.count === 1 ? "A connection" : `${status.exposure.count} connections`}{" "}
+              reached the mesh port from {status.exposure.from}, which is a public address — so this
+              port is open to the internet, not just your network.{" "}
+              {status.exposure.authenticated
+                ? "At least one of them was a paired device of yours. Traffic still isn't encrypted, so put the link inside a VPN or tunnel."
+                : "None of them authenticated, so nothing was shared — but the port is being reached, and unpaired scanning is worth knowing about."}{" "}
+              If you didn't mean to expose it, close the forwarded port on your router and connect
+              through a VPN or tunnel (Tailscale, WireGuard, SSH) instead.
+            </p>
+          </div>
+        </div>
       )}
 
       <h2>What this device shares</h2>
@@ -240,7 +271,10 @@ export function DevicesPanel() {
           value={joinAddr}
           placeholder="192.168.1.42  (or hostname)"
           aria-label="Other device address"
-          onChange={(e) => setJoinAddr(e.target.value)}
+          onChange={(e) => {
+            setJoinAddr(e.target.value);
+            setPending(null);
+          }}
         />
         <input
           value={joinCode}
@@ -251,7 +285,7 @@ export function DevicesPanel() {
         <button
           className="btn primary"
           disabled={!joinAddr.trim() || !looksLikeCode(joinCode) || busy === "join"}
-          onClick={join}
+          onClick={() => void join()}
         >
           {busy === "join" ? <Spinner size={13} /> : "Pair"}
         </button>
@@ -260,6 +294,29 @@ export function DevicesPanel() {
         Devices on the same network find each other on their own — the address is only needed the
         first time, or for a machine somewhere else.
       </p>
+
+      {pending && (
+        <div className="warn-banner" role="alert">
+          <div>
+            <b>This link isn't private.</b>
+            <p>{pending}</p>
+          </div>
+          <div className="warn-actions">
+            <button
+              className="btn"
+              onClick={() => {
+                setPending(null);
+                void join(true);
+              }}
+            >
+              Pair anyway
+            </button>
+            <button className="btn" onClick={() => setPending(null)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="error-banner" role="alert">
@@ -278,6 +335,14 @@ export function DevicesPanel() {
           <span className={`conn-dot ${p.online ? "on" : ""}`} aria-hidden="true" />
           <b>{p.name}</b>
           <span className="hint">{p.addr || "address unknown"}</span>
+          {needsWarning(p.exposure ?? addressExposure(p.addr)) && (
+            <span
+              className="exposure-badge"
+              title={exposureNote(p.exposure ?? addressExposure(p.addr), "This device's address") ?? ""}
+            >
+              unencrypted link
+            </span>
+          )}
           <button className="btn" disabled={busy === `probe:${p.id}`} onClick={() => probe(p)}>
             {busy === `probe:${p.id}` ? <Spinner size={13} /> : "What can it do?"}
           </button>

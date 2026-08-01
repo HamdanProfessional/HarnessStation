@@ -4358,3 +4358,47 @@ textarea {
 .sidebar-foot {
   flex: none;
 }
+
+/* A warning that isn't an error: the thing worked, or would, but the user
+   should understand what they're about to do. */
+.warn-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 11px 13px;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
+  color: var(--text);
+  animation: rise var(--t-base) var(--ease);
+}
+
+.warn-banner b {
+  color: var(--warn);
+}
+
+.warn-banner p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.warn-actions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+
+.exposure-badge {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+  color: var(--warn);
+  cursor: help;
+}

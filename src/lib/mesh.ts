@@ -32,6 +32,8 @@ export interface MeshPeer {
   online: boolean;
   seen: number;
   capabilities: PeerCapabilities | null;
+  /** Where this peer's address lives, judged by Rust from the address itself. */
+  exposure?: Exposure;
 }
 
 export interface PeerCapabilities {
@@ -53,6 +55,17 @@ export interface MeshStatus {
   discoveryPort: number;
   pairing: { expires: number } | null;
   peers: MeshPeer[];
+  /**
+   * Set once something from off the LAN has connected to this device — i.e. the
+   * port really is reachable from the internet, not merely might be.
+   */
+  exposure: {
+    from: string;
+    class: string;
+    at: number;
+    count: number;
+    authenticated: boolean;
+  } | null;
 }
 
 export const CAPABILITY_VERSION = 1;
@@ -146,6 +159,85 @@ export function normalizePairingCode(input: string): string {
 /** Is this plausibly a full code? Used to enable the Pair button. */
 export function looksLikeCode(input: string): boolean {
   return input.toUpperCase().replace(/[^A-Z0-9]/g, "").length >= 12;
+}
+
+// ---------------------------------------------------------------------------
+// Where an address lives
+// ---------------------------------------------------------------------------
+
+/**
+ * How exposed a peer address is.
+ *
+ * This matters because mesh traffic isn't encrypted yet. On a home LAN that's
+ * the same exposure as any other local service; over the open internet it means
+ * anyone on the path can read the prompts, the tool output and the knowledge
+ * that goes across. So the app has to be able to tell the difference and say so.
+ *
+ *   loopback  same machine
+ *   private   RFC1918 / link-local / IPv6 ULA — a LAN
+ *   vpn       100.64.0.0/10, the range Tailscale and other overlays use
+ *   public    routable on the internet
+ *   unknown   a hostname; we can't resolve it here, so we can't judge it
+ */
+export type Exposure = "loopback" | "private" | "vpn" | "public" | "unknown";
+
+/** Strip any port and brackets, leaving the host. */
+export function hostOf(addr: string): string {
+  const s = addr.trim().replace(/^\w+:\/\//, "");
+  const bracketed = s.match(/^\[([^\]]+)\]/);
+  if (bracketed) return bracketed[1];
+  // An IPv6 literal without brackets has several colons; a host:port has one.
+  const parts = s.split(":");
+  return parts.length > 2 ? s : parts[0];
+}
+
+export function addressExposure(addr: string): Exposure {
+  const host = hostOf(addr).toLowerCase();
+  if (!host) return "unknown";
+  if (host === "localhost" || host === "::1" || host.startsWith("127.")) return "loopback";
+
+  const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (v4) {
+    const [a, b] = v4.slice(1, 3).map(Number);
+    if (v4.slice(1).map(Number).some((n) => n > 255)) return "unknown";
+    if (a === 10) return "private";
+    if (a === 192 && b === 168) return "private";
+    if (a === 172 && b >= 16 && b <= 31) return "private";
+    if (a === 169 && b === 254) return "private"; // link-local
+    // Carrier-grade NAT. Tailscale hands out addresses here, and so does some
+    // mobile carrier equipment — either way it isn't the open internet.
+    if (a === 100 && b >= 64 && b <= 127) return "vpn";
+    return "public";
+  }
+
+  if (host.includes(":")) {
+    if (host.startsWith("fe80")) return "private"; // link-local
+    // fc00::/7 — unique local addresses.
+    if (/^f[cd]/.test(host)) return "private";
+    return "public";
+  }
+
+  // A hostname. `desk.local` is mDNS and therefore a LAN, but anything else
+  // could resolve anywhere, and guessing wrong in the reassuring direction is
+  // the one mistake worth avoiding.
+  if (host.endsWith(".local") || !host.includes(".")) return "private";
+  return "unknown";
+}
+
+/** Should the user be warned before sending unencrypted traffic here? */
+export function needsWarning(exposure: Exposure): boolean {
+  return exposure === "public" || exposure === "unknown";
+}
+
+export function exposureNote(exposure: Exposure, what = "That address"): string | null {
+  switch (exposure) {
+    case "public":
+      return `${what} is on the public internet. Mesh traffic isn't encrypted yet, so anything you send across it — prompts, tool output, knowledge — can be read on the way. Put the link inside a VPN or tunnel (Tailscale, WireGuard, SSH) instead of connecting directly.`;
+    case "unknown":
+      return `${what} is a hostname, so there's no telling whether it stays on your network. If it crosses the internet, use a VPN or tunnel — mesh traffic isn't encrypted yet.`;
+    default:
+      return null;
+  }
 }
 
 // ---------------------------------------------------------------------------

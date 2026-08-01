@@ -1,9 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  addressExposure,
   authorize,
   describeSelf,
   deviceId,
+  exposureNote,
+  hostOf,
   looksLikeCode,
+  needsWarning,
   newPairingCode,
   normalizePairingCode,
   remotelySafe,
@@ -147,5 +151,76 @@ describe("device identity", () => {
     const first = deviceId();
     expect(first).toMatch(/^[0-9a-f]{32}$/);
     expect(deviceId()).toBe(first);
+  });
+});
+
+describe("how exposed an address is", () => {
+  it("recognises a LAN", () => {
+    for (const addr of [
+      "192.168.1.20",
+      "192.168.1.20:8793",
+      "10.0.0.4",
+      "172.16.5.5",
+      "172.31.255.254",
+      "169.254.10.1",
+      "desk.local",
+      "desk",
+      "[fe80::1]:8793",
+      "fd00::1",
+    ]) {
+      expect(addressExposure(addr), addr).toBe("private");
+    }
+  });
+
+  it("recognises loopback and overlay networks", () => {
+    expect(addressExposure("127.0.0.1:8793")).toBe("loopback");
+    expect(addressExposure("localhost")).toBe("loopback");
+    // Tailscale and other overlays hand out CGNAT addresses; they're tunnelled,
+    // so they shouldn't trigger the unencrypted-link warning.
+    expect(addressExposure("100.101.102.103")).toBe("vpn");
+    expect(addressExposure("100.64.0.1")).toBe("vpn");
+  });
+
+  it("calls a routable address public — including the near misses", () => {
+    for (const addr of [
+      "8.8.8.8",
+      "172.32.0.1", // one past the private block
+      "172.15.0.1", // one before it
+      "100.128.0.1", // one past CGNAT
+      "192.169.1.1", // not 192.168
+      "203.0.113.9",
+      "[2606:4700::1111]:8793",
+    ]) {
+      expect(addressExposure(addr), addr).toBe("public");
+    }
+  });
+
+  it("won't guess about a hostname it can't resolve", () => {
+    // Erring towards "safe" here would be the one dangerous mistake.
+    expect(addressExposure("mybox.example.com")).toBe("unknown");
+    expect(addressExposure("")).toBe("unknown");
+  });
+
+  it("warns for public and unknown, and stays quiet for the rest", () => {
+    expect(needsWarning("public")).toBe(true);
+    expect(needsWarning("unknown")).toBe(true);
+    expect(needsWarning("private")).toBe(false);
+    expect(needsWarning("vpn")).toBe(false);
+    expect(needsWarning("loopback")).toBe(false);
+  });
+
+  it("explains why, and suggests the fix", () => {
+    const note = exposureNote(addressExposure("8.8.8.8"));
+    expect(note).toMatch(/isn't encrypted/);
+    expect(note).toMatch(/VPN or tunnel/);
+    expect(exposureNote("private")).toBeNull();
+    expect(exposureNote("vpn")).toBeNull();
+  });
+
+  it("pulls the host out of whatever form the address takes", () => {
+    expect(hostOf("192.168.1.5:8793")).toBe("192.168.1.5");
+    expect(hostOf("ws://192.168.1.5:8793")).toBe("192.168.1.5");
+    expect(hostOf("[2606:4700::1111]:8793")).toBe("2606:4700::1111");
+    expect(hostOf("2606:4700::1111")).toBe("2606:4700::1111");
   });
 });

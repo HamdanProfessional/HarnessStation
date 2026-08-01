@@ -129,6 +129,60 @@ struct Arming {
     expires: u64,
 }
 
+/// How exposed an address is. Mirrors `addressExposure` in the frontend.
+///
+/// Worth doing in both places: the frontend judges an address the user typed,
+/// before anything is sent, while this judges the address a connection actually
+/// arrived from — which is the only way to learn that the port is reachable from
+/// outside the LAN. A user behind a router they thought was closed finds out
+/// here, not from a guess.
+fn classify(ip: std::net::IpAddr) -> &'static str {
+    use std::net::IpAddr;
+    match ip {
+        IpAddr::V4(v4) => {
+            let o = v4.octets();
+            if v4.is_loopback() {
+                "loopback"
+            } else if v4.is_private() || v4.is_link_local() {
+                "private"
+            } else if o[0] == 100 && (64..=127).contains(&o[1]) {
+                "vpn" // carrier-grade NAT: Tailscale and friends live here
+            } else {
+                "public"
+            }
+        }
+        IpAddr::V6(v6) => {
+            if v6.is_loopback() {
+                "loopback"
+            } else if let Some(v4) = v6.to_ipv4_mapped() {
+                // A dual-stack listener reports IPv4 peers this way, and reading
+                // the raw v6 form would call every LAN address public.
+                classify(IpAddr::V4(v4))
+            } else {
+                let seg = v6.segments()[0];
+                if (seg & 0xffc0) == 0xfe80 || (seg & 0xfe00) == 0xfc00 {
+                    "private" // link-local or unique-local
+                } else {
+                    "public"
+                }
+            }
+        }
+    }
+}
+
+/// A connection that arrived from beyond the local network.
+#[derive(Clone, Serialize)]
+pub struct Exposure {
+    /// The address it came from, so the user can recognise (or not) the source.
+    from: String,
+    class: String,
+    at: u64,
+    /// How many such connections since the mesh started.
+    count: u64,
+    /// Whether it got as far as authenticating.
+    authenticated: bool,
+}
+
 #[derive(Default)]
 pub struct Mesh {
     identity: Mutex<Identity>,
@@ -139,6 +193,8 @@ pub struct Mesh {
     arming: Mutex<Option<Arming>>,
     /// Inbound requests waiting for the frontend to answer.
     inbox: Mutex<HashMap<u64, oneshot::Sender<Value>>>,
+    /// Set once something outside the LAN has connected to us.
+    exposure: Mutex<Option<Exposure>>,
     next_rid: AtomicU64,
 }
 
@@ -252,6 +308,23 @@ async fn listen(mesh: Arc<Mesh>, app: tauri::AppHandle, port: u16) {
         let Ok((stream, from)) = listener.accept().await else {
             continue;
         };
+        // Note anything reaching us from off the LAN before doing any work with
+        // it. Unauthenticated scans count: they're evidence the port is open to
+        // the internet, which is exactly what the user needs telling.
+        let class = classify(from.ip());
+        if class == "public" {
+            let mut slot = mesh.exposure.lock().await;
+            let count = slot.as_ref().map(|e| e.count).unwrap_or(0) + 1;
+            let authenticated = slot.as_ref().is_some_and(|e| e.authenticated);
+            *slot = Some(Exposure {
+                from: from.ip().to_string(),
+                class: class.to_string(),
+                at: now(),
+                count,
+                authenticated,
+            });
+            eprintln!("[mesh] connection from a public address ({}) — the port is reachable from the internet", from.ip());
+        }
         let mesh = mesh.clone();
         let app = app.clone();
         tauri::async_runtime::spawn(async move {
@@ -403,6 +476,13 @@ async fn authorize(mesh: &Arc<Mesh>, nonce: &str, msg: &Value) -> Result<Authori
     if let Some(p) = mesh.peers.lock().await.get_mut(&peer_id) {
         p.seen = now();
         p.name = peer_name.clone();
+    }
+    // A paired device calling in over the internet is a weaker warning than an
+    // anonymous one, but it's still unencrypted traffic — the UI distinguishes.
+    if let Some(e) = mesh.exposure.lock().await.as_mut() {
+        if e.at + 5 >= now() {
+            e.authenticated = true;
+        }
     }
     Ok(Authorized { peer_id, peer_name, issued: None })
 }
@@ -586,6 +666,7 @@ pub async fn mesh_stop(state: tauri::State<'_, Arc<Mesh>>) -> Result<(), String>
         task.abort();
     }
     *mesh.arming.lock().await = None;
+    *mesh.exposure.lock().await = None;
     Ok(())
 }
 
@@ -601,6 +682,10 @@ async fn mesh_status_inner(mesh: &Arc<Mesh>) -> Result<Value, String> {
                 "name": p.name,
                 "addr": p.addr,
                 "paired": p.paired(),
+                "exposure": p.addr.rsplit_once(':').map(|(h, _)| h.to_string())
+                    .and_then(|h| h.trim_matches(['[', ']']).parse::<std::net::IpAddr>().ok())
+                    .map(classify)
+                    .unwrap_or("unknown"),
                 "online": p.seen >= cutoff,
                 "seen": p.seen,
                 "capabilities": p.capabilities,
@@ -624,6 +709,7 @@ async fn mesh_status_inner(mesh: &Arc<Mesh>) -> Result<Value, String> {
         "port": MESH_PORT,
         "discoveryPort": DISCOVERY_PORT,
         "pairing": mesh.arming.lock().await.as_ref().map(|a| json!({ "expires": a.expires })),
+        "exposure": mesh.exposure.lock().await.clone(),
         "peers": list,
     }))
 }
@@ -840,6 +926,28 @@ mod tests {
         assert!(same_secret("abc", "abc"));
         assert!(!same_secret("abc", "abd"));
         assert!(!same_secret("abc", "abcd"));
+    }
+
+    #[test]
+    fn addresses_are_classified_by_how_exposed_they_are() {
+        let c = |s: &str| classify(s.parse::<std::net::IpAddr>().unwrap());
+        assert_eq!(c("127.0.0.1"), "loopback");
+        assert_eq!(c("192.168.1.20"), "private");
+        assert_eq!(c("10.4.4.4"), "private");
+        assert_eq!(c("172.16.0.9"), "private");
+        assert_eq!(c("172.32.0.9"), "public"); // just outside the private block
+        assert_eq!(c("169.254.7.7"), "private");
+        assert_eq!(c("100.101.102.103"), "vpn"); // Tailscale's range
+        assert_eq!(c("100.128.0.1"), "public"); // just outside it
+        assert_eq!(c("8.8.8.8"), "public");
+        assert_eq!(c("::1"), "loopback");
+        assert_eq!(c("fe80::1"), "private");
+        assert_eq!(c("fd00::1"), "private");
+        assert_eq!(c("2606:4700::1111"), "public");
+        // A dual-stack listener reports IPv4 peers mapped into v6; reading the
+        // raw form would call every machine on the LAN a public one.
+        assert_eq!(c("::ffff:192.168.1.20"), "private");
+        assert_eq!(c("::ffff:8.8.8.8"), "public");
     }
 
     #[test]
