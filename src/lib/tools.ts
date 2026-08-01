@@ -1,10 +1,29 @@
 import { invoke } from "@tauri-apps/api/core";
 import { fetch } from "@tauri-apps/plugin-http";
+import { BROWSER_TOOLS, isBrowserTool, runBrowserTool } from "./browserTools";
 import { MCP_GATEWAY_TOOLS } from "./mcpGateway";
 import type { Tool, ToolSet } from "./types";
 
 /** Ready-made tool sets shipped with the app (always available, non-deletable). */
 export const BUILTIN_TOOLSETS: ToolSet[] = [
+  {
+    id: "browser",
+    name: "Browser",
+    toolIds: [
+      "open_url",
+      "read_all_text",
+      "find_text",
+      "list_buttons",
+      "click_button",
+      "take_screenshot",
+      "read_screenshot",
+      "open_new_tab",
+      "list_tabs",
+      "change_tab",
+      "close_tab",
+      "close_browser",
+    ],
+  },
   {
     id: "builtin-research",
     name: "Research",
@@ -567,6 +586,8 @@ return (j.title || top.title) + "\\n\\n" + (j.extract || "No summary.") + "\\n\\
   },
   // Four tools stand in for every connected MCP server's tools; see mcpGateway.ts.
   ...MCP_GATEWAY_TOOLS,
+  // Drive the user's real browser through the extension; see browserTools.ts.
+  ...BROWSER_TOOLS,
 ];
 
 /** Built-in media-generation tool ids, dispatched to the media engines. */
@@ -654,6 +675,8 @@ export async function executeTool(
     const { runMediaTool } = await import("./media");
     return runMediaTool(kind, prompt, media ?? { models: [], defaults: {} });
   }
+  if (isBrowserTool(tool.id)) return runBrowserTool(tool.id, args);
+
   const { parseMcpToolId, mcpCallTool } = await import("./mcp");
 
   // Progressive MCP disclosure: four cheap tools stand in for every server's

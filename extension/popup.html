@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { font: 13px system-ui, sans-serif; width: 230px; margin: 0; padding: 12px; }
+      h1 { font-size: 13px; margin: 0 0 8px; }
+      .row { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+      .dot { width: 8px; height: 8px; border-radius: 50%; background: #c0392b; }
+      .dot.on { background: #27ae60; }
+      p { margin: 6px 0 0; color: #666; line-height: 1.4; }
+    </style>
+  </head>
+  <body>
+    <h1>HarnessStation bridge</h1>
+    <div class="row"><span class="dot" id="dot"></span><span id="state">Checking…</span></div>
+    <p id="hint">The app must be running for this to connect.</p>
+    <script src="popup.js"></script>
+  </body>
+</html>

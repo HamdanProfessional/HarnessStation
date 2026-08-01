@@ -41,6 +41,12 @@ tar = "0.4"
 rand = "0.8"
 open = "5"
 
+# Local WebSocket bridge to the browser extension. The extension runs inside the
+# user's real browser, so automation reuses their existing logins instead of a
+# blank automated profile.
+tokio = { version = "1", features = ["net", "sync", "time", "rt", "macros"] }
+tokio-tungstenite = "0.24"
+
 # Keychain backend per platform: Credential Manager on Windows, Secret Service
 # (gnome-keyring / kwallet) on Linux. With no backend compiled in, saving an API
 # key fails at runtime rather than at build time — hence the explicit split.

@@ -41,6 +41,10 @@ Everything below is in the tree and working.
 | Lazy transcripts (metadata index + hydrate on open) | `storage.loadChatIndex`, `store.hydrateChat` |
 | SVG artifacts in the canvas | `lib/attach.ts` `extractArtifact`, `Canvas.tsx` |
 | CI + tagged release pipeline | `.github/workflows/` |
+| Projects + three-tier memory | `lib/memoryScopes.ts`, `Project` in types |
+| Memory budgeted to the context window | `lib/contextBudget.ts` |
+| Progressive MCP disclosure (4 tools, any number of servers) | `lib/mcpGateway.ts` |
+| Browser control via a real-browser extension | `extension/`, `src-tauri/src/browser.rs`, `lib/browserTools.ts` |
 | Voice chats: save, resume, compact | `voice.ts` (`openChat`/`persist`), `Chat.kind = "voice"` |
 | Neural voice preferred on "auto" | `lib/tts.ts`, `lib/piper.ts` |
 | VRM avatar (VTuber models) | `VrmAvatar.tsx`, `storage.listAvatars` |

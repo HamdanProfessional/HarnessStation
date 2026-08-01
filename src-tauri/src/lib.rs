@@ -1,4 +1,5 @@
 mod audio;
+mod browser;
 mod local;
 mod mcp;
 mod oauth;
@@ -95,6 +96,11 @@ fn set_tray_title(app: tauri::AppHandle, text: String) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Shared with the WebSocket listener below, so tool calls and the socket see
+    // the same pending-request map.
+    let browser_bridge = std::sync::Arc::new(browser::BrowserBridge::new());
+    browser::spawn(browser_bridge.clone());
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_http::init())
@@ -106,6 +112,7 @@ pub fn run() {
         .manage(local::SttServer(Mutex::new(None)))
         .manage(mcp::McpState(Mutex::new(HashMap::new())))
         .manage(audio::Recorder(Mutex::new(None)))
+        .manage(browser_bridge.clone())
         .manage(speech::Speaker::default())
         .setup(|app| {
             // Register the quick-entry hotkey after startup. If another instance
@@ -184,6 +191,8 @@ pub fn run() {
             audio::mic_stop,
             audio::mic_take,
             audio::mic_snapshot,
+            browser::browser_call,
+            browser::browser_status,
             audio::mic_level,
             audio::mic_active,
             audio::mic_devices,

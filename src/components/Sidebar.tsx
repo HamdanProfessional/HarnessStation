@@ -429,6 +429,7 @@ export function Sidebar() {
             {navBtn("workflows", "Workflows", <IconFlow size={15} />)}
             {navBtn("schedules", "Schedules", <IconClock size={15} />)}
             {navBtn("mcp", "MCP Servers", <IconPlug size={15} />)}
+            {navBtn("browser", "Browser", <IconCompass size={15} />)}
           </>
         )}
       </div>

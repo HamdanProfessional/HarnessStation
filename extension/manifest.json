@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "HarnessStation Browser Bridge",
+  "version": "1.0.0",
+  "description": "Lets HarnessStation drive this browser, using the sessions you are already signed in to.",
+  "permissions": [
+    "tabs",
+    "scripting",
+    "activeTab",
+    "windows"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "HarnessStation bridge",
+    "default_popup": "popup.html"
+  },
+  "icons": {}
+}

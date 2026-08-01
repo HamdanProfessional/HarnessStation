@@ -19,6 +19,7 @@ const SkillsView = lazy(() => import("./components/SkillsView").then((m) => ({ d
 const EvalsView = lazy(() => import("./components/EvalsView").then((m) => ({ default: m.EvalsView })));
 const BenchmarksView = lazy(() => import("./components/BenchmarksView").then((m) => ({ default: m.BenchmarksView })));
 const McpView = lazy(() => import("./components/McpView").then((m) => ({ default: m.McpView })));
+const BrowserView = lazy(() => import("./components/BrowserView").then((m) => ({ default: m.BrowserView })));
 const VoiceView = lazy(() => import("./components/VoiceView").then((m) => ({ default: m.VoiceView })));
 import { DialogHost } from "./components/Dialog";
 import { ContextMenu } from "./components/ContextMenu";
@@ -46,6 +47,7 @@ const VIEW_LABEL: Partial<Record<string, string>> = {
   knowledge: "Loading knowledge bases…",
   skills: "Loading skills…",
   mcp: "Loading MCP servers…",
+  browser: "Opening browser control…",
 };
 
 export default function App() {
@@ -179,6 +181,8 @@ export default function App() {
         <SkillsView />
       ) : view === "mcp" ? (
         <McpView />
+      ) : view === "browser" ? (
+        <BrowserView />
       ) : (
         <>
           <ChatWindow />

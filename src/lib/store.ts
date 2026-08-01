@@ -71,7 +71,8 @@ export type View =
   | "evals"
   | "knowledge"
   | "skills"
-  | "mcp";
+  | "mcp"
+  | "browser";
 
 interface AppState {
   ready: boolean;
