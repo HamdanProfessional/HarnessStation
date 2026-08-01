@@ -4411,6 +4411,10 @@ textarea {
    ========================================================================= */
 
 .inline-browser {
+  /* .messages is a column flex container, and flex items shrink by default. A
+     `height` is only a starting size there, so once the conversation overflowed
+     the card was squashed to nothing — a browser 0 px tall. */
+  flex: 0 0 auto;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   background: var(--bg-2);
@@ -4451,6 +4455,9 @@ textarea {
    taller than the conversation it sits in. */
 .inline-browser-slot {
   height: clamp(260px, 52vh, 520px);
+  /* Belt and braces: a height can be overridden by a flex context, a min-height
+     can't be shrunk past. */
+  min-height: clamp(260px, 52vh, 520px);
   background: var(--bg);
   display: flex;
 }
@@ -4460,6 +4467,7 @@ textarea {
 @media (max-height: 720px) {
   .inline-browser-slot {
     height: clamp(220px, 58vh, 400px);
+    min-height: clamp(220px, 58vh, 400px);
   }
 }
 

@@ -55,8 +55,15 @@ export function InlineBrowser() {
       setBusy(true);
       setError(null);
       try {
-        const r = visibleRect() ?? { x: 0, y: 0, width: 640, height: 360 };
-        await invoke("inapp_open", { url: target, ...r });
+        // Falling back to a fixed rectangle would drop the page at the top-left
+        // of the window, over the app. If the card isn't measurable yet, open it
+        // hidden and let the sync loop place it on the next frame.
+        const r = visibleRect();
+        await invoke("inapp_open", {
+          url: target,
+          ...(r ?? { x: 0, y: 0, width: 1, height: 1 }),
+        });
+        if (!r) await invoke("inapp_hide").catch(() => {});
         setOpen(true);
       } catch (e) {
         setError((e as Error).message || String(e));
@@ -70,6 +77,9 @@ export function InlineBrowser() {
   // Let the browser tools drive this card while it's on screen.
   useEffect(() => {
     registerPane(async (to) => {
+      // The card sits at the end of the thread; if the user is reading further
+      // up, bring it into view — "I opened the page" should come with the page.
+      slotRef.current?.scrollIntoView({ block: "nearest" });
       await show(to);
       await new Promise((r) => setTimeout(r, 200));
     });

@@ -135,6 +135,19 @@ export default function App() {
     };
   }, []);
 
+  // Let the browser tools open the in-conversation browser themselves. A model
+  // told to open a page shouldn't need the user to have opened the card first.
+  useEffect(() => {
+    void import("./lib/browserPane").then(({ registerPaneRequester }) =>
+      registerPaneRequester(() => useStore.getState().setBrowserDock(true)),
+    );
+    return () => {
+      void import("./lib/browserPane").then(({ registerPaneRequester }) =>
+        registerPaneRequester(null),
+      );
+    };
+  }, []);
+
   // Bring the device mesh up if the user asked for it. Deliberately after the
   // first render: it binds a network port, and a machine that can't bind one
   // should still get a working app.
