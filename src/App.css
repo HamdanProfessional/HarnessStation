@@ -4402,3 +4402,65 @@ textarea {
   color: var(--warn);
   cursor: help;
 }
+
+/* =========================================================================
+   Inline browser
+   -------------------------------------------------------------------------
+   A card in the message flow. The page itself is a native webview floating
+   over .inline-browser-slot, so this only draws the frame around it.
+   ========================================================================= */
+
+.inline-browser {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  animation: rise var(--t-base) var(--ease);
+}
+
+.inline-browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-3);
+}
+
+.inline-browser-bar input {
+  font-size: 12px;
+  padding: 4px 8px;
+  background: var(--bg-2);
+}
+
+/* The traffic-light dot: reads as a browser chrome at a glance. */
+.inline-browser-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+  margin: 0 2px;
+}
+
+/* Tall enough to be a usable page, short enough to stay a message. */
+.inline-browser-slot {
+  height: min(52vh, 460px);
+  background: var(--bg);
+  display: flex;
+}
+
+.inline-browser .browser-empty {
+  margin: auto;
+  padding: 20px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inline-browser {
+    animation: none;
+  }
+}

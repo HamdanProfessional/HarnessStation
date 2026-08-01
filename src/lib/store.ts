@@ -597,6 +597,21 @@ export const useStore = create<AppState>((set, get) => ({
 
   hydrateChat: async (id) => {
     if (get().hydratedIds[id]) return;
+    // Anything already holding messages in memory is authoritative, and must not
+    // be overwritten by whatever last reached disk.
+    //
+    // Chats built from the index always start empty — messages only ever arrive
+    // here or from a live turn. So a non-empty chat means a turn is in flight or
+    // already hydrated, and saves are coalesced at 400 ms behind it. Reading the
+    // body mid-turn handed back a copy from *before* the newest tool result and
+    // replaced the live array with it: the result appeared, then vanished a
+    // moment later. Any hydrate racing a turn could do it — enabling a tool,
+    // opening the sidebar search, moving a chat out of a project.
+    const existing = get().chats.find((c) => c.id === id);
+    if (existing && existing.messages.length > 0) {
+      set({ hydratedIds: { ...get().hydratedIds, [id]: true } });
+      return;
+    }
     const body = await storage.loadChatBody(id);
     set({
       // Marked even when the read failed: a missing file has nothing more to give,

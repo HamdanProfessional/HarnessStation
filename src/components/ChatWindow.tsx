@@ -9,6 +9,7 @@ import type { Attachment } from "../lib/types";
 import { useStore } from "../lib/store";
 import { ensureWhisper, transcribePath } from "../lib/whisper";
 import { LogoMark } from "./icons";
+import { InlineBrowser } from "./InlineBrowser";
 
 const STARTER_PROMPTS = [
   "Summarize the latest news on a topic I choose, with sources.",
@@ -142,7 +143,7 @@ function ToolResult({
 }
 
 export function ChatWindow() {
-  const { chats, currentId, streaming, error, sendMessage, regenerate, stop, clearError, branchAt, editUserMessage, agents, compactChat, setView, settings } =
+  const { chats, currentId, streaming, error, sendMessage, regenerate, stop, clearError, branchAt, editUserMessage, agents, compactChat, setView, settings, browserDock } =
     useStore();
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
@@ -371,6 +372,9 @@ export function ChatWindow() {
             </button>
           </div>
         )}
+        {/* The browser lives in the conversation, after the last message, so the
+            model's browsing reads as part of the thread rather than beside it. */}
+        {browserDock && <InlineBrowser />}
       </div>
       {voiceState && <div className="voice-state">{voiceState}</div>}
       {attachments.length > 0 && (
