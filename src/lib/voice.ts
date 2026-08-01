@@ -279,13 +279,28 @@ export class VoiceSession {
       this.history = chat ? chat.messages.slice() : [];
       return;
     }
-    this.chatId = useStore.getState().newVoiceChat();
+    // Deliberately no chat yet. Creating one here meant every start/stop left an
+    // empty "Voice chat — …" in the sidebar even if you never said anything.
+    // The chat is created on the first turn instead — see ensureChat().
+    this.chatId = null;
     this.history = [];
+  }
+
+  /** The chat to write to, created on demand so silent calls leave no trace. */
+  private ensureChat(): string | null {
+    if (this.chatId) return this.chatId;
+    if (!this.store) return null;
+    const st = this.store.getState();
+    this.chatId = st.newVoiceChat();
+    // Now that the call has something in it, let the sidebar mark it live.
+    st.setActiveVoiceChat(this.chatId);
+    return this.chatId;
   }
 
   /** Write the transcript back to its chat. Coalesced by the store, so cheap. */
   private persist(): void {
-    const id = this.chatId;
+    if (!this.history.length) return; // nothing said yet — don't create a chat
+    const id = this.ensureChat();
     if (!id || !this.store) return;
     const st = this.store.getState();
     const chat = st.chats.find((c) => c.id === id);
@@ -592,6 +607,9 @@ export class VoiceSession {
     const continuous = this.mode === "auto";
     if (!continuous) this.recorder = null;
     const livePartial = this.partial;
+    // Read the VAD result for the segment being handed over BEFORE resetting it
+    // for the next one — this is what decides whether to transcribe at all.
+    const spoke = this.heardSpeech;
     try {
       const wav = continuous ? await rec.takePath() : await rec.stopPath();
       if (continuous) {
@@ -601,7 +619,7 @@ export class VoiceSession {
         this.heardSpeech = false;
         this.partial = "";
       }
-      const nothing = spokeFor < MIN_UTTERANCE_MS || (this.mode === "auto" && !this.heardSpeech);
+      const nothing = spokeFor < MIN_UTTERANCE_MS || (this.mode === "auto" && !spoke);
       let chunk = "";
       if (!nothing) {
         this.setState("thinking");
