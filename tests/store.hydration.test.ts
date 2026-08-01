@@ -95,6 +95,9 @@ beforeEach(() => {
     currentId: null,
     streaming: false,
     error: null,
+    view: "chat",
+    pendingVoiceChat: null,
+    activeVoiceChat: null,
   });
 });
 
@@ -204,5 +207,54 @@ describe("hydrateAllChats", () => {
 
     await useStore.getState().hydrateAllChats();
     expect(loadChatBody).toHaveBeenCalledTimes(2); // nothing left to do
+  });
+});
+
+describe("voice calls route to the Voice view", () => {
+  it("opens a spoken conversation as a call, not as a transcript", async () => {
+    // Regression: clicking a saved voice chat opened it in the chat view, so you
+    // could type into a conversation you had been having out loud.
+    useStore.setState({ chats: [{ ...stub("V"), kind: "voice" }], hydratedIds: {} });
+
+    useStore.getState().selectChat("V");
+
+    const st = useStore.getState();
+    expect(st.view).toBe("voice");
+    expect(st.pendingVoiceChat).toBe("V");
+    expect(st.currentId).toBe("V");
+  });
+
+  it("still opens a typed chat in the chat view", () => {
+    useStore.getState().selectChat("A");
+    const st = useStore.getState();
+    expect(st.view).toBe("chat");
+    expect(st.pendingVoiceChat).toBeNull();
+  });
+
+  it("newVoiceCall asks the Voice view for a fresh call", () => {
+    useStore.getState().newVoiceCall();
+    const st = useStore.getState();
+    expect(st.view).toBe("voice");
+    expect(st.pendingVoiceChat).toBe("new");
+  });
+
+  it("the request is one-shot, so remounting doesn't restart the call", () => {
+    useStore.getState().newVoiceCall();
+    useStore.getState().clearPendingVoiceChat();
+    expect(useStore.getState().pendingVoiceChat).toBeNull();
+  });
+
+  it("tracks which call is on air so the sidebar can show it", () => {
+    useStore.getState().setActiveVoiceChat("V");
+    expect(useStore.getState().activeVoiceChat).toBe("V");
+    useStore.getState().setActiveVoiceChat(null);
+    expect(useStore.getState().activeVoiceChat).toBeNull();
+  });
+
+  it("newVoiceChat creates a chat marked as voice and ready to write to", () => {
+    const id = useStore.getState().newVoiceChat();
+    const chat = useStore.getState().chats.find((c) => c.id === id)!;
+    expect(chat.kind).toBe("voice");
+    expect(useStore.getState().hydratedIds[id]).toBe(true);
   });
 });

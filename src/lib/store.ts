@@ -80,6 +80,14 @@ interface AppState {
   /** Message count per chat from the index, so the sidebar needn't load transcripts. */
   messageCounts: Record<string, number>;
   /**
+   * A voice call the Voice view should open: a chat id to resume, or "new".
+   * The view clears it once it has picked it up. This is how the sidebar starts
+   * or reopens a call without reaching into the session directly.
+   */
+  pendingVoiceChat: string | null;
+  /** The call currently on air, so the sidebar can show and reopen it. */
+  activeVoiceChat: string | null;
+  /**
    * Chats whose transcript is in memory. Startup reads only the metadata index,
    * so `chat.messages` is empty until the chat is opened — and an unhydrated chat
    * must never be written back, or its file would be replaced with an empty one.
@@ -118,6 +126,12 @@ interface AppState {
   newChat: () => void;
   /** Create a chat for a spoken session and return its id. */
   newVoiceChat: () => string;
+  /** Start a fresh voice call and show the Voice view. */
+  newVoiceCall: () => void;
+  /** The Voice view calls this once it has acted on `pendingVoiceChat`. */
+  clearPendingVoiceChat: () => void;
+  /** The session reports the call it's on (null when it stops). */
+  setActiveVoiceChat: (id: string | null) => void;
   selectChat: (id: string) => void;
   deleteChat: (id: string) => Promise<void>;
   renameChat: (id: string, title: string) => Promise<void>;
@@ -186,6 +200,8 @@ export const useStore = create<AppState>((set, get) => ({
   chats: [],
   messageCounts: {},
   hydratedIds: {},
+  pendingVoiceChat: null,
+  activeVoiceChat: null,
   presets: [],
   templates: [],
   customTools: [],
@@ -376,7 +392,18 @@ export const useStore = create<AppState>((set, get) => ({
     return chat.id;
   },
 
+  newVoiceCall: () => set({ view: "voice", pendingVoiceChat: "new" }),
+
+  clearPendingVoiceChat: () => set({ pendingVoiceChat: null }),
+
+  setActiveVoiceChat: (id) => set({ activeVoiceChat: id }),
+
   selectChat: (id) => {
+    // A spoken conversation reopens as a call, not as a transcript to type into.
+    if (get().chats.find((c) => c.id === id)?.kind === "voice") {
+      set({ currentId: id, view: "voice", pendingVoiceChat: id });
+      return;
+    }
     set({ currentId: id, view: "chat" });
     void get().hydrateChat(id);
   },

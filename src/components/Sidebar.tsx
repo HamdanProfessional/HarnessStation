@@ -57,6 +57,8 @@ export function Sidebar() {
     view,
     messageCounts,
     hydrateAllChats,
+    newVoiceCall,
+    activeVoiceChat,
   } = useStore();
   const [query, setQuery] = useState("");
   const [menuFor, setMenuFor] = useState<{ id: string; top: number; left: number } | null>(null);
@@ -116,7 +118,7 @@ export function Sidebar() {
       onClick={() => selectChat(c.id)}
     >
       <span className="chat-icon">
-        <IconChat size={14} />
+        {c.kind === "voice" ? <IconSpeaker size={14} /> : <IconChat size={14} />}
       </span>
       <span className="chat-text">
         <span className="chat-title">
@@ -124,6 +126,8 @@ export function Sidebar() {
           {c.title}
         </span>
         <span className="chat-sub">
+          {c.id === activeVoiceChat ? <span className="live-dot" title="Call in progress" /> : null}
+          {c.kind === "voice" ? "Call · " : ""}
           {relTime(c.updatedAt)}
           {/* Loaded chats know their own length; the rest come from the index. */}
           {(c.messages.length || messageCounts[c.id] || 0) > 0 &&
@@ -199,9 +203,18 @@ export function Sidebar() {
         <NotificationBell />
       </div>
 
-      <button className="btn primary new-chat-btn" onClick={newChat}>
-        <IconPlus size={14} /> New chat
-      </button>
+      <div className="new-row">
+        <button className="btn primary new-chat-btn" onClick={newChat}>
+          <IconPlus size={14} /> New chat
+        </button>
+        <button
+          className="btn new-call-btn"
+          onClick={newVoiceCall}
+          title="Start a voice call with the avatar"
+        >
+          <IconSpeaker size={14} /> New call
+        </button>
+      </div>
 
       <div className="search-wrap">
         <span className="search-icon">

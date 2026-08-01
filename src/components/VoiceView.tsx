@@ -44,7 +44,18 @@ interface Turn {
 let liveSession: VoiceSession | null = null;
 
 export function VoiceView() {
-  const { settings, saveSettings, setView, agents, allTools, chats, selectChat } = useStore();
+  const {
+    settings,
+    saveSettings,
+    setView,
+    agents,
+    allTools,
+    chats,
+    selectChat,
+    pendingVoiceChat,
+    clearPendingVoiceChat,
+    setActiveVoiceChat,
+  } = useStore();
   const voiceCfg = settings.voice ?? {};
   const realTools = allTools().filter(
     (t) => !t.id.startsWith("agent:") && !t.id.startsWith("workflow:"),
@@ -103,7 +114,13 @@ export function VoiceView() {
           setTurns((t) => [...t, { role: "assistant", text }]);
         },
         onAction: (label) => setTurns((t) => [...t, { role: "action", text: label }]),
-        onError: (msg) => setError(msg),
+        onError: (msg) => {
+          setError(msg);
+          if (!liveSession?.isRunning()) {
+            setRunning(false);
+            useStore.getState().setActiveVoiceChat(null);
+          }
+        },
       };
     const makeCtx = (): VoiceContext => {
         const st = useStore.getState();
@@ -173,11 +190,16 @@ export function VoiceView() {
     }
   }
 
-  // Rehydrate the UI from a session that kept running while we were away.
+  // Rehydrate the UI from a session that kept running while we were away. Without
+  // this the view reads "Off" while the avatar is still listening in the background.
   useEffect(() => {
     const s = sessionRef.current;
-    if (!s?.isRunning()) return;
+    if (!s?.isRunning()) {
+      setActiveVoiceChat(null);
+      return;
+    }
     setRunning(true);
+    setActiveVoiceChat(s.getChatId());
     setState(s.getState());
     setTurns(
       s
@@ -187,6 +209,20 @@ export function VoiceView() {
         .map((m) => ({ role: m.role as "user" | "assistant", text: m.content })),
     );
   }, []);
+
+  // The sidebar starts calls by putting a request in the store: "new" for a fresh
+  // one, or a chat id to reopen. Doing it this way keeps the session out of the
+  // sidebar and survives this view being unmounted.
+  useEffect(() => {
+    if (!pendingVoiceChat) return;
+    const id = pendingVoiceChat;
+    clearPendingVoiceChat();
+    const s = sessionRef.current;
+    if (!s) return;
+    // Already on that call? Just show it rather than restarting.
+    if (id !== "new" && s.isRunning() && s.getChatId() === id) return;
+    void (id === "new" ? startFresh() : resume(id));
+  }, [pendingVoiceChat, clearPendingVoiceChat]);
 
   // Global push-to-talk (Ctrl+Shift+V held) — works even when the window isn't focused.
   useEffect(() => {
@@ -256,9 +292,14 @@ export function VoiceView() {
     const s = sessionRef.current!;
     setError(null);
     setPartial("");
-    if (running) await s.stop();
+    if (s.isRunning()) await s.stop();
+    if (!resolved.provider || !resolved.model) {
+      setError("Add a provider with a model first, then start the avatar.");
+      return;
+    }
     setRunning(true);
     await s.start(mode, id);
+    setActiveVoiceChat(s.getChatId());
     setTurns(
       s
         .getHistory()
@@ -267,19 +308,31 @@ export function VoiceView() {
     );
   };
 
+  /** Begin a brand-new call. The previous one stays saved. */
+  const startFresh = async () => {
+    const s = sessionRef.current!;
+    setError(null);
+    setPartial("");
+    setTurns([]);
+    if (s.isRunning()) await s.stop();
+    if (!resolved.provider || !resolved.model) {
+      setError("Add a provider with a model first, then start the avatar.");
+      return;
+    }
+    setRunning(true);
+    await s.start(mode);
+    setActiveVoiceChat(s.getChatId());
+  };
+
   const toggleSession = async () => {
     const s = sessionRef.current!;
     setError(null);
     if (running) {
       await s.stop();
       setRunning(false);
+      setActiveVoiceChat(null);
     } else {
-      if (!resolved.provider || !resolved.model) {
-        setError("Add a provider with a model first, then start the avatar.");
-        return;
-      }
-      setRunning(true);
-      await s.start(mode);
+      await startFresh();
     }
   };
 
@@ -288,9 +341,13 @@ export function VoiceView() {
     const s = sessionRef.current!;
     s.setMode(m);
     if (running) {
+      // Restart on the same call — switching push-to-talk to hands-free shouldn't
+      // abandon the conversation and open a new one.
+      const id = s.getChatId();
       await s.stop();
       setRunning(true);
-      await s.start(m);
+      await s.start(m, id ?? undefined);
+      setActiveVoiceChat(s.getChatId());
     }
   };
 
@@ -471,12 +528,8 @@ export function VoiceView() {
             </button>{" "}
             <button
               className="link-btn"
-              title="Start a new conversation — this one stays saved"
-              onClick={() => {
-                void sessionRef.current?.clearHistory();
-                setTurns([]);
-                setPartial("");
-              }}
+              title="Start a new call — this one stays saved"
+              onClick={() => void startFresh()}
             >
               New
             </button>

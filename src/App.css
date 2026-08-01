@@ -3665,3 +3665,43 @@ select:focus {
   color: var(--accent);
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
 }
+
+/* New chat / New call pair at the top of the sidebar. */
+.new-row {
+  display: flex;
+  gap: 6px;
+}
+
+.new-row .btn {
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+  padding-left: 8px;
+  padding-right: 8px;
+  white-space: nowrap;
+}
+
+.new-call-btn {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--text);
+}
+
+.new-call-btn:hover {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+/* Pulsing dot on the chat that is currently on a call. */
+.live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
