@@ -349,12 +349,20 @@ pub async fn speak(
 }
 
 /// Stop speaking immediately (barge-in) by dropping the host; the next call respawns it.
+///
+/// Async on purpose: `wait()` blocks until the speech process is really gone, and
+/// a synchronous command runs that wait on the UI thread. Barge-in happens while
+/// the user is talking over the avatar, so a child that takes its time to die
+/// would freeze the window at the worst possible moment.
 #[tauri::command]
-pub fn speak_stop(state: State<Speaker>) {
+pub async fn speak_stop(state: State<'_, Speaker>) -> Result<(), String> {
     #[cfg(windows)]
-    if let Some(mut host) = state.0.lock().unwrap().take() {
-        let _ = host.child.kill();
-        let _ = host.child.wait();
+    {
+        let host = state.0.lock().unwrap().take();
+        if let Some(mut host) = host {
+            let _ = host.child.kill();
+            let _ = tokio::task::spawn_blocking(move || host.child.wait()).await;
+        }
     }
     // Don't take the lock here — speak() holds it for the whole utterance, which is
     // exactly the thing being interrupted.
@@ -363,6 +371,7 @@ pub fn speak_stop(state: State<Speaker>) {
         let _ = &state;
         kill_speaking();
     }
+    Ok(())
 }
 
 /// Voices installed through Windows Settings ("Speech" / language packs) register under

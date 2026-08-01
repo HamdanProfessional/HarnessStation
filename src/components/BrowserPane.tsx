@@ -69,12 +69,22 @@ export function BrowserPane() {
   // any window resize firing, hence the ResizeObserver.
   useEffect(() => {
     if (!open) return;
-    const sync = () => void invoke("inapp_bounds", rect()).catch(() => {});
+    // Moving a native webview is main-thread work in the window's message loop,
+    // so this fires only when the rectangle has actually changed. The timer is
+    // just a backstop for layout shifts nothing observes.
+    let last = "";
+    const sync = () => {
+      const r = rect();
+      const key = `${r.x},${r.y},${r.width},${r.height}`;
+      if (key === last) return;
+      last = key;
+      void invoke("inapp_bounds", r).catch(() => {});
+    };
     sync();
     const ro = new ResizeObserver(sync);
     if (slotRef.current) ro.observe(slotRef.current);
     window.addEventListener("resize", sync);
-    const tick = setInterval(sync, 500);
+    const tick = setInterval(sync, 1500);
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", sync);

@@ -132,15 +132,48 @@ fn record_thread(
     Ok((data, sample_rate))
 }
 
+/// Wait for a capture thread to finish, off the main thread and with a deadline.
+///
+/// Joining a thread from a synchronous command runs on the UI thread, and
+/// tearing down a cpal stream can stall — a device removed mid-recording, a
+/// driver that doesn't return. That froze the whole window: no CPU burned, no
+/// message pump, nothing to see. Now the wait happens on a blocking worker and
+/// gives up after a few seconds; a thread that won't die costs one pool thread
+/// instead of the application.
+async fn join_capture(
+    handle: JoinHandle<Result<(Vec<f32>, u32), String>>,
+) -> Result<(Vec<f32>, u32), String> {
+    let joined = tokio::time::timeout(
+        std::time::Duration::from_secs(5),
+        tokio::task::spawn_blocking(move || handle.join()),
+    )
+    .await
+    .map_err(|_| {
+        "the microphone didn't release — the device may have been unplugged".to_string()
+    })?
+    .map_err(|e| e.to_string())?;
+
+    joined.map_err(|_| "recording thread panicked".to_string())?
+}
+
 #[tauri::command]
-pub fn mic_start(device: Option<String>, state: State<Recorder>) -> Result<(), String> {
-    let mut guard = state.0.lock().unwrap();
+pub async fn mic_start(
+    device: Option<String>,
+    state: State<'_, Recorder>,
+) -> Result<(), String> {
     // Never fail with "already recording": a stale session (view switch, aborted turn,
     // leftover mic test) is simply discarded so the new one can start cleanly.
-    if let Some(old) = guard.take() {
+    // The guard is scoped so it can't be held across the await below.
+    let old = {
+        let mut guard = state.0.lock().unwrap();
+        guard.take()
+    };
+    if let Some(old) = old {
         old.stop.store(true, Ordering::Relaxed);
-        let _ = old.handle.join();
+        // A previous device that won't let go must not stop us opening a new one.
+        let _ = join_capture(old.handle).await;
     }
+    let mut guard = state.0.lock().unwrap();
     let stop = Arc::new(AtomicBool::new(false));
     let stop2 = stop.clone();
     let level = Arc::new(AtomicU32::new(0));
@@ -178,13 +211,14 @@ pub fn mic_active(state: State<Recorder>) -> bool {
 
 /// Stop recording, write a 16 kHz mono WAV to ~/.harnessx/tmp/dictation.wav, return its relative path.
 #[tauri::command]
-pub fn mic_stop(state: State<Recorder>) -> Result<String, String> {
-    let rec = state.0.lock().unwrap().take().ok_or("not recording")?;
+pub async fn mic_stop(state: State<'_, Recorder>) -> Result<String, String> {
+    let rec = {
+        let mut guard = state.0.lock().unwrap();
+        guard.take()
+    }
+    .ok_or("not recording")?;
     rec.stop.store(true, Ordering::Relaxed);
-    let (samples, rate) = rec
-        .handle
-        .join()
-        .map_err(|_| "recording thread panicked")??;
+    let (samples, rate) = join_capture(rec.handle).await?;
     let pcm = if rate == 16000 { samples } else { resample(&samples, rate, 16000) };
     let dir = crate::local::harness_root().join("tmp");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;

@@ -14,7 +14,6 @@
 //! every injected snippet catches its own errors and returns them as data.
 
 use serde_json::Value;
-use std::sync::mpsc;
 use std::time::Duration;
 use tauri::{Manager, WebviewUrl};
 
@@ -30,7 +29,15 @@ fn webview<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Option<tauri::Webvie
 /// The snippet is wrapped so a thrown error comes back as `{"__error": "..."}`
 /// instead of vanishing — on Windows the platform drops exceptions silently,
 /// which would otherwise look like a hang.
-fn eval_json<R: tauri::Runtime>(
+///
+/// This *must* stay async, and must never block a thread waiting for the reply.
+/// WebView2 delivers the callback on the thread that owns the window — the main
+/// thread — so a blocking wait anywhere it can reach deadlocks the whole app:
+/// the waiter is holding the thread that would deliver the value it waits for.
+/// The window stops pumping messages and the app freezes having burned no CPU,
+/// which is precisely how it presented. Awaiting a oneshot parks the task rather
+/// than the thread, so the main thread stays free to deliver the callback.
+async fn eval_json<R: tauri::Runtime>(
     view: &tauri::Webview<R>,
     expr: &str,
 ) -> Result<Value, String> {
@@ -38,15 +45,22 @@ fn eval_json<R: tauri::Runtime>(
         "(() => {{ try {{ return JSON.stringify({{ ok: (function(){{ {expr} }})() }}); }} \
          catch (e) {{ return JSON.stringify({{ __error: String(e && e.message || e) }}); }} }})()"
     );
-    let (tx, rx) = mpsc::channel::<String>();
+    let (tx, rx) = tokio::sync::oneshot::channel::<String>();
+    // The callback is `Fn`, not `FnOnce`, so the sender lives in a slot it takes.
+    let tx = std::sync::Mutex::new(Some(tx));
     view.eval_with_callback(wrapped, move |raw| {
-        let _ = tx.send(raw);
+        if let Ok(mut slot) = tx.lock() {
+            if let Some(tx) = slot.take() {
+                let _ = tx.send(raw);
+            }
+        }
     })
     .map_err(|e| e.to_string())?;
 
-    let raw = rx
-        .recv_timeout(EVAL_TIMEOUT)
-        .map_err(|_| "the page didn't respond — it may still be loading".to_string())?;
+    let raw = tokio::time::timeout(EVAL_TIMEOUT, rx)
+        .await
+        .map_err(|_| "the page didn't respond — it may still be loading".to_string())?
+        .map_err(|_| "the page went away before replying".to_string())?;
 
     // The callback gives us a JSON string *containing* our JSON string.
     let inner: String = serde_json::from_str(&raw).unwrap_or(raw);
@@ -155,6 +169,7 @@ pub async fn inapp_status(app: tauri::AppHandle) -> Result<Value, String> {
     };
     let url = view.url().map(|u| u.to_string()).unwrap_or_default();
     let title = eval_json(&view, "return document.title;")
+        .await
         .ok()
         .and_then(|v| v.as_str().map(str::to_string))
         .unwrap_or_default();
@@ -166,7 +181,7 @@ pub async fn inapp_status(app: tauri::AppHandle) -> Result<Value, String> {
 pub async fn inapp_eval(app: tauri::AppHandle, expr: String) -> Result<Value, String> {
     let view = webview(&app)
         .ok_or_else(|| "the in-app browser isn't open — call open_url first".to_string())?;
-    eval_json(&view, &expr)
+    eval_json(&view, &expr).await
 }
 
 /// Navigate the existing pane.
