@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Spinner } from "./Loading";
 import { createMotionDriver, MMD_MORPHS } from "../lib/avatarMotion";
 import type { VoiceState } from "../lib/voice";
 
@@ -197,7 +198,11 @@ export function MmdAvatar({ bundle, modelPath, state, level, onError }: Props) {
 
   return (
     <div className="vrm-stage" ref={mountRef}>
-      {loading && <div className="vrm-loading">Loading avatar…</div>}
+      {loading && (
+        <div className="vrm-loading">
+          <Spinner /> Loading avatar…
+        </div>
+      )}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { runWorkflow } from "../lib/workflow";
 import { prettyName } from "../lib/format";
 import { STT_LANGUAGES } from "../lib/whisper";
 import * as storage from "../lib/storage";
+import { Spinner } from "./Loading";
 import type { Tool, VoiceMode } from "../lib/types";
 
 // three.js + three-vrm are large; keep them out of the initial bundle.
@@ -402,7 +403,7 @@ export function VoiceView() {
     <main className="voice-main">
       <div className="voice-stage">
         {avatarData || avatarBundle ? (
-          <Suspense fallback={<div className="vrm-stage vrm-loading">Loading avatar…</div>}>
+          <Suspense fallback={<div className="vrm-stage vrm-loading"><Spinner /> Loading avatar…</div>}>
             {avatarKind === "mmd" && avatarBundle ? (
               <MmdAvatar
                 bundle={avatarBundle}

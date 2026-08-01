@@ -88,6 +88,8 @@ interface AppState {
   pendingVoiceChat: string | null;
   /** The call currently on air, so the sidebar can show and reopen it. */
   activeVoiceChat: string | null;
+  /** What startup is doing, so the splash says something truthful. */
+  bootStatus: string | null;
   /**
    * Chats whose transcript is in memory. Startup reads only the metadata index,
    * so `chat.messages` is empty until the chat is opened — and an unhydrated chat
@@ -212,6 +214,7 @@ export const useStore = create<AppState>((set, get) => ({
   hydratedIds: {},
   pendingVoiceChat: null,
   activeVoiceChat: null,
+  bootStatus: null,
   presets: [],
   templates: [],
   customTools: [],
@@ -277,6 +280,18 @@ export const useStore = create<AppState>((set, get) => ({
 
   init: async () => {
     // Everything here is independent — one wave of I/O rather than four in series.
+    // Each one reports as it lands so the splash shows real progress instead of
+    // a spinner that tells you nothing.
+    let done = 0;
+    const steps = 13;
+    const step = <T,>(label: string, work: Promise<T>): Promise<T> =>
+      work.then((v) => {
+        done++;
+        set({ bootStatus: `${label} · ${Math.round((done / steps) * 100)}%` });
+        return v;
+      });
+
+    set({ bootStatus: "Reading your settings…" });
     const [
       settings,
       chatIndex,
@@ -291,19 +306,19 @@ export const useStore = create<AppState>((set, get) => ({
       skills,
       evals,
     ] = await Promise.all([
-      storage.loadSettings(),
-      storage.loadChatIndex(),
-      storage.loadPresets(),
-      storage.listTemplates(),
-      storage.listTools(),
-      storage.listWorkflows(),
-      storage.listToolSets(),
-      storage.listAgents(),
-      storage.listSchedules(),
-      storage.listProjects(),
-      import("./skills").then((m) => m.listSkills()),
-      storage.listEvals(),
-      import("./platform").then((m) => m.detectOs()),
+      step("Settings", storage.loadSettings()),
+      step("Conversations", storage.loadChatIndex()),
+      step("Presets", storage.loadPresets()),
+      step("Templates", storage.listTemplates()),
+      step("Tools", storage.listTools()),
+      step("Workflows", storage.listWorkflows()),
+      step("Tool sets", storage.listToolSets()),
+      step("Agents", storage.listAgents()),
+      step("Schedules", storage.listSchedules()),
+      step("Projects", storage.listProjects()),
+      step("Skills", import("./skills").then((m) => m.listSkills())),
+      step("Evals", storage.listEvals()),
+      step("Platform", import("./platform").then((m) => m.detectOs())),
     ]);
     // Metadata only: each chat's messages arrive when it's first opened.
     const stubs: Chat[] = chatIndex.map(({ messageCount: _n, ...meta }) => ({
@@ -333,6 +348,7 @@ export const useStore = create<AppState>((set, get) => ({
       evals,
       currentId: first.id,
       ready: true,
+      bootStatus: null,
     });
   },
 

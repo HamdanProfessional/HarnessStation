@@ -25,13 +25,33 @@ import { ContextMenu } from "./components/ContextMenu";
 import { Toaster } from "./components/Toaster";
 import { CommandPalette } from "./components/CommandPalette";
 import { Onboarding, hasOnboarded } from "./components/Onboarding";
+import { ClosingOverlay, Splash, ViewLoading } from "./components/Loading";
 import { useStore } from "./lib/store";
 import { flushChatSaves } from "./lib/storage";
 import "./App.css";
 
+/** Named so a view switch says what's arriving, not just "Loading…". */
+const VIEW_LABEL: Partial<Record<string, string>> = {
+  voice: "Opening the voice avatar…",
+  settings: "Opening settings…",
+  models: "Loading your models…",
+  discover: "Opening Discover…",
+  tools: "Loading tools…",
+  workflows: "Loading workflows…",
+  agents: "Loading agents…",
+  schedules: "Loading schedules…",
+  benchmarks: "Loading benchmarks…",
+  compare: "Opening Compare…",
+  evals: "Loading evals…",
+  knowledge: "Loading knowledge bases…",
+  skills: "Loading skills…",
+  mcp: "Loading MCP servers…",
+};
+
 export default function App() {
-  const { ready, view, settings, init, tickSchedules, autoConnectMcp } = useStore();
+  const { ready, view, settings, init, tickSchedules, autoConnectMcp, bootStatus } = useStore();
   const [, setForce] = useState(0);
+  const [closing, setClosing] = useState(false);
 
   useEffect(() => {
     void init().then(() => autoConnectMcp());
@@ -48,10 +68,16 @@ export default function App() {
   // if the window is closed mid-reply.
   useEffect(() => {
     const flush = () => void flushChatSaves();
-    window.addEventListener("beforeunload", flush);
+    // On the way out, say what's happening rather than appearing to hang: the
+    // batched chat writes can take a moment to land.
+    const onUnload = () => {
+      setClosing(true);
+      flush();
+    };
+    window.addEventListener("beforeunload", onUnload);
     document.addEventListener("visibilitychange", flush);
     return () => {
-      window.removeEventListener("beforeunload", flush);
+      window.removeEventListener("beforeunload", onUnload);
       document.removeEventListener("visibilitychange", flush);
     };
   }, []);
@@ -117,14 +143,14 @@ export default function App() {
     document.documentElement.dataset.theme = theme;
   }, [settings.theme]);
 
-  if (!ready) return <div className="loading">Loading…</div>;
+  if (!ready) return <Splash status={bootStatus} />;
 
   const showOnboard = !hasOnboarded();
 
   return (
     <div className="app">
       <Sidebar />
-      <Suspense fallback={<div className="loading">Loading…</div>}>
+      <Suspense fallback={<ViewLoading label={VIEW_LABEL[view] ?? "Loading…"} />}>
       {view === "voice" ? (
         <VoiceView />
       ) : view === "settings" ? (
@@ -166,6 +192,7 @@ export default function App() {
       <Toaster />
       <CommandPalette />
       {showOnboard && <Onboarding onClose={() => setForce((n) => n + 1)} />}
+      {closing && <ClosingOverlay />}
     </div>
   );
 }
