@@ -13,6 +13,12 @@ pub struct RecState {
     stop: Arc<AtomicBool>,
     /// Most recent input RMS (f32 bits) — drives the voice orb + silence detection.
     level: Arc<AtomicU32>,
+    /// Live capture buffer, shared with the recording thread so a segment can be
+    /// taken mid-flight. Without this the mic has to stop to produce a WAV, which
+    /// is what made the avatar deaf while it was transcribing and replying.
+    samples: Arc<Mutex<Vec<f32>>>,
+    /// Device sample rate, published once the stream is open (0 until then).
+    rate: Arc<AtomicU32>,
     handle: JoinHandle<Result<(Vec<f32>, u32), String>>,
 }
 
@@ -47,6 +53,8 @@ pub fn mic_devices() -> Result<Vec<String>, String> {
 fn record_thread(
     stop: Arc<AtomicBool>,
     level: Arc<AtomicU32>,
+    samples: Arc<Mutex<Vec<f32>>>,
+    rate_out: Arc<AtomicU32>,
     want: Option<String>,
 ) -> Result<(Vec<f32>, u32), String> {
     let host = cpal::default_host();
@@ -62,7 +70,7 @@ fn record_thread(
     let config = device.default_input_config().map_err(|e| e.to_string())?;
     let sample_rate = config.sample_rate().0;
     let channels = config.channels() as usize;
-    let samples = Arc::new(Mutex::new(Vec::<f32>::new()));
+    rate_out.store(sample_rate, Ordering::Relaxed);
     let s2 = samples.clone();
     let err_fn = |e| eprintln!("mic stream error: {e}");
     let l_f32 = level.clone();
@@ -137,9 +145,19 @@ pub fn mic_start(device: Option<String>, state: State<Recorder>) -> Result<(), S
     let stop2 = stop.clone();
     let level = Arc::new(AtomicU32::new(0));
     let level2 = level.clone();
+    let samples = Arc::new(Mutex::new(Vec::<f32>::new()));
+    let samples2 = samples.clone();
+    let rate = Arc::new(AtomicU32::new(0));
+    let rate2 = rate.clone();
     let want = device.filter(|d| !d.trim().is_empty());
-    let handle = std::thread::spawn(move || record_thread(stop2, level2, want));
-    *guard = Some(RecState { stop, level, handle });
+    let handle = std::thread::spawn(move || record_thread(stop2, level2, samples2, rate2, want));
+    *guard = Some(RecState {
+        stop,
+        level,
+        samples,
+        rate,
+        handle,
+    });
     Ok(())
 }
 
@@ -173,6 +191,53 @@ pub fn mic_stop(state: State<Recorder>) -> Result<String, String> {
     let path = dir.join("dictation.wav");
     write_wav(&path, &pcm, 16000).map_err(|e| e.to_string())?;
     Ok("tmp/dictation.wav".into())
+}
+
+/// Write the captured audio so far to a WAV without stopping the recording.
+///
+/// `take` clears the buffer afterwards, so the next segment starts fresh; leaving
+/// it false gives a rolling snapshot for live transcription. Either way the mic
+/// keeps running, which is what lets the avatar hear you while it is still
+/// transcribing or answering the previous thing you said.
+fn dump(state: &State<Recorder>, name: &str, take: bool) -> Result<String, String> {
+    let guard = state.0.lock().unwrap();
+    let rec = guard.as_ref().ok_or("not recording")?;
+    let rate = rec.rate.load(Ordering::Relaxed);
+    if rate == 0 {
+        return Err("microphone still opening".into());
+    }
+    let pcm_raw = {
+        let mut buf = rec.samples.lock().unwrap();
+        if take {
+            std::mem::take(&mut *buf)
+        } else {
+            buf.clone()
+        }
+    };
+    if pcm_raw.is_empty() {
+        return Err("no audio captured".into());
+    }
+    let pcm = if rate == 16000 {
+        pcm_raw
+    } else {
+        resample(&pcm_raw, rate, 16000)
+    };
+    let dir = crate::local::harness_root().join("tmp");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    write_wav(&dir.join(name), &pcm, 16000).map_err(|e| e.to_string())?;
+    Ok(format!("tmp/{name}"))
+}
+
+/// Take the audio so far as a segment and keep recording. Used per utterance.
+#[tauri::command]
+pub fn mic_take(state: State<Recorder>) -> Result<String, String> {
+    dump(&state, "segment.wav", true)
+}
+
+/// Copy the audio so far without consuming it — for rolling live transcription.
+#[tauri::command]
+pub fn mic_snapshot(state: State<Recorder>) -> Result<String, String> {
+    dump(&state, "partial.wav", false)
 }
 
 fn resample(input: &[f32], from: u32, to: u32) -> Vec<f32> {

@@ -182,6 +182,8 @@ pub fn run() {
             secret::secret_delete,
             audio::mic_start,
             audio::mic_stop,
+            audio::mic_take,
+            audio::mic_snapshot,
             audio::mic_level,
             audio::mic_active,
             audio::mic_devices,

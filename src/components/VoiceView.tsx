@@ -68,6 +68,8 @@ export function VoiceView() {
   const [error, setError] = useState<string | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [partial, setPartial] = useState("");
+  /** What the mic is hearing right now, before the turn is committed. */
+  const [heard, setHeard] = useState("");
   const [running, setRunning] = useState(false);
   const [holding, setHolding] = useState(false);
 
@@ -106,8 +108,10 @@ export function VoiceView() {
         onStatus: setStatus,
         onUser: (text) => {
           setPartial("");
+          setHeard("");
           setTurns((t) => [...t, { role: "user", text }]);
         },
+        onPartial: setHeard,
         onDelta: (d) => setPartial((p) => p + d),
         onAssistant: (text) => {
           setPartial("");
@@ -569,6 +573,15 @@ export function VoiceView() {
               </div>
             ),
           )}
+          {heard && (
+            <div className="voice-turn voice-turn-user voice-turn-live">
+              <span className="voice-turn-who">You</span>
+              <div>
+                {heard}
+                <span className="live-caret" />
+              </div>
+            </div>
+          )}
           {partial && (
             <div className="voice-turn voice-turn-assistant">
               <span className="voice-turn-who">Avatar</span>
@@ -688,6 +701,18 @@ export function VoiceView() {
             />
             Let me interrupt by talking (use headphones)
           </label>
+          <label className="agent-check">
+            <input
+              type="checkbox"
+              checked={voiceCfg.liveTranscript ?? true}
+              onChange={(e) => patchVoice({ liveTranscript: e.target.checked })}
+            />
+            Show words as I speak them
+          </label>
+          <small className="hint" style={{ margin: "-4px 0 10px", display: "block" }}>
+            Re-transcribes the current sentence about once a second so you can see what it heard.
+            Turn it off if your machine struggles — the reply itself is unaffected.
+          </small>
           <label className="field">
             <span>Language I speak</span>
             <select

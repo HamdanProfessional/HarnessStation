@@ -152,6 +152,8 @@ export interface VoiceSettings {
   replyLanguage?: string;
   /** Turn off reasoning/thinking on every model the avatar uses, for faster replies. */
   noThinking?: boolean;
+  /** Show a rolling transcript while you speak. Costs extra whisper passes. */
+  liveTranscript?: boolean;
   /** Run each utterance through a small model that rewrites it for speech. */
   speechRewrite?: boolean;
   /** Provider/model for that rewrite — use the smallest, fastest one you have. */

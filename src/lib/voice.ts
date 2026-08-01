@@ -41,6 +41,11 @@ export interface VoiceCallbacks {
   onLevel: (level: number) => void;
   onStatus: (s: string | null) => void;
   onUser: (text: string) => void;
+  /**
+   * Rolling transcript of what you're saying right now, before the turn ends.
+   * Lets you see what it actually heard as you speak, rather than after.
+   */
+  onPartial?: (text: string) => void;
   onDelta: (text: string) => void;
   onAssistant: (text: string) => void;
   onAction: (label: string) => void;
@@ -217,6 +222,11 @@ export class VoiceSession {
   /** Wake-word mode: follow-ups are accepted without the wake phrase until this time. */
   private awakeUntil = 0;
   private loudSince = 0;
+  /** Live transcript of the segment being spoken, for on-screen feedback. */
+  private partial = "";
+  /** Guards the rolling transcription so passes can't pile up on a slow machine. */
+  private partialBusy = false;
+  private lastPartialAt = 0;
   /** Transcript of a sentence that sounded unfinished — waiting for the rest. */
   private pending = "";
   private holds = 0;
@@ -366,6 +376,7 @@ export class VoiceSession {
       language: v.language ?? DEFAULT_STT_LANG,
       translate: v.translateToEnglish ?? false,
       replyLanguage: v.replyLanguage ?? "match",
+      liveTranscript: v.liveTranscript ?? true,
     };
   }
 
@@ -400,6 +411,8 @@ export class VoiceSession {
   async stop() {
     this.running = false;
     this.pending = "";
+    this.partial = "";
+    this.cb.onPartial?.("");
     this.holds = 0;
     if (this.timer) {
       clearInterval(this.timer);
@@ -508,6 +521,7 @@ export class VoiceSession {
 
     this.cb.onLevel(this.state === "listening" ? level : 0);
     if (this.state !== "listening" || !this.recorder) return;
+    void this.updatePartial();
     const now = Date.now();
     if (level > threshold) {
       this.lastLoud = now;
@@ -532,15 +546,61 @@ export class VoiceSession {
     }
   }
 
+  /**
+   * Rolling transcription of the segment in progress.
+   *
+   * Whisper has no streaming mode here, so this re-transcribes the audio captured
+   * so far every second or so and shows the result. It's throttled and skipped
+   * while a pass is already running, so on a slow machine it degrades to fewer
+   * updates rather than queueing work — and it never blocks the real transcript,
+   * which is still produced once from the final segment.
+   */
+  private async updatePartial(): Promise<void> {
+    if (!this.cfg().liveTranscript || !this.cb.onPartial) return;
+    if (this.partialBusy || !this.recorder || !this.heardSpeech) return;
+    const now = Date.now();
+    if (now - this.lastPartialAt < 900) return;
+    this.lastPartialAt = now;
+    this.partialBusy = true;
+    try {
+      const wav = await this.recorder.snapshotPath();
+      const stt = (this.getCtx().settings.voice?.sttModel as SttModelId) || DEFAULT_STT;
+      const text = (await transcribeFast(wav, stt, this.sttOpts())).trim();
+      // Still listening to the same segment? (A turn may have ended meanwhile.)
+      if (!this.recorder || this.state !== "listening") return;
+      if (text && !NOISE.test(text)) {
+        this.partial = text;
+        this.cb.onPartial?.([this.pending, text].filter(Boolean).join(" "));
+      }
+    } catch {
+      /* no audio yet, or the model is busy — try again next tick */
+    } finally {
+      this.partialBusy = false;
+      this.lastPartialAt = Date.now();
+    }
+  }
+
   /** Stop recording, transcribe, and respond. */
   private async finishUtterance() {
     if (!this.recorder || this.busy) return;
     const rec = this.recorder;
-    this.recorder = null;
     const spokeFor = Date.now() - this.listenStart;
     this.busy = true;
+    // In hands-free mode the mic stays open across transcription and the reply,
+    // so anything said in that window is captured instead of falling into a
+    // deaf gap. Push-to-talk still stops, because the key press defines the turn.
+    const continuous = this.mode === "auto";
+    if (!continuous) this.recorder = null;
+    const livePartial = this.partial;
     try {
-      const wav = await rec.stopPath();
+      const wav = continuous ? await rec.takePath() : await rec.stopPath();
+      if (continuous) {
+        // The segment just taken is consumed; the next one starts from now.
+        this.listenStart = Date.now();
+        this.lastLoud = 0;
+        this.heardSpeech = false;
+        this.partial = "";
+      }
       const nothing = spokeFor < MIN_UTTERANCE_MS || (this.mode === "auto" && !this.heardSpeech);
       let chunk = "";
       if (!nothing) {
@@ -551,6 +611,10 @@ export class VoiceSession {
         chunk = (await transcribeFast(wav, stt, this.sttOpts())).trim();
         this.cb.onStatus(null);
         if (NOISE.test(chunk)) chunk = "";
+        // The live pass already transcribed this audio once. If the final pass
+        // comes back empty but the rolling one heard words, trust those rather
+        // than dropping the turn entirely.
+        if (!chunk && livePartial && !NOISE.test(livePartial)) chunk = livePartial;
       }
       // Nothing new in this slice: if we were holding a half-sentence, send it now.
       if (!chunk && !this.pending) return;
@@ -589,6 +653,8 @@ export class VoiceSession {
         }
       }
       this.awakeUntil = Date.now() + followUpMs;
+      this.partial = "";
+      this.cb.onPartial?.("");
       this.cb.onUser(spoken);
       await this.respond(spoken);
       this.awakeUntil = Date.now() + followUpMs;
@@ -600,10 +666,9 @@ export class VoiceSession {
       this.busy = false;
       if (this.running && this.mode === "auto") {
         if (this.recorder) {
-          // barge-in mic is already open — just resume listening on it
-          this.listenStart = Date.now();
-          this.lastLoud = 0;
-          this.heardSpeech = false;
+          // Already open — either continuous listening or the barge-in mic.
+          // Keep whatever was said during the reply rather than resetting it.
+          if (!this.heardSpeech) this.listenStart = Date.now();
           this.loudSince = 0;
           this.setState("listening");
         } else {
