@@ -4308,3 +4308,21 @@ textarea {
     animation: none;
   }
 }
+
+/* Pairing code: the one string a user retypes on another machine, so it wants
+   to be unmistakable — wide tracking, monospace, no ambiguity. */
+.pair-code {
+  font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  font-size: 17px;
+  letter-spacing: 0.18em;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-3);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  user-select: all;
+}
+
+.ok-note {
+  color: var(--ok);
+}

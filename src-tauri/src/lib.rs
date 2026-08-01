@@ -2,6 +2,7 @@ mod audio;
 mod browser;
 mod inapp_browser;
 mod local;
+mod mesh;
 mod mcp;
 mod oauth;
 mod py;
@@ -115,6 +116,7 @@ pub fn run() {
         .manage(audio::Recorder(Mutex::new(None)))
         .manage(browser_bridge.clone())
         .manage(speech::Speaker::default())
+        .manage(std::sync::Arc::new(mesh::Mesh::new()))
         .setup(|app| {
             // Register the quick-entry hotkey after startup. If another instance
             // (or a leftover process) already holds it, log and continue rather
@@ -192,6 +194,17 @@ pub fn run() {
             audio::mic_stop,
             audio::mic_take,
             audio::mic_snapshot,
+            mesh::mesh_start,
+            mesh::mesh_stop,
+            mesh::mesh_status,
+            mesh::mesh_arm_pairing,
+            mesh::mesh_disarm_pairing,
+            mesh::mesh_pair,
+            mesh::mesh_call,
+            mesh::mesh_add_peer,
+            mesh::mesh_forget,
+            mesh::mesh_reply,
+            mesh::mesh_export_peers,
             browser::browser_call,
             browser::browser_status,
             inapp_browser::inapp_open,

@@ -137,6 +137,21 @@ export default function App() {
     };
   }, []);
 
+  // Bring the device mesh up if the user asked for it. Deliberately after the
+  // first render: it binds a network port, and a machine that can't bind one
+  // should still get a working app.
+  useEffect(() => {
+    if (localStorage.getItem("hs-mesh-auto") !== "1") return;
+    let stopped = false;
+    void import("./lib/meshRuntime").then(({ startMesh }) => {
+      if (!stopped) void startMesh().catch(() => {});
+    });
+    return () => {
+      stopped = true;
+      void import("./lib/meshRuntime").then(({ stopMesh }) => void stopMesh().catch(() => {}));
+    };
+  }, []);
+
   useEffect(() => {
     const theme =
       settings.theme === "system"

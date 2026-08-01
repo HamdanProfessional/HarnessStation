@@ -3,6 +3,7 @@ import { confirmDialog } from "../lib/dialog";
 import { toast } from "../lib/toast";
 import * as storage from "../lib/storage";
 import { checkForUpdate, installUpdate, type UpdateInfo } from "../lib/updater";
+import { DevicesPanel } from "./DevicesPanel";
 import { useStore } from "../lib/store";
 import { useModal } from "../lib/useModal";
 import { AvatarGallery } from "./AvatarGallery";
@@ -31,6 +32,7 @@ const TABS = [
   { id: "media", label: "Media models" },
   { id: "voice", label: "Voice" },
   { id: "memory", label: "Memory" },
+  { id: "devices", label: "Devices" },
   { id: "usage", label: "Usage" },
   { id: "data", label: "Data & updates" },
 ] as const;
@@ -498,6 +500,10 @@ export function SettingsView() {
             </p>
           </>
         )}
+      </section>
+
+      <section hidden={tab !== "devices"}>
+        <DevicesPanel />
       </section>
 
       <section hidden={tab !== "usage"}>
