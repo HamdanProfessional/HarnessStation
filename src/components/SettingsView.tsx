@@ -11,6 +11,7 @@ import { listSystemVoices, type SysVoice } from "../lib/sysvoice";
 import { onSpendChange, totals, type SpendTotals } from "../lib/budget";
 import { testRewrite, type RewriteTestResult } from "../lib/speechRewrite";
 import { formatCost } from "../lib/cost";
+import { hasBuiltInGateway } from "../lib/gateway";
 import { PIPER_VOICES, DEFAULT_PIPER_VOICE, piperReady, piperVoice } from "../lib/piper";
 import { listMicDevices, micLevel, startRecording, type Recorder } from "../lib/audio";
 import { STT_MODELS, DEFAULT_STT } from "../lib/whisper";
@@ -368,22 +369,29 @@ export function SettingsView() {
       <section hidden={tab !== "providers"}>
         <h2>Connections</h2>
         <p className="hint">
-          General APIs (benchmarks, Hugging Face search, MCP directory) can proxy through your own
-          server so its keys stay server-side. AI-provider keys below always stay local. Leave the
-          server URL empty to call services directly.
+          Shared data the app fetches on your behalf — model benchmarks, the MCP directory,
+          Hugging Face search — comes from the HarnessStation gateway, so no key of ours ships
+          inside the app.{" "}
+          {hasBuiltInGateway()
+            ? "This build has one configured; leave the field below empty unless you run your own."
+            : "This build has none configured, so benchmarks need either your own gateway below or your own Artificial Analysis key."}
+        </p>
+        <p className="hint" style={{ marginBottom: 12 }}>
+          <b>Your</b> provider keys — models, image/voice generation, MCP servers — never go through
+          it. They stay on this machine and are sent only to the service they belong to.
         </p>
         <div className="provider-row">
           <input
             className="grow"
             value={draft.serverUrl ?? ""}
-            placeholder="Gateway server URL (optional), e.g. https://api.myserver.com"
+            placeholder="Self-hosted gateway URL (optional), e.g. https://gateway.example.com"
             onChange={(e) => setDraft({ ...draft, serverUrl: e.target.value })}
           />
           <input
             className="grow"
             type="password"
             value={draft.aaApiKey ?? ""}
-            placeholder="Artificial Analysis API key (for Benchmarks, if no server)"
+            placeholder="Your own Artificial Analysis key (only if not using a gateway)"
             onChange={(e) => setDraft({ ...draft, aaApiKey: e.target.value })}
           />
         </div>

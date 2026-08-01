@@ -1,43 +1,350 @@
 [
   {
     "name": "Filesystem",
-    "description": "Read/write files in allowed directories (official reference server).",
+    "category": "Reference",
+    "description": "Read/write files in allowed directories.",
     "transport": "stdio",
     "command": "npx",
-    "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:\\Users"]
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-filesystem",
+      "C:\\Users"
+    ]
   },
   {
     "name": "Fetch",
-    "description": "Fetch web pages and convert to markdown (official reference server).",
+    "category": "Reference",
+    "description": "Fetch web pages and convert to markdown.",
     "transport": "stdio",
     "command": "npx",
-    "args": ["-y", "@modelcontextprotocol/server-fetch"]
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-fetch"
+    ]
   },
   {
     "name": "Memory",
-    "description": "Knowledge-graph memory the model can read/write (official reference server).",
+    "category": "Reference",
+    "description": "Knowledge-graph memory the model can read/write.",
     "transport": "stdio",
     "command": "npx",
-    "args": ["-y", "@modelcontextprotocol/server-memory"]
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-memory"
+    ]
   },
   {
     "name": "Sequential Thinking",
-    "description": "Structured step-by-step reasoning tool (official reference server).",
+    "category": "Reference",
+    "description": "Structured step-by-step reasoning tool.",
     "transport": "stdio",
     "command": "npx",
-    "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-sequential-thinking"
+    ]
+  },
+  {
+    "name": "Everything",
+    "category": "Reference",
+    "description": "Reference server exercising all MCP features (prompts, tools, resources).",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-everything"
+    ]
+  },
+  {
+    "name": "Time",
+    "category": "Reference",
+    "description": "Time and timezone conversion utilities.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-time"
+    ]
+  },
+  {
+    "name": "Git",
+    "category": "Dev",
+    "description": "Read, search, and manipulate local Git repositories.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-git"
+    ]
   },
   {
     "name": "GitHub",
-    "description": "GitHub official remote MCP (needs OAuth/PAT token).",
+    "category": "Dev",
+    "description": "GitHub official remote MCP \u2014 repos, issues, PRs, code search.",
     "transport": "http",
     "url": "https://api.githubcopilot.com/mcp/",
     "needsAuth": true
   },
   {
+    "name": "GitLab",
+    "category": "Dev",
+    "description": "Manage GitLab projects, MRs, and issues.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-gitlab"
+    ],
+    "needsAuth": true
+  },
+  {
+    "name": "Sentry",
+    "category": "Dev",
+    "description": "Retrieve and analyze Sentry error reports.",
+    "transport": "http",
+    "url": "https://mcp.sentry.dev/mcp",
+    "needsAuth": true
+  },
+  {
+    "name": "Playwright",
+    "category": "Dev",
+    "description": "Browser automation and testing with Playwright.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@playwright/mcp"
+    ]
+  },
+  {
+    "name": "Puppeteer",
+    "category": "Dev",
+    "description": "Headless-Chrome browser automation.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-puppeteer"
+    ]
+  },
+  {
+    "name": "E2B",
+    "category": "Dev",
+    "description": "Run code in a secure cloud sandbox.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@e2b/mcp-server"
+    ],
+    "needsAuth": true
+  },
+  {
+    "name": "Context7",
+    "category": "Dev",
+    "description": "Up-to-date library and framework documentation.",
+    "transport": "http",
+    "url": "https://mcp.context7.com/mcp"
+  },
+  {
+    "name": "Brave Search",
+    "category": "Search",
+    "description": "Web and local search via the Brave Search API.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-brave-search"
+    ],
+    "needsAuth": true
+  },
+  {
+    "name": "Tavily",
+    "category": "Search",
+    "description": "AI-optimized web search and extraction.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "tavily-mcp"
+    ],
+    "needsAuth": true
+  },
+  {
+    "name": "Exa",
+    "category": "Search",
+    "description": "Neural web search built for AI agents.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "exa-mcp-server"
+    ],
+    "needsAuth": true
+  },
+  {
+    "name": "Perplexity",
+    "category": "Search",
+    "description": "Ask Perplexity's Sonar models for cited answers.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "server-perplexity-ask"
+    ],
+    "needsAuth": true
+  },
+  {
+    "name": "Firecrawl",
+    "category": "Search",
+    "description": "Scrape, crawl, and extract structured data from websites.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "firecrawl-mcp"
+    ],
+    "needsAuth": true
+  },
+  {
     "name": "Hugging Face",
-    "description": "Hugging Face official remote MCP (models, datasets, Spaces).",
+    "category": "Search",
+    "description": "Search HF models, datasets, and Spaces.",
     "transport": "http",
     "url": "https://huggingface.co/mcp"
+  },
+  {
+    "name": "PostgreSQL",
+    "category": "Data",
+    "description": "Query PostgreSQL databases (read-only schema inspection).",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-postgres",
+      "postgresql://localhost/mydb"
+    ]
+  },
+  {
+    "name": "SQLite",
+    "category": "Data",
+    "description": "Query and explore a local SQLite database.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "mcp-server-sqlite-npx",
+      "./data.db"
+    ]
+  },
+  {
+    "name": "Redis",
+    "category": "Data",
+    "description": "Interact with a Redis key-value store.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-redis"
+    ]
+  },
+  {
+    "name": "Chroma",
+    "category": "Data",
+    "description": "Vector database for embeddings and retrieval.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "chroma-mcp"
+    ]
+  },
+  {
+    "name": "Notion",
+    "category": "Data",
+    "description": "Read and update Notion pages and databases.",
+    "transport": "http",
+    "url": "https://mcp.notion.com/mcp",
+    "needsAuth": true
+  },
+  {
+    "name": "Airtable",
+    "category": "Data",
+    "description": "Read/write Airtable bases and records.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "airtable-mcp-server"
+    ],
+    "needsAuth": true
+  },
+  {
+    "name": "Google Drive",
+    "category": "Data",
+    "description": "Search and read files in Google Drive.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-gdrive"
+    ],
+    "needsAuth": true
+  },
+  {
+    "name": "Slack",
+    "category": "Productivity",
+    "description": "Read and post to Slack channels.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-slack"
+    ],
+    "needsAuth": true
+  },
+  {
+    "name": "Linear",
+    "category": "Productivity",
+    "description": "Manage Linear issues, projects, and cycles.",
+    "transport": "http",
+    "url": "https://mcp.linear.app/mcp",
+    "needsAuth": true
+  },
+  {
+    "name": "Atlassian",
+    "category": "Productivity",
+    "description": "Jira and Confluence \u2014 issues, pages, search.",
+    "transport": "http",
+    "url": "https://mcp.atlassian.com/v1/sse",
+    "needsAuth": true
+  },
+  {
+    "name": "Stripe",
+    "category": "Productivity",
+    "description": "Query Stripe payments, customers, and invoices.",
+    "transport": "http",
+    "url": "https://mcp.stripe.com",
+    "needsAuth": true
+  },
+  {
+    "name": "Google Maps",
+    "category": "Productivity",
+    "description": "Geocoding, directions, and place search.",
+    "transport": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-google-maps"
+    ],
+    "needsAuth": true
+  },
+  {
+    "name": "Cloudflare",
+    "category": "Productivity",
+    "description": "Manage Cloudflare Workers, KV, R2, and D1.",
+    "transport": "http",
+    "url": "https://observability.mcp.cloudflare.com/sse",
+    "needsAuth": true
   }
 ]

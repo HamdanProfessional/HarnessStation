@@ -1,19 +1,40 @@
 /**
- * API gateway: all "general" third-party APIs (benchmarks, Hugging Face search,
- * MCP directory) go through here. If Settings has a server URL, calls are proxied
- * through that self-hosted server (which holds the general API keys); otherwise
- * they fall back to calling the services directly from the app.
+ * API gateway: the *shared* third-party services (benchmarks, Hugging Face
+ * search, MCP directory) go through here rather than being called from the app
+ * with a key baked into the binary.
  *
- * User AI-provider keys (OpenAI/Anthropic/etc.) intentionally do NOT go through
- * the gateway — they stay local and are sent only to their own provider.
+ * User AI-provider keys (OpenAI/Anthropic/Groq/Ollama/…), media-generation keys
+ * and MCP credentials intentionally do NOT go through the gateway. Those are the
+ * user's own, stay on their machine, and are sent only to the service they
+ * belong to.
+ *
+ * The URL is resolved in this order:
+ *   1. Settings → server URL, for anyone self-hosting their own gateway
+ *   2. VITE_GATEWAY_URL, baked in at build time (this is what a release ships)
+ *   3. nothing — fall back to calling the service directly with the user's own
+ *      key, which is what a dev build with no gateway running does
  */
 import { fetch } from "@tauri-apps/plugin-http";
 import { useStore } from "./store";
 
-function serverUrl(): string | null {
-  const url = useStore.getState().settings.serverUrl?.trim();
-  return url ? url.replace(/\/+$/, "") : null;
+/** Baked in at build time: set VITE_GATEWAY_URL when building a release. */
+const BUILT_IN_GATEWAY = (import.meta.env.VITE_GATEWAY_URL ?? "").trim();
+
+const trim = (u: string) => u.trim().replace(/\/+$/, "");
+
+/** The gateway this build should talk to, or null to call services directly. */
+export function gatewayUrl(): string | null {
+  const configured = useStore.getState().settings.serverUrl?.trim();
+  if (configured) return trim(configured);
+  return BUILT_IN_GATEWAY ? trim(BUILT_IN_GATEWAY) : null;
 }
+
+/** True when this build ships with a gateway, so no user key is needed. */
+export function hasBuiltInGateway(): boolean {
+  return !!BUILT_IN_GATEWAY;
+}
+
+const serverUrl = gatewayUrl;
 
 async function getJson(url: string, headers: Record<string, string> = {}): Promise<unknown> {
   const res = await fetch(url, { headers: { "User-Agent": "HarnessStation", ...headers } });
@@ -41,7 +62,9 @@ export async function fetchBenchmarks(): Promise<BenchmarkModel[]> {
     const key = useStore.getState().settings.aaApiKey?.trim();
     if (!key) {
       throw new Error(
-        "No Artificial Analysis API key. Add one in Settings (free at artificialanalysis.ai/api) or configure a server URL.",
+        "Benchmarks need the HarnessStation gateway, which isn't configured in this build. " +
+          "Either set a server URL in Settings → Providers, or add your own Artificial Analysis " +
+          "key there (free at artificialanalysis.ai/api).",
       );
     }
     data = await getJson("https://artificialanalysis.ai/api/v2/data/llms/models", {
