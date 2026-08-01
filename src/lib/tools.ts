@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { fetch } from "@tauri-apps/plugin-http";
+import { MCP_GATEWAY_TOOLS } from "./mcpGateway";
 import type { Tool, ToolSet } from "./types";
 
 /** Ready-made tool sets shipped with the app (always available, non-deletable). */
@@ -564,6 +565,8 @@ return (j.title || top.title) + "\\n\\n" + (j.extract || "No summary.") + "\\n\\
     builtin: true,
     group: "Media",
   },
+  // Four tools stand in for every connected MCP server's tools; see mcpGateway.ts.
+  ...MCP_GATEWAY_TOOLS,
 ];
 
 /** Built-in media-generation tool ids, dispatched to the media engines. */
@@ -652,6 +655,30 @@ export async function executeTool(
     return runMediaTool(kind, prompt, media ?? { models: [], defaults: {} });
   }
   const { parseMcpToolId, mcpCallTool } = await import("./mcp");
+
+  // Progressive MCP disclosure: four cheap tools stand in for every server's
+  // tools, so connecting servers costs no context until the model looks.
+  const { isMcpGatewayTool } = await import("./mcpGateway");
+  if (isMcpGatewayTool(tool.id)) {
+    const gw = await import("./mcpGateway");
+    const { useStore } = await import("./store");
+    const servers = gw.groupByServer(useStore.getState().mcpTools);
+    if (tool.id === "mcp_servers") return gw.listServers(servers);
+    if (tool.id === "mcp_tools") {
+      return gw.listTools(servers, String(args.server ?? ""), String(args.query ?? ""));
+    }
+    if (tool.id === "mcp_describe") {
+      const wanted = Array.isArray(args.tools) ? args.tools.map(String) : [];
+      return gw.describeTools(servers, String(args.server ?? ""), wanted);
+    }
+    // mcp_call: resolve the server+tool the model named to a registered tool id.
+    const target = gw.resolveCall(servers, String(args.server ?? ""), String(args.tool ?? ""));
+    if (typeof target === "string") return target; // an explanatory error
+    const callArgs = (args.args ?? {}) as Record<string, unknown>;
+    const ref = parseMcpToolId(target.id);
+    return ref ? mcpCallTool(ref.serverId, ref.toolName, callArgs) : "Error: bad MCP tool id.";
+  }
+
   const mcp = parseMcpToolId(tool.id);
   if (mcp) return mcpCallTool(mcp.serverId, mcp.toolName, args);
   if (tool.runtime === "python") {

@@ -733,6 +733,10 @@ export const listToolSets = () => listJson<ToolSet>("toolsets");
 export const saveToolSet = (t: ToolSet) => saveJson("toolsets", t.id, t);
 export const deleteToolSet = (id: string) => removeJson("toolsets", id);
 
+export const listProjects = () => listJson<import("./types").Project>("projects");
+export const saveProject = (p: import("./types").Project) => saveJson("projects", p.id, p);
+export const deleteProject = (id: string) => removeJson("projects", id);
+
 export const listTemplates = () => listJson<Template>("templates");
 export const saveTemplate = (t: Template) => saveJson("templates", t.id, t);
 export const deleteTemplate = (id: string) => removeJson("templates", id);

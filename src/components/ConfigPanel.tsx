@@ -25,6 +25,7 @@ export function ConfigPanel() {
     deleteToolSet,
     knowledgeBases,
     ensureKnowledgeBases,
+    projects,
     agents,
     applyAgentToChat,
     activity,
@@ -37,6 +38,7 @@ export function ConfigPanel() {
     void ensureKnowledgeBases();
   }, [ensureKnowledgeBases]);
   const chat = chats.find((c) => c.id === currentId);
+  const projectOfChat = chat?.projectId ? projects.find((p) => p.id === chat.projectId) : undefined;
   const [loadingModels, setLoadingModels] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [modelError, setModelError] = useState<string | null>(null);
@@ -464,6 +466,29 @@ export function ConfigPanel() {
           </label>
         );
       })()}
+
+      {/* Memory can be switched off per conversation: a big store on a small
+          local model is the difference between a slow answer and a failed one. */}
+      <label className="agent-check" title="Recalled memory for this conversation">
+        <input
+          type="checkbox"
+          checked={!chat.memoryOff}
+          onChange={(e) => updateChat({ memoryOff: !e.target.checked })}
+        />
+        Use remembered facts here
+      </label>
+      {chat.memoryOff && (
+        <small className="hint" style={{ marginBottom: 12, display: "block" }}>
+          This chat runs with no recalled memory. It still learns — facts are saved as usual.
+        </small>
+      )}
+
+      {projectOfChat && (
+        <small className="hint" style={{ marginBottom: 12, display: "block" }}>
+          In project <b>{projectOfChat.name}</b> — shares that project's memory with its other
+          chats and calls.
+        </small>
+      )}
 
       {knowledgeBases.length > 0 && (() => {
         const selected = chat.knowledgeBaseIds ?? (chat.knowledgeBaseId ? [chat.knowledgeBaseId] : []);

@@ -18,6 +18,7 @@ import type {
   KnowledgeBase,
   Message,
   Preset,
+  Project,
   Provider,
   Schedule,
   Settings,
@@ -102,6 +103,9 @@ interface AppState {
   agents: Agent[];
   schedules: Schedule[];
   knowledgeBases: KnowledgeBase[];
+  projects: Project[];
+  /** Project the sidebar is filtered to, or null for everything. */
+  activeProjectId: string | null;
   skills: import("./skills").Skill[];
   evals: Eval[];
   currentId: string | null;
@@ -184,6 +188,12 @@ interface AppState {
   runScheduleNow: (id: string) => Promise<void>;
   tickSchedules: () => Promise<void>;
 
+  saveProject: (p: Project) => Promise<void>;
+  deleteProject: (id: string, opts?: { deleteChats?: boolean }) => Promise<void>;
+  setActiveProject: (id: string | null) => void;
+  /** Start a chat inside a project, inheriting its tools and knowledge. */
+  newProjectChat: (projectId: string) => void;
+
   saveKnowledgeBase: (kb: KnowledgeBase) => Promise<void>;
   deleteKnowledgeBase: (id: string) => Promise<void>;
 
@@ -211,6 +221,8 @@ export const useStore = create<AppState>((set, get) => ({
   agents: [],
   schedules: [],
   knowledgeBases: [],
+  projects: [],
+  activeProjectId: null,
   skills: [],
   evals: [],
   currentId: null,
@@ -275,6 +287,7 @@ export const useStore = create<AppState>((set, get) => ({
       toolSets,
       agents,
       schedules,
+      projects,
       skills,
       evals,
     ] = await Promise.all([
@@ -287,6 +300,7 @@ export const useStore = create<AppState>((set, get) => ({
       storage.listToolSets(),
       storage.listAgents(),
       storage.listSchedules(),
+      storage.listProjects(),
       import("./skills").then((m) => m.listSkills()),
       storage.listEvals(),
       import("./platform").then((m) => m.detectOs()),
@@ -314,6 +328,7 @@ export const useStore = create<AppState>((set, get) => ({
       toolSets,
       agents,
       schedules,
+      projects: [...projects].sort((a, b) => a.name.localeCompare(b.name)),
       skills,
       evals,
       currentId: first.id,
@@ -808,6 +823,59 @@ export const useStore = create<AppState>((set, get) => ({
     if (s) await executeSchedule(s, get, set);
   },
 
+  saveProject: async (p) => {
+    const next = { ...p, updatedAt: new Date().toISOString() };
+    const rest = get().projects.filter((x) => x.id !== p.id);
+    set({ projects: [...rest, next].sort((a, b) => a.name.localeCompare(b.name)) });
+    await storage.saveProject(next);
+  },
+
+  deleteProject: async (id, opts) => {
+    // Chats outlive the project by default — losing a month of conversations
+    // because a folder was tidied away is not a recoverable mistake.
+    const chats = get().chats.filter((c) => c.projectId === id);
+    if (opts?.deleteChats) {
+      for (const c of chats) await get().deleteChat(c.id);
+    } else {
+      for (const c of chats) {
+        await get().hydrateChat(c.id);
+        get().updateChatById(c.id, { projectId: undefined });
+      }
+    }
+    await storage.deleteProject(id);
+    // The project's own memory goes with it; global and per-chat memory stay.
+    try {
+      const { forgetAll } = await import("./memory");
+      const { projectScope } = await import("./memoryScopes");
+      await forgetAll(projectScope(id));
+    } catch {
+      /* memory file may not exist */
+    }
+    set({
+      projects: get().projects.filter((p) => p.id !== id),
+      activeProjectId: get().activeProjectId === id ? null : get().activeProjectId,
+    });
+  },
+
+  setActiveProject: (id) => set({ activeProjectId: id }),
+
+  newProjectChat: (projectId) => {
+    const project = get().projects.find((p) => p.id === projectId);
+    const chat: Chat = {
+      ...newChatObj(get().settings),
+      projectId,
+      enabledTools: project?.defaultToolIds ?? [],
+      knowledgeBaseIds: project?.knowledgeBaseIds ?? [],
+    };
+    set({
+      chats: [chat, ...get().chats],
+      currentId: chat.id,
+      view: "chat",
+      activeProjectId: projectId,
+      hydratedIds: { ...get().hydratedIds, [chat.id]: true },
+    });
+  },
+
   saveKnowledgeBase: async (kb) => {
     await storage.saveKnowledgeBase(kb);
     const rest = get().knowledgeBases.filter((k) => k.id !== kb.id);
@@ -1028,6 +1096,19 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
     startIdx++;
   }
 
+  // A project's description and instructions apply to every chat inside it, so
+  // you don't restate the brief in each conversation.
+  const project = chat.projectId ? get().projects.find((p) => p.id === chat.projectId) : undefined;
+  const projectNote = project
+    ? [
+        `You are working inside the project "${project.name}".`,
+        project.description.trim(),
+        project.instructions.trim(),
+      ]
+        .filter(Boolean)
+        .join("\n")
+    : "";
+
   const agentName = chat.agentId
     ? get().agents.find((a) => a.id === chat.agentId)?.name
     : undefined;
@@ -1080,7 +1161,14 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
       const result = await streamChat({
         provider,
         model: chat.model,
-        system: [composeSystemPrompt(settings, base), skillIndex, memoryBlock, ragContext, summaryNote]
+        system: [
+          composeSystemPrompt(settings, base),
+          projectNote,
+          skillIndex,
+          memoryBlock,
+          ragContext,
+          summaryNote,
+        ]
           .filter(Boolean)
           .join("\n\n"),
         messages: history,
@@ -1257,14 +1345,17 @@ async function maybeHarvestMemory(
   const lastUser = [...chat.messages].reverse().find((m) => m.role === "user");
   if (!lastUser) return;
   try {
-    const { shouldExtract, markExtracted, extractAndStore, GLOBAL_MEMORY } = await import("./memory");
+    const { shouldExtract, markExtracted, GLOBAL_MEMORY } = await import("./memory");
     if (!(await shouldExtract(GLOBAL_MEMORY, lastUser.content))) return;
     const transcript = chat.messages
       .filter((m) => m.role !== "tool")
       .slice(-14)
       .map((m) => `${m.role}: ${m.content}`)
       .join("\n");
-    await extractAndStore(GLOBAL_MEMORY, transcript, provider, model);
+    // Each fact is filed by tier: personal facts reach global from anywhere,
+    // project facts stay in the project rather than leaking into other work.
+    const { extractScoped } = await import("./memoryScopes");
+    await extractScoped(chat, transcript, provider, model);
     markExtracted(GLOBAL_MEMORY);
     // Ambient maintenance: rate-limited internally, so this is a no-op most turns.
     const { consolidate } = await import("./memory");

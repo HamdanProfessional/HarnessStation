@@ -63,8 +63,10 @@ export interface Settings {
   backgroundMode?: boolean;
   /** Remember facts across every chat automatically, with no memory tool calls. */
   passiveMemory?: boolean;
-  /** How many recalled facts to inject per turn. */
+  /** How many recalled facts to consider per tier before trimming. */
   memoryK?: number;
+  /** Share of the model's context window recalled memory may occupy (max 0.25). */
+  memoryShare?: number;
   /** Embedding provider/model used for agent memory + knowledge (semantic recall). */
   embedProviderId?: string;
   embedModel?: string;
@@ -190,11 +192,35 @@ export interface Message {
   completionTokens?: number;
 }
 
+/**
+ * A group of chats and calls that share memory and settings — a piece of work
+ * rather than a single conversation.
+ */
+export interface Project {
+  id: string;
+  name: string;
+  /** What the project is, injected into every chat inside it. */
+  description: string;
+  /** Extra system instructions for every chat in the project. */
+  instructions: string;
+  createdAt: string;
+  updatedAt: string;
+  /** Knowledge bases every chat in the project retrieves from. */
+  knowledgeBaseIds?: string[];
+  /** Tools switched on by default for new chats in the project. */
+  defaultToolIds?: string[];
+  color?: string;
+}
+
 export interface Chat {
   id: string;
   title: string;
   /** "voice" chats are spoken sessions; they persist and resume like any other. */
   kind?: "voice";
+  /** The project this belongs to, if any — decides which memory it shares. */
+  projectId?: string;
+  /** Turn off recalled memory for this one conversation. */
+  memoryOff?: boolean;
   pinned?: boolean;
   folder?: string;
   createdAt: string;

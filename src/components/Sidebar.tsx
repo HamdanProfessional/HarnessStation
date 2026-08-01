@@ -59,6 +59,12 @@ export function Sidebar() {
     hydrateAllChats,
     newVoiceCall,
     activeVoiceChat,
+    projects,
+    activeProjectId,
+    setActiveProject,
+    saveProject,
+    deleteProject,
+    newProjectChat,
   } = useStore();
   const [query, setQuery] = useState("");
   const [menuFor, setMenuFor] = useState<{ id: string; top: number; left: number } | null>(null);
@@ -94,14 +100,18 @@ export function Sidebar() {
   }, [query, hydrateAllChats]);
 
   const q = query.toLowerCase();
+  // A project acts as a lens on the chat list: inside one you see only its work.
+  const inScope = activeProjectId
+    ? chats.filter((c) => c.projectId === activeProjectId)
+    : chats;
   const filtered = (
     q
-      ? chats.filter(
+      ? inScope.filter(
           (c) =>
             c.title.toLowerCase().includes(q) ||
             c.messages.some((m) => m.content.toLowerCase().includes(q)),
         )
-      : chats
+      : inScope
   )
     .slice()
     .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
@@ -188,6 +198,31 @@ export function Sidebar() {
     }
   };
 
+  const addProject = async () => {
+    const name = await promptDialog("New project", { placeholder: "e.g. Firmware rewrite" });
+    if (!name?.trim()) return;
+    const now = new Date().toISOString();
+    const id = `proj-${Date.now()}`;
+    await saveProject({
+      id,
+      name: name.trim(),
+      description: "",
+      instructions: "",
+      createdAt: now,
+      updatedAt: now,
+    });
+    setActiveProject(id);
+  };
+
+  const removeProject = async (id: string, name: string) => {
+    const ok = await confirmDialog(`Delete project "${name}"?`, {
+      message:
+        "Its chats are kept and moved out of the project. The project's shared memory is deleted; your global and per-chat memory are untouched.",
+      danger: true,
+    });
+    if (ok) await deleteProject(id);
+  };
+
   const navBtn = (v: View, label: string, icon: React.ReactNode) => (
     <button className={`nav-btn ${view === v ? "active" : ""}`} onClick={() => setView(v)}>
       <span className="nav-icon">{icon}</span>
@@ -228,7 +263,79 @@ export function Sidebar() {
         />
       </div>
 
-      <div className="nav-section-title">Chats</div>
+      <div className="nav-section">
+        <button
+          className="nav-section-title"
+          onClick={() => toggleSection("projects")}
+          aria-expanded={!collapsed.projects}
+        >
+          <span className={`nav-caret ${collapsed.projects ? "closed" : ""}`} aria-hidden="true">
+            ▾
+          </span>
+          Projects
+          <span className="grow" />
+          <span
+            className="link-btn"
+            role="button"
+            tabIndex={0}
+            title="New project"
+            onClick={(e) => {
+              e.stopPropagation();
+              void addProject();
+            }}
+            onKeyDown={(e) => e.key === "Enter" && void addProject()}
+          >
+            +
+          </span>
+        </button>
+        {!collapsed.projects && (
+          <>
+            {projects.length === 0 && (
+              <p className="hint project-empty">
+                Group chats and calls that share a brief and a memory.
+              </p>
+            )}
+            {projects.map((p) => (
+              <div
+                key={p.id}
+                className={`project-item ${p.id === activeProjectId ? "active" : ""}`}
+                onClick={() => setActiveProject(p.id === activeProjectId ? null : p.id)}
+              >
+                <span className="grow">{p.name}</span>
+                <span className="hint">{chats.filter((c) => c.projectId === p.id).length}</span>
+                <button
+                  className="icon-btn"
+                  aria-label={`New chat in ${p.name}`}
+                  title="New chat in this project"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    newProjectChat(p.id);
+                  }}
+                >
+                  <IconPlus size={12} />
+                </button>
+                <button
+                  className="icon-btn"
+                  aria-label={`Delete project ${p.name}`}
+                  title="Delete project"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void removeProject(p.id, p.name);
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+
+      <div className="nav-section-title">
+        {activeProjectId
+          ? `Chats in ${projects.find((p) => p.id === activeProjectId)?.name ?? "project"}`
+          : "Chats"}
+      </div>
       <div className="chat-list">
         {filtered.length === 0 && <div className="hint chat-empty">No chats found.</div>}
         {rootChats.map(chatItem)}

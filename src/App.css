@@ -3715,3 +3715,56 @@ select:focus {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.25; }
 }
+
+/* Projects: a lens on the chat list, grouping work that shares a brief. */
+.project-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  margin: 1px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.project-item:hover {
+  background: var(--bg-3);
+  color: var(--text);
+}
+
+.project-item.active {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--text);
+}
+
+.project-item .grow {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Only show the row's buttons on hover, so the list stays calm. */
+.project-item .icon-btn {
+  opacity: 0;
+  padding: 0 3px;
+}
+
+.project-item:hover .icon-btn,
+.project-item.active .icon-btn {
+  opacity: 0.7;
+}
+
+.project-item .icon-btn:hover {
+  opacity: 1;
+}
+
+.project-empty {
+  padding: 2px 9px 6px;
+  font-size: 11px;
+}
+
+.nav-section-title .grow {
+  flex: 1;
+}
