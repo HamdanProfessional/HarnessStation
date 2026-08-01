@@ -4444,11 +4444,23 @@ textarea {
   margin: 0 2px;
 }
 
-/* Tall enough to be a usable page, short enough to stay a message. */
+/* Tall enough to be a usable page, short enough to stay a message.
+   The floor matters as much as the cap: a browser squeezed into 150 px shows one
+   line of a site and is worse than useless. It scales with the window rather
+   than being a fixed number, so a short laptop screen doesn't end up with a card
+   taller than the conversation it sits in. */
 .inline-browser-slot {
-  height: min(52vh, 460px);
+  height: clamp(260px, 52vh, 520px);
   background: var(--bg);
   display: flex;
+}
+
+/* Below roughly a tablet height, give it proportionally more of the window —
+   52vh of a 600 px window is 312 px, which is already tight. */
+@media (max-height: 720px) {
+  .inline-browser-slot {
+    height: clamp(220px, 58vh, 400px);
+  }
 }
 
 .inline-browser .browser-empty {

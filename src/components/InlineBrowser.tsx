@@ -38,9 +38,13 @@ export function InlineBrowser() {
     const top = Math.max(r.top, s?.top ?? 0);
     const bottom = Math.min(r.bottom, s?.bottom ?? window.innerHeight);
     const height = bottom - top;
-    // Too little showing to be worth a page — a sliver of browser peeking out
-    // above the composer looks like a rendering fault.
-    if (height < 80 || r.width < 80) return null;
+    // Below a usable minimum, hide rather than shrink. A browser squeezed into a
+    // sliver shows one line of a page and reads as a rendering fault, so the
+    // floor scales with the card — which itself scales with the window — instead
+    // of being a fixed number that's generous on a monitor and absurd on a
+    // laptop.
+    const floor = Math.max(140, r.height * 0.35);
+    if (height < floor || r.width < 120) return null;
     return { x: r.left, y: top, width: r.width, height };
   }, []);
 
