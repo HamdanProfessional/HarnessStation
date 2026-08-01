@@ -2056,6 +2056,134 @@ select:focus {
   padding: 26px clamp(18px, 7vw, 110px) 60px;
 }
 
+/* Settings specifically: a fixed header and nav rail, with only the panel
+   scrolling. Other views share .settings-main and keep the plain scroll. */
+.settings-page {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 20px clamp(16px, 4vw, 48px) 0;
+}
+
+.settings-shell {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  /* The rail is a fixed column; the panel takes the rest and is capped for
+     readability rather than stretching a checkbox across an ultrawide. */
+  grid-template-columns: 226px minmax(0, 1fr);
+  gap: 26px;
+}
+
+.settings-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 4px 20px 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+}
+
+.settings-search {
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  padding: 6px 10px;
+}
+
+.rail-empty {
+  padding: 6px 10px;
+}
+
+.settings-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px 6px 60px 0;
+  max-width: 860px;
+}
+
+/* Vertical rail entries: a label with a line of context under it, so the panels
+   are distinguishable without opening each one. */
+.settings-page .settings-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  width: 100%;
+  padding: 7px 10px;
+  text-align: left;
+}
+
+.settings-tab-label {
+  font-size: 13px;
+}
+
+.settings-tab-blurb {
+  font-size: 11px;
+  color: var(--text-dim);
+  opacity: 0.85;
+}
+
+.settings-tab:hover:not(.active) {
+  background: var(--bg-3);
+  color: var(--text);
+}
+
+/* Each section is a card. The panels are long — Voice runs to a dozen settings —
+   and unbroken rows of controls are hard to scan. */
+.settings-body > section {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+.settings-body > section > h2:first-child {
+  margin-top: 0;
+}
+
+/* "Unsaved changes" beside the title — the panel edits a copy, so without this
+   it's possible to change several things and lose them by navigating away. */
+.dirty-dot {
+  font-size: 11.5px;
+  color: var(--warn);
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
+  padding: 2px 9px;
+  border-radius: 999px;
+  animation: fade-in var(--t-base) var(--ease);
+}
+
+.settings-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+@media (max-width: 900px) {
+  .settings-shell {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  /* No room for a rail: fall back to the horizontal strip. */
+  .settings-rail {
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+  .settings-page .settings-tab {
+    width: auto;
+  }
+  .settings-tab-blurb {
+    display: none;
+  }
+  .settings-search {
+    width: 100%;
+  }
+}
+
 .settings-header {
   display: flex;
   justify-content: space-between;
@@ -3565,18 +3693,6 @@ select:focus {
 }
 
 /* Settings section tabs — the page is far too long for one scroll. */
-.settings-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  padding: 4px 0 10px;
-  margin-bottom: 6px;
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
-}
 
 .settings-tab {
   background: none;

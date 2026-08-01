@@ -27,16 +27,57 @@ import type {
   Settings,
 } from "../lib/types";
 
-/** Settings is long; these split it into panels rather than one endless scroll. */
+/**
+ * Settings is long; these split it into panels rather than one endless scroll.
+ *
+ * The keywords exist so the search box can find a setting by the word someone
+ * actually has in mind — nobody looks for "barge-in" under "Voice", they type
+ * "interrupt".
+ */
 const TABS = [
-  { id: "general", label: "General" },
-  { id: "providers", label: "Providers" },
-  { id: "media", label: "Media models" },
-  { id: "voice", label: "Voice" },
-  { id: "memory", label: "Memory" },
-  { id: "devices", label: "Devices" },
-  { id: "usage", label: "Usage" },
-  { id: "data", label: "Data & updates" },
+  {
+    id: "general",
+    label: "General",
+    blurb: "Instructions, conversation, theme",
+    keywords: "system prompt instructions theme dark light conversation compact autotitle tray background",
+  },
+  {
+    id: "providers",
+    label: "Providers",
+    blurb: "Models, keys, embeddings",
+    keywords: "api key openai anthropic ollama local model endpoint base url embeddings gateway benchmarks",
+  },
+  {
+    id: "media",
+    label: "Media models",
+    blurb: "Image, audio, video, 3D",
+    keywords: "image audio video 3d generate replicate stable diffusion speech",
+  },
+  {
+    id: "voice",
+    label: "Voice",
+    blurb: "Avatar, speech, microphone",
+    keywords: "avatar speech tts stt whisper microphone mic kokoro piper elevenlabs interrupt barge wake word language vrm",
+  },
+  {
+    id: "memory",
+    label: "Memory",
+    blurb: "What the app remembers",
+    keywords: "memory facts recall forget passive context window budget share",
+  },
+  {
+    id: "devices",
+    label: "Devices",
+    blurb: "Pair your other machines",
+    keywords: "mesh lan network pair peer share remote device",
+  },
+  { id: "usage", label: "Usage", blurb: "Spend caps and totals", keywords: "cost spend budget cap daily monthly tokens price" },
+  {
+    id: "data",
+    label: "Data & updates",
+    blurb: "Storage, export, version",
+    keywords: "data folder export import backup update version about reset",
+  },
 ] as const;
 
 type Tab = (typeof TABS)[number]["id"];
@@ -62,9 +103,10 @@ export function SettingsView() {
     setTab(id);
     localStorage.setItem(TAB_KEY, id);
     // Each panel is its own page — start it at the top.
-    document.querySelector(".settings-main")?.scrollTo({ top: 0 });
+    document.querySelector(".settings-body")?.scrollTo({ top: 0 });
   };
   const [saved, setSaved] = useState(false);
+  const [query, setQuery] = useState("");
   const [dataMsg, setDataMsg] = useState<string | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const [winVoices, setWinVoices] = useState<SysVoice[]>([]);
@@ -340,32 +382,83 @@ export function SettingsView() {
     setTimeout(() => setSaved(false), 1500);
   };
 
+  /**
+   * Whether the draft differs from what's stored.
+   *
+   * The panel edits a copy and only commits on Save, so without this it's
+   * entirely possible to change six things, wander off, and lose all of them
+   * with no indication anything was pending.
+   */
+  const dirty = JSON.stringify(draft) !== JSON.stringify(settings);
+
+  /** Sections matching the search box, by label, blurb or keyword. */
+  const q = query.trim().toLowerCase();
+  const matches = q
+    ? TABS.filter((t) => `${t.label} ${t.blurb} ${t.keywords}`.toLowerCase().includes(q))
+    : [...TABS];
+
+  // Ctrl+S, because this is a form with an explicit Save and everyone tries it.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (dirty) void save();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  const leave = () => {
+    if (dirty && !confirm("You have unsaved changes. Leave without saving?")) return;
+    setView("chat");
+  };
+
   return (
-    <main className="settings-main">
+    <main className="settings-main settings-page">
       <div className="settings-header">
         <h1>Settings</h1>
-        <div>
-          <button className="btn" onClick={() => setView("chat")}>
-            ← Back
-          </button>{" "}
-          <button className="btn primary" onClick={() => void save()}>
-            {saved ? "Saved ✓" : "Save"}
-          </button>
-        </div>
+        {dirty && <span className="dirty-dot" title="Unsaved changes" aria-live="polite">Unsaved changes</span>}
+        <div className="grow" />
+        <button className="btn" onClick={leave}>
+          ← Back
+        </button>
+        <button className="btn primary" disabled={!dirty && !saved} onClick={() => void save()}>
+          {saved ? "Saved ✓" : dirty ? "Save (Ctrl+S)" : "Saved"}
+        </button>
       </div>
 
-      <nav className="settings-tabs" aria-label="Settings sections">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            className={`settings-tab ${tab === t.id ? "active" : ""}`}
-            aria-current={tab === t.id ? "page" : undefined}
-            onClick={() => openTab(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </nav>
+      <div className="settings-shell">
+        <nav className="settings-rail" aria-label="Settings sections">
+          <input
+            className="settings-search"
+            type="search"
+            value={query}
+            placeholder="Search settings…"
+            aria-label="Search settings"
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              // Enter goes to the first match, so a search can be driven entirely
+              // from the keyboard.
+              if (e.key === "Enter" && matches[0]) openTab(matches[0].id);
+              if (e.key === "Escape") setQuery("");
+            }}
+          />
+          {matches.length === 0 && <p className="hint rail-empty">Nothing matches “{query}”.</p>}
+          {matches.map((t) => (
+            <button
+              key={t.id}
+              className={`settings-tab ${tab === t.id ? "active" : ""}`}
+              aria-current={tab === t.id ? "page" : undefined}
+              onClick={() => openTab(t.id)}
+            >
+              <span className="settings-tab-label">{t.label}</span>
+              <span className="settings-tab-blurb">{t.blurb}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="settings-body">
 
       <section hidden={tab !== "general"}>
         <h2>System instructions (global)</h2>
@@ -1518,6 +1611,8 @@ export function SettingsView() {
           </div>
         ))}
       </section>
+        </div>
+      </div>
     </main>
   );
 }
