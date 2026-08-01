@@ -120,6 +120,9 @@ interface AppState {
   runAgentTask: (agentId: string, task: string, onEvent: (l: string) => void) => Promise<string>;
   init: () => Promise<void>;
   setView: (v: View) => void;
+  /** Is the browser docked open beside the chat / call? */
+  browserDock: boolean;
+  setBrowserDock: (open: boolean) => void;
   saveSettings: (s: Settings) => Promise<void>;
   ensureLocalProvider: (port: number, models: string[]) => Promise<void>;
   addCloudProvider: (p: {
@@ -354,6 +357,9 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   setView: (view) => set({ view }),
+
+  browserDock: false,
+  setBrowserDock: (browserDock) => set({ browserDock }),
 
   saveSettings: async (settings) => {
     set({ settings });

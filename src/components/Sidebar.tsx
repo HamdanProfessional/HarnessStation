@@ -65,6 +65,8 @@ export function Sidebar() {
     saveProject,
     deleteProject,
     newProjectChat,
+    browserDock,
+    setBrowserDock,
   } = useStore();
   const [query, setQuery] = useState("");
   const [menuFor, setMenuFor] = useState<{ id: string; top: number; left: number } | null>(null);
@@ -429,7 +431,20 @@ export function Sidebar() {
             {navBtn("workflows", "Workflows", <IconFlow size={15} />)}
             {navBtn("schedules", "Schedules", <IconClock size={15} />)}
             {navBtn("mcp", "MCP Servers", <IconPlug size={15} />)}
-            {navBtn("browser", "Browser", <IconCompass size={15} />)}
+            {/* The browser docks beside the conversation rather than taking
+                over the window — you can watch the model use it while you talk. */}
+            <button
+              className={`nav-btn ${browserDock ? "active" : ""}`}
+              onClick={() => {
+                if (view !== "chat" && view !== "voice") setView("chat");
+                setBrowserDock(!browserDock);
+              }}
+            >
+              <span className="nav-icon">
+                <IconCompass size={15} />
+              </span>
+              Browser
+            </button>
           </>
         )}
       </div>

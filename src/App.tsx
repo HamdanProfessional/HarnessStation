@@ -19,6 +19,7 @@ const SkillsView = lazy(() => import("./components/SkillsView").then((m) => ({ d
 const EvalsView = lazy(() => import("./components/EvalsView").then((m) => ({ default: m.EvalsView })));
 const BenchmarksView = lazy(() => import("./components/BenchmarksView").then((m) => ({ default: m.BenchmarksView })));
 const McpView = lazy(() => import("./components/McpView").then((m) => ({ default: m.McpView })));
+const BrowserPane = lazy(() => import("./components/BrowserPane").then((m) => ({ default: m.BrowserPane })));
 const BrowserView = lazy(() => import("./components/BrowserView").then((m) => ({ default: m.BrowserView })));
 const VoiceView = lazy(() => import("./components/VoiceView").then((m) => ({ default: m.VoiceView })));
 import { DialogHost } from "./components/Dialog";
@@ -51,7 +52,8 @@ const VIEW_LABEL: Partial<Record<string, string>> = {
 };
 
 export default function App() {
-  const { ready, view, settings, init, tickSchedules, autoConnectMcp, bootStatus } = useStore();
+  const { ready, view, settings, init, tickSchedules, autoConnectMcp, bootStatus, browserDock } =
+    useStore();
   const [, setForce] = useState(0);
   const [closing, setClosing] = useState(false);
 
@@ -191,6 +193,12 @@ export default function App() {
         </>
       )}
       </Suspense>
+      {/* Docked beside the conversation, so the model can browse while you watch. */}
+      {browserDock && (view === "chat" || view === "voice") && (
+        <Suspense fallback={null}>
+          <BrowserPane />
+        </Suspense>
+      )}
       <DialogHost />
       <ContextMenu />
       <Toaster />

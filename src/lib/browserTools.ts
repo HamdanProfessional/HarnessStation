@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { requestPage } from "./browserPane";
 import type { Tool } from "./types";
 
 /**
@@ -198,7 +199,11 @@ async function evalPage(expr: string): Promise<unknown> {
 async function callInApp(action: string, args: Record<string, unknown>): Promise<unknown> {
   switch (action) {
     case "open_url": {
-      await invoke("inapp_navigate", { url: String(args.url) });
+      const url = String(args.url);
+      // If the pane is on screen beside the chat, let it place and navigate
+      // itself — it's the only thing that knows its own geometry. Otherwise
+      // drive the webview directly.
+      if (!(await requestPage(url))) await invoke("inapp_navigate", { url });
       // Give the navigation a moment before anything reads the page.
       await new Promise((r) => setTimeout(r, 1200));
       return evalPage("return { tabId: 0, title: document.title, url: location.href, active: true };");

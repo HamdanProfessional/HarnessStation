@@ -3,6 +3,24 @@
   font-size: 14px;
   --radius: 12px;
   --radius-sm: 8px;
+
+  /*
+   * Motion tokens. One vocabulary so everything moves at the same speed and with
+   * the same feel — mixed ad-hoc durations are what make an interface feel
+   * assembled rather than designed.
+   *
+   * fast   state changes you shouldn't consciously notice (hover, focus)
+   * base   things that visibly move (panels, cards, list rows)
+   * slow   entrances and overlays, where a beat of weight reads as quality
+   */
+  --t-fast: 110ms;
+  --t-base: 180ms;
+  --t-slow: 260ms;
+
+  /* Standard easing out — decelerates into place, which reads as physical. */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  /* A little overshoot, for things that pop into existence. */
+  --ease-pop: cubic-bezier(0.34, 1.36, 0.64, 1);
 }
 
 [data-theme="dark"] {
@@ -3973,4 +3991,320 @@ select:focus {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+}
+
+/* =========================================================================
+   Interaction & motion
+   -------------------------------------------------------------------------
+   One consistent language for hover, press and focus, layered over the
+   component styles above. Kept in one block so the feel of the app can be
+   tuned in one place instead of hunting through three thousand lines.
+   ========================================================================= */
+
+/* ---- buttons ---------------------------------------------------------- */
+
+.btn,
+.icon-btn,
+.nav-btn,
+.seg-btn,
+.link-btn,
+.settings-tab,
+.chat-item,
+.project-item,
+.avatar-card,
+.voice-resume-item {
+  transition:
+    background var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease),
+    transform var(--t-fast) var(--ease),
+    opacity var(--t-fast) var(--ease);
+}
+
+/* A press should feel like a press: settle down, then release. */
+.btn:active:not(:disabled),
+.icon-btn:active,
+.seg-btn:active,
+.settings-tab:active {
+  transform: translateY(1px) scale(0.985);
+  transition-duration: 60ms;
+}
+
+.btn.primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(109, 124, 255, 0.45);
+}
+
+.btn.primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.99);
+  box-shadow: 0 2px 8px rgba(109, 124, 255, 0.4);
+}
+
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.icon-btn:hover {
+  background: var(--bg-3);
+  color: var(--text);
+}
+
+/* ---- keyboard focus ---------------------------------------------------
+   Mouse users never see these; keyboard users get a clear, consistent ring
+   instead of the browser default, which is invisible on a dark surface.     */
+
+.btn:focus-visible,
+.icon-btn:focus-visible,
+.nav-btn:focus-visible,
+.seg-btn:focus-visible,
+.link-btn:focus-visible,
+.chat-item:focus-visible,
+.project-item:focus-visible,
+.avatar-card:focus-visible,
+.voice-resume-item:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Text fields get a soft glow on focus rather than a hard ring. */
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: var(--glow);
+}
+
+input,
+select,
+textarea {
+  transition:
+    border-color var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease),
+    background var(--t-fast) var(--ease);
+}
+
+/* ---- lists and cards --------------------------------------------------- */
+
+/* A row you can click should lift very slightly towards the pointer. */
+.chat-item:hover,
+.project-item:hover {
+  transform: translateX(1px);
+}
+
+.avatar-card:hover,
+.voice-resume-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+  border-color: var(--border-strong);
+}
+
+/* The active chat gets a rail rather than just a fill, so it reads at a glance. */
+.chat-item.active::before,
+.project-item.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 60%;
+  border-radius: 0 3px 3px 0;
+  background: var(--grad);
+  transform: translateY(-50%);
+  animation: rail-in var(--t-base) var(--ease);
+}
+
+.project-item {
+  position: relative;
+}
+
+@keyframes rail-in {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+/* ---- panels and overlays ---------------------------------------------- */
+
+.modal-backdrop {
+  animation: fade-in var(--t-base) var(--ease);
+}
+
+.modal,
+.dialog,
+.onboard {
+  animation: pop-in var(--t-slow) var(--ease-pop);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
+
+/* Views arriving after a lazy chunk shouldn't snap in. */
+.settings-main,
+.browser-main,
+.voice-main,
+.chat-main {
+  animation: view-in var(--t-base) var(--ease);
+}
+
+@keyframes view-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* ---- streaming ---------------------------------------------------------
+   The assistant bubble grows constantly while a reply streams. Animating its
+   height would fight the scroll, so only the newest message fades in.        */
+
+.msg {
+  animation: rise var(--t-base) var(--ease);
+}
+
+.toolcall,
+.toolresult,
+.reasoning {
+  animation: fade-in var(--t-base) var(--ease);
+}
+
+/* Disclosure arrows should turn, not jump. */
+.nav-caret,
+.toolcall-arrow {
+  transition: transform var(--t-base) var(--ease);
+  display: inline-block;
+}
+
+.nav-caret.closed {
+  transform: rotate(-90deg);
+}
+
+[aria-expanded="true"] > .toolcall-arrow {
+  transform: rotate(90deg);
+}
+
+/* ---- scrollbars --------------------------------------------------------
+   The default Windows scrollbar is a bright slab against a dark app.         */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-3) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--bg-3);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 6px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+  background-clip: content-box;
+}
+
+/* ---- reduced motion ----------------------------------------------------
+   Movement is decoration here; state is carried by colour and position too,
+   so removing it costs nothing.                                             */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .btn:active:not(:disabled),
+  .btn.primary:hover:not(:disabled),
+  .chat-item:hover,
+  .project-item:hover,
+  .avatar-card:hover,
+  .voice-resume-item:hover {
+    transform: none;
+  }
+}
+
+/* =========================================================================
+   Docked browser
+   -------------------------------------------------------------------------
+   Sits beside the chat or the call. The page itself is a native webview
+   floating over .browser-slot, so this only styles the frame around it.
+   ========================================================================= */
+
+.browser-pane {
+  width: clamp(360px, 42vw, 720px);
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border);
+  background: var(--bg-2);
+  min-width: 0;
+  animation: pane-in var(--t-slow) var(--ease);
+}
+
+@keyframes pane-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+}
+
+.browser-pane-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.browser-pane-bar input {
+  font-size: 12.5px;
+}
+
+/* The webview is opaque, so give the empty state the page's own background
+   rather than letting the app show through only until something loads. */
+.browser-pane .browser-slot {
+  flex: 1;
+  min-height: 0;
+  background: var(--bg);
+  display: flex;
+}
+
+@media (max-width: 1100px) {
+  .browser-pane {
+    width: clamp(300px, 50vw, 520px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .browser-pane {
+    animation: none;
+  }
 }
