@@ -4476,3 +4476,12 @@ textarea {
     animation: none;
   }
 }
+
+/* `hidden` must actually hide.
+   The user-agent rule is `[hidden] { display: none }`, which any class that sets
+   `display` outranks — so an element with a layout class stays visible while the
+   markup says it isn't. That's a silent failure, and it already caught the chat
+   list once. */
+[hidden] {
+  display: none !important;
+}

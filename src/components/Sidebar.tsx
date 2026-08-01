@@ -352,7 +352,12 @@ export function Sidebar() {
         <span className="grow" />
         <span className="tool-group-count">{filtered.length}</span>
       </button>
-      <div className="chat-list" hidden={collapsed.chats}>
+      {/* Rendered conditionally, like every other section. The `hidden`
+          attribute was silently doing nothing here: .chat-list sets
+          `display: flex`, and a class selector outranks the user-agent's
+          `[hidden] { display: none }`. */}
+      {!collapsed.chats && (
+      <div className="chat-list">
         {filtered.length === 0 && <div className="hint chat-empty">No chats found.</div>}
         {rootChats.map(chatItem)}
         {folderNames.map((f) => {
@@ -375,6 +380,7 @@ export function Sidebar() {
           );
         })}
       </div>
+      )}
 
       {menuFor &&
         createPortal(

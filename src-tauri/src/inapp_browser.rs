@@ -20,6 +20,22 @@ use tauri::{Manager, WebviewUrl};
 const LABEL: &str = "inapp-browser";
 const EVAL_TIMEOUT: Duration = Duration::from_secs(20);
 
+/// Serialises every geometry operation on the pane, and remembers the last
+/// bounds applied.
+///
+/// Moving a child webview is a synchronous cross-apartment COM call: Tauri hands
+/// it to the main thread and blocks until it returns. The frontend can issue
+/// those far faster than they complete — a scroll produces one per frame — and
+/// each arrives on its own async worker, so they pile up as concurrent blocking
+/// calls into the same webview. The app was found frozen in exactly that state:
+/// several threads parked in EventPairLow (a blocking COM wait) with the pane
+/// mid-resize and the window inactive.
+///
+/// One at a time, then, and identical bounds don't go through at all. A tokio
+/// mutex rather than a std one: waiters park instead of holding a worker.
+static GEOM: tokio::sync::Mutex<Option<(i32, i32, i32, i32)>> =
+    tokio::sync::Mutex::const_new(None);
+
 fn webview<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Option<tauri::Webview<R>> {
     app.webviews().get(LABEL).cloned()
 }
@@ -88,6 +104,7 @@ pub async fn inapp_open(
     }
     let parsed: url::Url = url.parse().map_err(|_| "that isn't a valid URL".to_string())?;
 
+    let mut last = GEOM.lock().await;
     if let Some(view) = webview(&app) {
         view.navigate(parsed).map_err(|e| e.to_string())?;
         view.set_position(tauri::LogicalPosition::new(x, y))
@@ -95,6 +112,7 @@ pub async fn inapp_open(
         view.set_size(tauri::LogicalSize::new(width, height))
             .map_err(|e| e.to_string())?;
         view.show().map_err(|e| e.to_string())?;
+        *last = Some((x as i32, y as i32, width as i32, height as i32));
         return Ok(());
     }
 
@@ -116,6 +134,7 @@ pub async fn inapp_open(
             tauri::LogicalSize::new(width, height),
         )
         .map_err(|e| e.to_string())?;
+    *last = Some((x as i32, y as i32, width as i32, height as i32));
     Ok(())
 }
 
@@ -128,17 +147,29 @@ pub async fn inapp_bounds(
     width: f64,
     height: f64,
 ) -> Result<(), String> {
+    let mut last = GEOM.lock().await;
+    // Sub-pixel scroll deltas would otherwise send a move for a change nobody
+    // can see, at one call per frame.
+    let key = (x as i32, y as i32, width as i32, height as i32);
+    if *last == Some(key) {
+        return Ok(());
+    }
     let Some(view) = webview(&app) else { return Ok(()) };
     view.set_position(tauri::LogicalPosition::new(x, y))
         .map_err(|e| e.to_string())?;
     view.set_size(tauri::LogicalSize::new(width, height))
         .map_err(|e| e.to_string())?;
+    *last = Some(key);
     Ok(())
 }
 
 /// Hide the pane when the user navigates away from the Browser view.
+// Show/hide/close take the same lock as the move: they are COM calls into the
+// same webview, and interleaving them with a resize is what has to be avoided.
+
 #[tauri::command]
 pub async fn inapp_hide(app: tauri::AppHandle) -> Result<(), String> {
+    let _guard = GEOM.lock().await;
     if let Some(view) = webview(&app) {
         view.hide().map_err(|e| e.to_string())?;
     }
@@ -147,6 +178,7 @@ pub async fn inapp_hide(app: tauri::AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn inapp_show(app: tauri::AppHandle) -> Result<(), String> {
+    let _guard = GEOM.lock().await;
     if let Some(view) = webview(&app) {
         view.show().map_err(|e| e.to_string())?;
     }
@@ -155,9 +187,12 @@ pub async fn inapp_show(app: tauri::AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn inapp_close(app: tauri::AppHandle) -> Result<(), String> {
+    let mut last = GEOM.lock().await;
     if let Some(view) = webview(&app) {
         view.close().map_err(|e| e.to_string())?;
     }
+    // The next pane is a new webview; its bounds must be applied afresh.
+    *last = None;
     Ok(())
 }
 

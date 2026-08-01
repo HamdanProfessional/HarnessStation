@@ -81,13 +81,24 @@ export function InlineBrowser() {
     if (!open) return;
     let last = "";
     let frame = 0;
-    const apply = () => {
+    // Moving the webview is a blocking call into the window's message loop, and
+    // scroll can ask far faster than it completes. One at a time, or they stack
+    // up as concurrent blocking calls and the app stops responding.
+    let inFlight = false;
+
+    const apply = async () => {
       frame = 0;
+      // Nothing to position while the window is tabbed away or minimised, and
+      // driving a webview belonging to an inactive window is what wedged it.
+      if (document.hidden || inFlight) return;
+
       const r = visibleRect();
       if (!r) {
         if (last !== "hidden") {
           last = "hidden";
-          void invoke("inapp_hide").catch(() => {});
+          inFlight = true;
+          await invoke("inapp_hide").catch(() => {});
+          inFlight = false;
         }
         return;
       }
@@ -95,18 +106,30 @@ export function InlineBrowser() {
       if (key === last) return;
       const wasHidden = last === "hidden";
       last = key;
-      void invoke("inapp_bounds", r).catch(() => {});
-      if (wasHidden) void invoke("inapp_show").catch(() => {});
+      inFlight = true;
+      try {
+        await invoke("inapp_bounds", r).catch(() => {});
+        if (wasHidden) await invoke("inapp_show").catch(() => {});
+      } finally {
+        inFlight = false;
+      }
     };
     // Scroll fires far faster than a webview can be moved; coalesce to a frame.
     const sync = () => {
-      if (!frame) frame = requestAnimationFrame(apply);
+      if (!frame) frame = requestAnimationFrame(() => void apply());
     };
 
-    apply();
+    // Coming back from another window, the pane needs re-placing — the layout
+    // may have moved while nothing was being applied.
+    const onVisibility = () => {
+      if (!document.hidden) sync();
+    };
+
+    void apply();
     const scroller = slotRef.current?.closest(".messages");
     scroller?.addEventListener("scroll", sync, { passive: true });
     window.addEventListener("resize", sync);
+    document.addEventListener("visibilitychange", onVisibility);
     const ro = new ResizeObserver(sync);
     if (slotRef.current) ro.observe(slotRef.current);
     if (scroller) ro.observe(scroller);
@@ -116,6 +139,7 @@ export function InlineBrowser() {
       if (frame) cancelAnimationFrame(frame);
       scroller?.removeEventListener("scroll", sync);
       window.removeEventListener("resize", sync);
+      document.removeEventListener("visibilitychange", onVisibility);
       ro.disconnect();
       clearInterval(tick);
     };
