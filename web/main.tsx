@@ -7,6 +7,7 @@ import "./shims/mic";
 import "./shims/secret";
 import "./shims/speak";
 import "./shims/vfs";
+import "./shims/pyodide";
 
 /**
  * Web entry point.
