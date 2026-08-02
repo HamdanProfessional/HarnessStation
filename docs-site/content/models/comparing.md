@@ -53,3 +53,48 @@ caps. When a cap is reached, new requests stop rather than continuing quietly.
 
 Estimates are based on published prices and token counts, so treat them as close
 rather than exact. The provider's own dashboard is the authority.
+
+## Building an eval set that's worth having
+
+Twenty representative cases tell you more about your workload than any public
+leaderboard. What makes them representative:
+
+**Use your real inputs.** Not simplified versions. The messy ones with unusual
+formatting are exactly where models differ.
+
+**Include the hard cases you've hit.** Every time a model gets something wrong in
+normal use, that's a test case. Collecting them as they happen is much easier
+than inventing them later.
+
+**Include cases where the right answer is "I don't know".** Models differ far
+more in whether they decline than in whether they can answer, and a model that
+confidently invents things is worse than one that's merely weaker.
+
+**Write down what a good answer contains**, not the exact wording. "Mentions the
+retry limit and that it's configurable" scores better than trying to match a
+paragraph.
+
+## When to re-run it
+
+- A new model appears and you're wondering whether to switch
+- You changed a system prompt or an agent's instructions
+- Your provider updated a model behind the same name — which happens, and can
+  change behaviour without notice
+- You're considering a cheaper model and want to know the real cost of switching
+
+That third case is the underrated one. A model id you've pinned can change
+underneath you, and an eval set is how you notice.
+
+## Reading the results honestly
+
+**A small difference is noise.** Models vary run to run. If two score within a
+case or two of each other on twenty cases, you've learned they're comparable, not
+that one is better.
+
+**Look at the failures, not the score.** *How* a model fails matters more than
+how often. One that occasionally says "I'm not sure" is more useful than one that
+occasionally invents an API that doesn't exist, even at the same score.
+
+**Cost and speed are part of the result.** A model scoring slightly lower at a
+tenth of the price and twice the speed is usually the better choice for anything
+running repeatedly.

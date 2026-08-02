@@ -65,6 +65,17 @@ describe("every page", () => {
     }
   });
 
+  it("is not a nested index.md, which would break its own relative links", () => {
+    // `use-cases/index.md` collapses to the slug `use-cases` and is served at
+    // /use-cases, so a sibling link like `codebase` resolves to /codebase
+    // rather than /use-cases/codebase. Only the root index may do this.
+    const nested = files
+      .map(slugOf)
+      .filter((s) => s !== "index" && !s.includes("/"))
+      .filter((s) => files.some((f) => f.replace(/\\/g, "/").endsWith(`${s}/index.md`)));
+    expect(nested, `name these something else: ${nested.join(", ")}`).toEqual([]);
+  });
+
   it("starts with exactly one H1", () => {
     for (const file of files) {
       const body = readFileSync(file, "utf8")

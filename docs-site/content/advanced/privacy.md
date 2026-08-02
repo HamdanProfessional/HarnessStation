@@ -44,11 +44,61 @@ anything but your own network, put it inside a VPN or tunnel.
 **Passive memory** stores facts from your conversations on disk. Review it in
 **Settings › Memory** occasionally; it sometimes keeps more than you'd expect.
 
-## Reviewing what it did
+## What each mode actually sends
 
-Every tool call is recorded in the conversation with its arguments and result, so
-there's a full record of what was touched. It's worth reading after an
-agent has been working unattended.
+| Setup | What leaves your machine |
+| --- | --- |
+| Local model, no tools | Nothing |
+| Local model + local embeddings | Nothing |
+| Cloud model | Your prompt, conversation history, and any file content the model read |
+| Cloud embeddings | Every document you index, in full |
+| Cloud voice | The text being spoken |
+| Browser tools | Normal web requests to the sites visited |
+
+The cloud embeddings row surprises people. Indexing a
+[knowledge base](../guide/knowledge) uploads **every document**, not just the
+parts later retrieved. For anything sensitive, use a local embedding model —
+Ollama with `nomic-embed-text` costs nothing and never leaves the machine.
+
+## A private-by-default setup
+
+If privacy is the priority:
+
+- A [local model](../models/local) through Ollama or LM Studio
+- Local embeddings for knowledge bases
+- Kokoro or Piper for speech, both of which run locally
+- Whisper for transcription — already local, always
+- Device mesh off, or confined to your own network
+
+That configuration sends nothing anywhere. It's genuinely usable — the main
+compromise is model quality on hard reasoning.
+
+## Reviewing what an agent did
+
+Every tool call is recorded in the conversation with its arguments and result,
+and that record is complete rather than a summary.
+
+Worth reading after anything unattended. What to look at:
+
+- **Which files** were read and written — the arguments show exact paths
+- **What commands** ran, if Terminal was enabled
+- **Which sites** were visited
+- **What was sent** where a tool called an external service
+
+Conversations are plain JSON on disk, so this is greppable across your whole
+history:
+
+```bash
+grep -rl "run_command" ~/.harnessx/conversations/
+```
+
+## Sharing conversations safely
+
+An exported chat contains everything in it — including file contents the model
+read, and anything you pasted. It does **not** contain your API keys.
+
+Read an export before sharing it. The risk isn't the app leaking keys; it's that
+a conversation about your codebase contains your codebase.
 
 ## Reporting a security issue
 

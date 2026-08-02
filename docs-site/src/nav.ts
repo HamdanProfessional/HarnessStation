@@ -32,6 +32,27 @@ export const NAV: NavSection[] = [
     ],
   },
   {
+    title: "Use cases",
+    items: [
+      { slug: "use-cases/overview", label: "Overview" },
+      { slug: "use-cases/codebase", label: "Working with a codebase" },
+      { slug: "use-cases/research", label: "Researching a topic" },
+      { slug: "use-cases/recurring-report", label: "A recurring report" },
+      { slug: "use-cases/documents", label: "Working through documents" },
+      { slug: "use-cases/scraping", label: "Pulling data off websites" },
+      { slug: "use-cases/support-assistant", label: "A business assistant" },
+      { slug: "use-cases/hands-free", label: "Hands-free work" },
+    ],
+  },
+  {
+    title: "Understanding it",
+    items: [
+      { slug: "concepts/how-it-works", label: "How it works" },
+      { slug: "concepts/prompting", label: "Getting better results" },
+      { slug: "concepts/cost", label: "Controlling cost" },
+    ],
+  },
+  {
     title: "Conversations",
     items: [
       { slug: "guide/chats", label: "Chats" },
@@ -88,6 +109,7 @@ export const NAV: NavSection[] = [
       { slug: "reference/shortcuts", label: "Keyboard shortcuts" },
       { slug: "reference/settings", label: "Settings reference" },
       { slug: "reference/troubleshooting", label: "Troubleshooting" },
+      { slug: "reference/faq", label: "FAQ" },
     ],
   },
 ];

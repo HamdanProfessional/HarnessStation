@@ -60,5 +60,14 @@ ones.
 
 New here? [Install it](start/install), then walk through
 [your first chat](start/first-chat) — that gets you from nothing to a working
-conversation in about five minutes. After that,
-[the tour](start/tour) explains what all the other panels are for.
+conversation in about five minutes. After that, [the tour](start/tour) explains
+what all the other panels are for.
+
+If you'd rather see it doing something real first, the
+[use cases](use-cases/overview) are end-to-end walkthroughs — working with a
+codebase, researching a topic, automating a weekly report — with the actual
+prompts and the failures worth knowing about.
+
+And if you want the mental model before the details,
+[how it works](concepts/how-it-works) explains the agent loop and what goes into
+each request, which turns out to explain most surprising behaviour.

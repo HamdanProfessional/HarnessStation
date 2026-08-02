@@ -48,3 +48,66 @@ Beyond that:
 
 Anything where a wrong answer acts on the world without review — sending mail,
 posting, committing. Have it prepare a draft and tell you.
+
+## A worked example
+
+A morning briefing that's ready before you are.
+
+**The agent** — *Automation › Agents*, instructions along these lines:
+
+```text
+Summarise what needs my attention today.
+
+Check the project directory for anything failing, and read
+notes/todo.md for outstanding items.
+
+Report only what changed since yesterday or needs a decision.
+If nothing does, say "Nothing needs you today" and stop.
+Keep it under 150 words.
+```
+
+**The schedule** — daily at 07:00, result to a new chat.
+
+The instruction to report nothing is what keeps a daily briefing worth reading.
+Without it, a quiet day produces a page of filler and you stop opening them
+within a fortnight.
+
+## Cron, for anything irregular
+
+The preset intervals cover most cases. For the rest, cron expressions:
+
+| | |
+| --- | --- |
+| `0 9 * * 1-5` | 9am, weekdays only |
+| `0 */4 * * *` | Every four hours |
+| `30 8 1 * *` | 08:30 on the first of each month |
+| `0 18 * * 5` | 6pm Friday |
+
+## Watching what they do
+
+Each run appears where you sent it, and every tool call it made is in that
+conversation. When a schedule starts producing odd output, that record is where
+the answer is.
+
+Runs are chats like any other, so they can be searched, exported, and deleted.
+
+## Where it goes wrong
+
+**It didn't run.** The app wasn't running. Schedules fire from inside
+HarnessStation, and a missed run doesn't fire late — turn on tray mode in
+**Settings › General**.
+
+**It ran but did nothing useful.** Test with **Run now** and read each step. Most
+scheduling problems are really agent problems, and they're much easier to see
+when you're watching.
+
+**It works in the morning and fails overnight.** Something it depends on wasn't
+available — a machine asleep, a service in maintenance, a VPN disconnected. Watch
+the first few runs at their real time rather than only testing at your desk.
+
+**Output quality drifts over weeks.** Models vary run to run. The more specific
+your instructions about format and length, the less it wanders.
+
+**It ran up a bill.** A loop with nobody watching. This is what
+[spend caps](../concepts/cost) are for, and why they should be set before the
+first scheduled run rather than after.

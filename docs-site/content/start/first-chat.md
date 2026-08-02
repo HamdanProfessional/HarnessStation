@@ -75,7 +75,8 @@ Watch what happens: it calls a tool, you see the call and its result in the
 conversation, and then it answers using what it read. That loop — call, read,
 respond — is the whole idea of the app.
 
-Next: [a tour of the app](tour), or jump straight to [tools](../guide/tools).
+Next: [a tour of the app](tour), or pick a
+[use case](../use-cases/overview) close to your own work and follow it through.
 
 ## If it didn't work
 

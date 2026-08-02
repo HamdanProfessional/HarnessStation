@@ -93,7 +93,11 @@ next to the title, and Ctrl+S works. → [Settings reference](../reference/setti
 
 Depending on what you came for:
 
+- A worked example end to end → [Use cases](../use-cases/overview)
+- Understanding what actually happens on a turn → [How it works](../concepts/how-it-works)
 - Making it useful on your own files → [Tools](../guide/tools)
+- Getting better answers → [Getting better results](../concepts/prompting)
 - Stopping it forget things → [Memory](../guide/memory)
 - Talking instead of typing → [Voice](../voice/talking)
 - Not paying per token → [Running models locally](../models/local)
+- Keeping the bill down → [Controlling cost](../concepts/cost)

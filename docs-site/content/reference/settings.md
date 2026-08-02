@@ -66,3 +66,47 @@ Set these before running anything unattended.
 
 Where your data lives, export and import, the version you're on, and checking for
 updates. → [Where your data lives](../advanced/data)
+
+## The settings most worth changing
+
+Most defaults are fine. These are the ones that repay attention:
+
+| Setting | Where | Why |
+| --- | --- | --- |
+| **Spend caps** | Usage | The one protection against an unattended loop |
+| **Voice engine** | Voice | The default system voice is much worse than Kokoro |
+| **Speech rewrite** | Voice | Largest single improvement to how replies sound |
+| **Auto-compact** | General | Stops long chats degrading and getting expensive |
+| **Embedding model** | Providers | Knowledge bases don't work without one |
+| **Background mode** | General | Required for schedules to fire |
+| **Memory share** | Memory | Lower it if recall is crowding out your conversation |
+
+## Global instructions, and what to put there
+
+They're sent with every message, so they should be things that apply to
+everything:
+
+```text
+Answer in British English.
+Be direct — skip preamble and get to the point.
+When you're unsure, say so rather than guessing.
+I'm an experienced developer; don't explain basics unless I ask.
+```
+
+What *not* to put there: anything project-specific (use
+[projects](../guide/projects)), anything task-specific (use the chat prompt), and
+anything long. Every word is paid for on every message, including trivial ones.
+
+## Things people expect to find and won't
+
+**A model default per tool.** Models are set per chat, per agent, or per workflow
+step — not globally per capability.
+
+**A global "enable all tools".** Deliberately absent. Tools are enabled per
+conversation, and there's no switch to grant everything at once.
+
+**Cloud sync.** There isn't any. Everything is local, and moving between machines
+means copying `~/.harnessx` or using the [device mesh](../advanced/devices).
+
+**A way to raise the memory share past 25%.** Capped on purpose — beyond that,
+recall costs more context than it returns.
