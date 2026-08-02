@@ -27,8 +27,18 @@ so the same call that reaches Rust on the desktop reaches a browser API here:
 
 ## What works, and what can't
 
-Runs in the browser: chat, all the views, settings and conversation history
-(persisted to OPFS), memory, knowledge, and Kokoro voice (already WASM).
+Runs in the browser, and verified end-to-end:
+
+- **Chat** — streamed replies render token-by-token (native fetch + the app's
+  SSE parser), against any CORS-enabled provider. Proven with a mock provider.
+- **Voice input** — getUserMedia capture (`mic.ts`) → 16 kHz WAV in OPFS →
+  transformers.js Whisper (`whisper.ts`), reusing the desktop's record-then-
+  transcribe-a-file flow.
+- **Voice output** — Kokoro (already WASM), cloud engines, or the browser's own
+  SpeechSynthesis voices (`speak.ts`) as the system-voice equivalent.
+- **Storage** — settings, conversations and presets persist to OPFS; keys go in
+  a browser secret store (`secret.ts`).
+- Plus all the views, memory and knowledge.
 
 Cannot run in a browser tab, by the nature of the platform:
 

@@ -5,6 +5,7 @@ import "../src/App.css";
 // Registers the browser backends (mic capture, …) into the invoke() dispatcher.
 import "./shims/mic";
 import "./shims/secret";
+import "./shims/speak";
 
 /**
  * Web entry point.
