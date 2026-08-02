@@ -31,6 +31,15 @@ try:
 except ImportError:
     sys.exit("paramiko is not installed. Run: pip install paramiko")
 
+# Remote output is UTF-8 (systemd uses arrows and box-drawing), but a Windows
+# console defaults to cp1252 and raises on anything outside it. Force UTF-8 with
+# replacement so streaming a command's output can't crash the client.
+for stream in (sys.stdout, sys.stderr):
+    try:
+        stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
+    except (AttributeError, ValueError):
+        pass
+
 
 DEFAULT_KEYS = ("id_ed25519", "id_rsa", "id_ecdsa")
 
