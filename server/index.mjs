@@ -184,6 +184,11 @@ if (!AA_API_KEY) {
 }
 loadDirectory();
 startRefreshLoop();
-app.listen(PORT, () =>
-  console.log(`[gateway] listening on :${PORT} (refresh every ${REFRESH_MS / 60_000}m)`),
+// Bind to loopback by default: in production the gateway sits behind a reverse
+// proxy, and there's no reason for the Node process itself to be reachable from
+// the network. Set HOST=0.0.0.0 to expose it directly (e.g. local development
+// against another machine).
+const HOST = process.env.HOST ?? "127.0.0.1";
+app.listen(PORT, HOST, () =>
+  console.log(`[gateway] listening on ${HOST}:${PORT} (refresh every ${REFRESH_MS / 60_000}m)`),
 );
