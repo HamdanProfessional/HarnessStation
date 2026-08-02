@@ -1,0 +1,18 @@
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "../src/App";
+import "../src/App.css";
+
+/**
+ * Web entry point.
+ *
+ * Mounts the exact same <App/> the desktop build uses. The difference is entirely
+ * in the Vite config, which points the @tauri-apps/* imports at the browser shims
+ * — so there is one app, not two, and a feature added to the desktop UI appears
+ * here for free.
+ */
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+);

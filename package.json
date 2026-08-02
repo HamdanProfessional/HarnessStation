@@ -12,7 +12,10 @@
     "tauri": "tauri",
     "docs:dev": "vite --config docs-site/vite.config.ts",
     "docs:build": "vite build --config docs-site/vite.config.ts",
-    "docs:preview": "vite preview --config docs-site/vite.config.ts"
+    "docs:preview": "vite preview --config docs-site/vite.config.ts",
+    "web:dev": "vite --config web/vite.config.ts",
+    "web:build": "vite build --config web/vite.config.ts",
+    "web:preview": "vite preview --config web/vite.config.ts"
   },
   "dependencies": {
     "@pixiv/three-vrm": "^3.5.5",

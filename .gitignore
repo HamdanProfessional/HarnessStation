@@ -37,3 +37,6 @@ server/.env
 
 # Built documentation site
 docs-site/dist
+
+# Built web app
+web/dist
