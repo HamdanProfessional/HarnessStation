@@ -46,7 +46,6 @@ const UNAVAILABLE: Record<string, string> = {
   mcp_connect: "stdio MCP servers need a local process; use an HTTP MCP server instead.",
   mesh_start: "The device mesh needs a network listener, which a browser tab can't open.",
   inapp_open: "The in-app browser is a native window; the web build can't embed one.",
-  secret_set: "Keys are stored in the browser for the web build, not an OS keychain.",
 };
 
 const warned = new Set<string>();

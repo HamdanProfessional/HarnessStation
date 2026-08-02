@@ -2,6 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "../src/App";
 import "../src/App.css";
+// Registers the browser backends (mic capture, …) into the invoke() dispatcher.
+import "./shims/mic";
+import "./shims/secret";
 
 /**
  * Web entry point.
