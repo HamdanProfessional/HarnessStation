@@ -6,6 +6,7 @@ import "../src/App.css";
 import "./shims/mic";
 import "./shims/secret";
 import "./shims/speak";
+import "./shims/vfs";
 
 /**
  * Web entry point.
