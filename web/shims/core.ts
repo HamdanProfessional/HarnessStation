@@ -38,7 +38,6 @@ const handlers: Record<string, Handler> = {
 
 /** Commands we know aren't available in the browser, with a reason worth showing. */
 const UNAVAILABLE: Record<string, string> = {
-  run_command: "Running shell commands needs the in-browser VM, which isn't loaded in this build yet.",
   start_server: "Local model servers can't be launched from a browser — connect a hosted or CORS-enabled endpoint instead.",
   stop_server: "Local model servers can't be launched from a browser.",
   mcp_connect: "stdio MCP servers need a local process; use an HTTP MCP server instead.",

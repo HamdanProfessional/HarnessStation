@@ -40,16 +40,23 @@ Runs in the browser, and verified end-to-end:
   a browser secret store (`secret.ts`).
 - Plus all the views, memory and knowledge.
 
-Cannot run in a browser tab, by the nature of the platform:
+Runs client-side via an in-browser VM — no server, loaded into the user's own
+memory, over one sandboxed OPFS workspace:
 
-- **Files and terminal** — no filesystem or process access. Planned via an
-  in-browser VM (WebVM/WebContainers) loaded into the user's own memory, so it
-  stays client-side.
+- **Files** — the file tools operate on a persistent workspace in OPFS
+  (`vfs.ts`), sandboxed so a path can't escape into the app's own data.
+- **Python** — real CPython via Pyodide (`pyodide.ts`), loaded from CDN on first
+  use.
+- **Terminal** — a coreutils subset (`shell.ts`): ls, cat, echo, grep, pipes,
+  redirection, `&&`/`;`, cd — over the same workspace. Full Linux (CheerpX) is a
+  future upgrade behind the same seam.
+
+Still genuinely can't run in a browser tab:
+
 - **Local models** — an https page can't reach `http://localhost` (mixed
   content). Use a CORS-enabled or hosted endpoint.
-- **stdio MCP, device mesh, native in-app browser** — need a real process.
-- **Provider CORS** — a provider that doesn't send CORS headers can't be called
-  directly from the browser and needs a proxy.
+- **stdio MCP, device mesh, native in-app browser** — need a real OS process.
+- **Provider CORS** — a provider that doesn't send CORS headers needs a proxy.
 
 Those surface in the UI as ordinary "not available" errors rather than crashes.
 
