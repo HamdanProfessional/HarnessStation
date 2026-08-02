@@ -34,3 +34,6 @@ src-tauri/gen/schemas
 
 # Gateway secrets
 server/.env
+
+# Built documentation site
+docs-site/dist
