@@ -16,6 +16,7 @@
 import { pipeline, type AutomaticSpeechRecognitionPipeline } from "@huggingface/transformers";
 import { readWav } from "./wav";
 import { readFile } from "./fs";
+import { sttSupported, sttSetLang, takeTranscript } from "./webstt";
 
 export {
   DEFAULT_STT,
@@ -78,6 +79,13 @@ export async function ensureWhisper(
   onStatus: (s: string) => void,
   model: SttModelId = "base" as SttModelId,
 ): Promise<void> {
+  // Prefer the browser's built-in recognizer: nothing to download, so there's
+  // no "installing Whisper" step to fail. Only fall back to the WASM model when
+  // SpeechRecognition isn't available (e.g. Firefox).
+  if (sttSupported()) {
+    onStatus("Ready to listen");
+    return;
+  }
   await getPipeline(model, onStatus);
 }
 
@@ -86,6 +94,16 @@ async function transcribe(
   model: SttModelId,
   stt: SttOptions,
 ): Promise<string> {
+  // Fast path: the mic shim ran the browser recognizer and stashed the text
+  // under a token appended to the path (`tmp/dictation.wav#t7`). Use it and skip
+  // decoding audio entirely — this is the normal web voice path.
+  const hash = wav.indexOf("#");
+  if (hash >= 0) {
+    // Keep the recognizer's language in step with the user's STT setting.
+    if (stt.language) sttSetLang(stt.language);
+    return takeTranscript(wav.slice(hash + 1)) ?? "";
+  }
+
   const p = await getPipeline(model);
   const { samples } = readWav(await readFile(wav));
   if (samples.length === 0) return "";

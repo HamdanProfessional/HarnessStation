@@ -15,6 +15,12 @@
 import { registerCommand } from "./core";
 import { writeWav } from "./wav";
 import { writeFile, mkdir } from "./fs";
+import { sttStart, sttStop, sttTake, sttPeek, stashTranscript } from "./webstt";
+
+// Whether the browser recognizer is driving transcription for this session. When
+// false (e.g. Firefox), we leave the WAV path untokenized so the whisper shim
+// falls back to decoding the audio with the WASM model.
+let recognizer = false;
 
 /** Whisper wants 16 kHz mono, so we resample to that on the way out. */
 const TARGET_RATE = 16000;
@@ -74,6 +80,10 @@ async function start(args: { device?: string | null } = {}): Promise<null> {
   sink.connect(ctx.destination);
 
   session = s;
+  // The getUserMedia capture above drives the level meter and the app's silence
+  // detection; the actual transcription comes from the browser recognizer, which
+  // we start alongside it. It opens its own mic stream — Chrome allows both.
+  recognizer = sttStart();
   return null;
 }
 
@@ -91,36 +101,46 @@ function resample(samples: Float32Array, from: number, to: number): Float32Array
   return out;
 }
 
-async function writeSegment(samples: number[], rate: number): Promise<string> {
+/**
+ * Write a WAV segment and return its path, with the recognizer's transcript for
+ * this segment stashed under a token appended as `path#token`. The whisper shim
+ * reads that token instead of decoding the audio. `kind`: t=take, s=snapshot,
+ * e=stop — purely for readable tokens.
+ */
+async function writeSegment(samples: number[], rate: number, kind: string, text: string): Promise<string> {
   const pcm = resample(Float32Array.from(samples), rate, TARGET_RATE);
   await mkdir("tmp");
   await writeFile(WAV_PATH, writeWav(pcm, TARGET_RATE));
-  return WAV_PATH;
+  // Only tokenize when the recognizer produced the text; otherwise hand back a
+  // plain path so the whisper shim decodes the audio with the WASM fallback.
+  return recognizer ? `${WAV_PATH}#${stashTranscript(kind, text)}` : WAV_PATH;
 }
 
-/** Write everything captured so far, and stop. */
+/** Write everything captured so far, and stop (used to discard / end). */
 async function stopAndWrite(): Promise<string> {
   if (!session) throw new Error("not recording");
   const { samples, rate } = session;
-  await stop();
-  return writeSegment(samples, rate);
+  const text = sttPeek();
+  await stop(); // also stops recognition
+  return writeSegment(samples, rate, "e", text);
 }
 
-/** Write everything so far and KEEP recording (clears the buffer). */
+/** Write everything so far and KEEP recording (consumes the recognizer buffer). */
 async function take(): Promise<string> {
   if (!session) throw new Error("not recording");
   const captured = session.samples;
   session.samples = [];
-  return writeSegment(captured, session.rate);
+  return writeSegment(captured, session.rate, "t", sttTake());
 }
 
 /** Copy the audio so far WITHOUT consuming it (for rolling live transcription). */
 async function snapshot(): Promise<string> {
   if (!session) throw new Error("not recording");
-  return writeSegment(session.samples.slice(), session.rate);
+  return writeSegment(session.samples.slice(), session.rate, "s", sttPeek());
 }
 
 async function stop(): Promise<void> {
+  sttStop(); // end recognition whenever the audio session ends
   if (!session) return;
   const { node, source, stream, ctx } = session;
   try {
