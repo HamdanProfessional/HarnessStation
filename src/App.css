@@ -4702,3 +4702,33 @@ textarea {
   font-size: 14px;
 }
 .webllm-models li:first-child { border-top: none; }
+
+/* Per-model download progress in the in-browser-models card. */
+.webllm-models li .grow { display: flex; flex-direction: column; gap: 4px; }
+.webllm-prog {
+  position: relative;
+  display: block;
+  height: 16px;
+  border-radius: 6px;
+  background: var(--panel-2, #1c1f28);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-top: 2px;
+}
+.webllm-prog-bar {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+.webllm-prog-text {
+  position: relative;
+  display: block;
+  font-size: 11px;
+  line-height: 16px;
+  padding: 0 8px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

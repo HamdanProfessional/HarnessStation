@@ -45,28 +45,59 @@ async function setActivity(text: string): Promise<void> {
   useStore.setState({ activity: text });
 }
 
-async function getEngine(model: string): Promise<Engine> {
+type ProgressReport = { text: string; progress: number };
+
+async function getEngine(
+  model: string,
+  onProgress?: (r: ProgressReport) => void,
+): Promise<Engine> {
   if (engine && loadedModel === model) return engine;
   const webllm = await import("@mlc-ai/web-llm");
-  const onProgress = (r: { text: string; progress: number }) => {
-    // r.text already reads e.g. "Fetching param cache… 45%"; surface it verbatim.
-    void setActivity(r.text || `Loading ${model}…`);
-  };
+  // Default: surface load progress in the chat activity row. A caller (the
+  // Settings download button) can capture it instead.
+  const report = onProgress ?? ((r: ProgressReport) => void setActivity(r.text || `Loading ${model}…`));
   loadingModel = model;
-  if (!engine) {
-    engine = await webllm.CreateMLCEngine(model, { initProgressCallback: onProgress });
-  } else {
-    await engine.reload(model);
+  try {
+    if (!engine) {
+      engine = await webllm.CreateMLCEngine(model, { initProgressCallback: report });
+    } else {
+      engine.setInitProgressCallback(report);
+      await engine.reload(model);
+    }
+    loadedModel = model;
+  } finally {
+    loadingModel = "";
+    if (!onProgress) await setActivity("");
   }
-  loadedModel = model;
-  loadingModel = "";
-  await setActivity("");
   return engine;
 }
 
 /** Is a model currently downloading/initialising? (for the UI). */
 export function webllmLoading(): string {
   return loadingModel;
+}
+
+/**
+ * Download + initialise a model ahead of time, so the first chat message is
+ * instant instead of a multi-hundred-MB wait. Progress is reported as a
+ * percentage (0–100) and the engine's own status line.
+ */
+export async function preloadWebLLM(
+  model: string,
+  onProgress: (pct: number, text: string) => void,
+): Promise<void> {
+  if (!("gpu" in navigator)) throw new Error("This browser has no WebGPU.");
+  await getEngine(model, (r) => onProgress(Math.round((r.progress ?? 0) * 100), r.text || ""));
+}
+
+/** Whether a model's weights are already cached in this browser (no re-download). */
+export async function webllmCached(model: string): Promise<boolean> {
+  try {
+    const webllm = await import("@mlc-ai/web-llm");
+    return await webllm.hasModelInCache(model);
+  } catch {
+    return false;
+  }
 }
 
 export async function streamWebLLM(p: ChatParams): Promise<ChatResult> {
