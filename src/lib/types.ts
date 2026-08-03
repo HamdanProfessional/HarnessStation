@@ -74,6 +74,31 @@ export interface Settings {
   mediaModels?: MediaModel[];
   /** Default media model id per kind, used by the generate_* tools. */
   defaultMediaIds?: { image?: string; audio?: string; video?: string; "3d"?: string };
+  /**
+   * Vault entries the model can *use* but never *see*. Only the metadata lives
+   * here; the value is in the OS keychain (web: localStorage) keyed `vault:<ref>`.
+   */
+  secrets?: VaultSecret[];
+}
+
+/**
+ * A saved credential the model references by name. The model gets the ref and
+ * description via the list_secrets tool; when it writes `{{REF}}` into a file,
+ * command or request, the app swaps in the real value at run time and redacts
+ * that value from anything the model reads back — so the secret never enters
+ * the transcript and can't be "leaked, rotate it".
+ */
+export interface VaultSecret {
+  /** Placeholder name the model uses, e.g. CLOUDFLARE_API_TOKEN. `[A-Z0-9_]+`. */
+  ref: string;
+  /** Human label, e.g. "Cloudflare API token". */
+  name: string;
+  /** What it unlocks / how it should be used, shown to the model. */
+  description: string;
+  /** Last few characters, so the owner can tell entries apart without revealing the value. */
+  hint?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ToolCall {

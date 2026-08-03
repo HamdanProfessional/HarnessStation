@@ -122,6 +122,15 @@ async function setSecret(id: string, value: string): Promise<void> {
   }
 }
 
+// ---------- user secrets vault ----------
+// Values live in the same keychain as provider keys, under a `vault:` namespace,
+// so they never touch settings.json or a chat transcript. Only metadata (name,
+// description) is persisted in Settings.
+
+export const vaultGet = (ref: string) => getSecret(`vault:${ref}`);
+export const vaultSet = (ref: string, value: string) => setSecret(`vault:${ref}`, value);
+export const vaultDelete = (ref: string) => setSecret(`vault:${ref}`, "");
+
 export async function loadSettings(): Promise<Settings> {
   await ensureDirs();
   let s: Settings;

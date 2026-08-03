@@ -127,6 +127,9 @@ interface AppState {
   browserDock: boolean;
   setBrowserDock: (open: boolean) => void;
   saveSettings: (s: Settings) => Promise<void>;
+  /** Add or update a vault secret. `value` empty = keep the existing value (edit metadata only). */
+  saveSecret: (meta: { ref: string; name: string; description: string }, value: string) => Promise<void>;
+  deleteSecret: (ref: string) => Promise<void>;
   ensureLocalProvider: (port: number, models: string[]) => Promise<void>;
   addCloudProvider: (p: {
     id: string;
@@ -372,6 +375,39 @@ export const useStore = create<AppState>((set, get) => ({
   saveSettings: async (settings) => {
     set({ settings });
     await storage.saveSettings(settings);
+  },
+
+  saveSecret: async ({ ref, name, description }, value) => {
+    const { invalidateSecretCache } = await import("./secrets");
+    // The value goes to the keychain only; settings.json keeps just metadata.
+    if (value) await storage.vaultSet(ref, value);
+    const now = new Date().toISOString();
+    const settings = structuredClone(get().settings);
+    const list = settings.secrets ?? [];
+    const at = list.findIndex((s) => s.ref === ref);
+    const hint = value ? value.slice(-4) : list[at]?.hint;
+    const entry = {
+      ref,
+      name,
+      description,
+      hint,
+      createdAt: at >= 0 ? list[at].createdAt : now,
+      updatedAt: now,
+    };
+    if (at >= 0) list[at] = entry;
+    else list.push(entry);
+    settings.secrets = list;
+    await get().saveSettings(settings);
+    invalidateSecretCache();
+  },
+
+  deleteSecret: async (ref) => {
+    const { invalidateSecretCache } = await import("./secrets");
+    await storage.vaultDelete(ref);
+    const settings = structuredClone(get().settings);
+    settings.secrets = (settings.secrets ?? []).filter((s) => s.ref !== ref);
+    await get().saveSettings(settings);
+    invalidateSecretCache();
   },
 
   ensureLocalProvider: async (port, models) => {

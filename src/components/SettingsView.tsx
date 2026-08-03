@@ -4,6 +4,7 @@ import { toast } from "../lib/toast";
 import * as storage from "../lib/storage";
 import { checkForUpdate, installUpdate, type UpdateInfo } from "../lib/updater";
 import { DevicesPanel } from "./DevicesPanel";
+import { SecretsPanel } from "./SecretsPanel";
 import { useStore } from "../lib/store";
 import { useModal } from "../lib/useModal";
 import { AvatarGallery } from "./AvatarGallery";
@@ -70,6 +71,12 @@ const TABS = [
     label: "Devices",
     blurb: "Pair your other machines",
     keywords: "mesh lan network pair peer share remote device",
+  },
+  {
+    id: "secrets",
+    label: "Secrets",
+    blurb: "API keys the model uses but can't read",
+    keywords: "secret api key token credential vault password cloudflare github stripe openai redact placeholder",
   },
   { id: "usage", label: "Usage", blurb: "Spend caps and totals", keywords: "cost spend budget cap daily monthly tokens price" },
   {
@@ -612,6 +619,10 @@ export function SettingsView() {
 
       <section hidden={tab !== "devices"}>
         <DevicesPanel />
+      </section>
+
+      <section hidden={tab !== "secrets"}>
+        <SecretsPanel />
       </section>
 
       <section hidden={tab !== "usage"}>

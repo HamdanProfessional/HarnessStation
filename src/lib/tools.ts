@@ -46,7 +46,7 @@ export const BUILTIN_TOOLSETS: ToolSet[] = [
   {
     id: "builtin-selfservice",
     name: "Self-service tooling",
-    toolIds: ["find_tools", "enable_tool", "use_skill"],
+    toolIds: ["find_tools", "enable_tool", "use_skill", "list_secrets"],
   },
   {
     id: "builtin-swarm",
@@ -100,6 +100,20 @@ export const BUILTIN_TOOLS: Tool[] = [
     parameters: { type: "object", properties: {}, required: [] },
     code: `return new Date().toString();`,
     builtin: true,
+  },
+  {
+    id: "list_secrets",
+    name: "list_secrets",
+    description:
+      "List the user's saved secrets (API keys, tokens) by reference name and description — never their values. " +
+      "To use one, write its placeholder like {{CLOUDFLARE_API_TOKEN}} into any file you create, command you run, " +
+      "or HTTP request you make; the app substitutes the real value at run time. You never see the value and it " +
+      "never appears in the conversation, so it can't be leaked. Call this when the user says a key is 'saved' or " +
+      "asks you to use one of their credentials.",
+    parameters: { type: "object", properties: {}, required: [] },
+    code: "", // handled directly in executeTool
+    builtin: true,
+    group: "Secrets",
   },
   {
     id: "calculate",
@@ -615,8 +629,33 @@ export async function detectPythonSchema(code: string): Promise<{
   return parsed;
 }
 
-/** Execute a tool: MCP tools route to their server; Python tools run via system Python; JS tools run with (args, ctx). `cwd` = working directory for fs/terminal tools. */
+/**
+ * Execute a tool, with the secrets vault wrapped around it: `{{REF}}`
+ * placeholders in the arguments are swapped for real values just before the tool
+ * runs, and every known secret value is scrubbed from the result before the
+ * model reads it. So a saved key reaches the file/command/request it's meant for
+ * and never enters the transcript. See secrets.ts.
+ */
 export async function executeTool(
+  tool: Tool,
+  args: Record<string, unknown>,
+  cwd = "",
+  media?: import("./media").MediaConfig,
+  target?: import("./toolDiscovery").ToolTarget,
+  sessionId?: string,
+): Promise<string> {
+  if (tool.id === "list_secrets") {
+    const { listSecretsForModel } = await import("./secrets");
+    return listSecretsForModel();
+  }
+  const { resolveSecretsInArgs, redactSecrets } = await import("./secrets");
+  const resolvedArgs = await resolveSecretsInArgs(args);
+  const out = await executeToolInner(tool, resolvedArgs, cwd, media, target, sessionId);
+  return redactSecrets(out);
+}
+
+/** The dispatch itself; executeTool wraps it with secret resolution/redaction. */
+async function executeToolInner(
   tool: Tool,
   args: Record<string, unknown>,
   cwd = "",
