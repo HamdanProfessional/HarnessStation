@@ -32,14 +32,14 @@
   --text-dim: #8b91a3;
   --border: rgba(255, 255, 255, 0.07);
   --border-strong: rgba(255, 255, 255, 0.14);
-  --accent: #6d7cff;
+  --accent: #5e6ad2;
   --accent-2: #2fd4e8;
-  --grad: linear-gradient(120deg, #6d7cff, #2fd4e8);
+  --grad: var(--accent); /* was a gradient — flat now */
   --ok: #3fd68f;
   --warn: #e3b341;
   --danger: #ff5d55;
   --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
-  --glow: 0 0 0 3px rgba(109, 124, 255, 0.22);
+  --glow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 [data-theme="light"] {
@@ -51,14 +51,14 @@
   --text-dim: #5d6374;
   --border: rgba(20, 24, 40, 0.09);
   --border-strong: rgba(20, 24, 40, 0.18);
-  --accent: #5563e8;
+  --accent: #4b56c9;
   --accent-2: #0eb5cc;
-  --grad: linear-gradient(120deg, #5563e8, #0eb5cc);
+  --grad: var(--accent);
   --ok: #199e60;
   --warn: #a8790a;
   --danger: #d43a33;
   --shadow: 0 8px 24px rgba(30, 36, 60, 0.12);
-  --glow: 0 0 0 3px rgba(85, 99, 232, 0.18);
+  --glow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 * {
@@ -88,10 +88,7 @@ body,
 }
 
 body {
-  background:
-    radial-gradient(1100px 500px at 85% -10%, rgba(109, 124, 255, 0.08), transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, rgba(47, 212, 232, 0.06), transparent 60%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -118,7 +115,7 @@ textarea,
 }
 
 ::selection {
-  background: rgba(109, 124, 255, 0.35);
+  background: rgba(94, 106, 210, 0.35);
 }
 
 *::-webkit-scrollbar {
@@ -198,16 +195,14 @@ select:focus {
 }
 
 .btn.primary {
-  background: var(--grad);
-  border: none;
+  background: var(--accent);
+  border: 1px solid transparent;
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 2px 12px rgba(109, 124, 255, 0.35);
 }
 
 .btn.primary:hover:not(:disabled) {
-  filter: brightness(1.1);
-  background: var(--grad);
+  background: color-mix(in srgb, var(--accent) 88%, #000);
 }
 
 .btn.danger {
@@ -460,8 +455,8 @@ select:focus {
 .nav-btn.active {
   background: linear-gradient(
     90deg,
-    rgba(109, 124, 255, 0.16),
-    rgba(47, 212, 232, 0.07) 70%,
+    rgba(94, 106, 210, 0.16),
+    rgba(94, 106, 210, 0.07) 70%,
     transparent
   );
   color: var(--text);
@@ -522,10 +517,8 @@ select:focus {
 .empty-state h2 {
   font-size: 30px;
   margin: 12px 0 2px;
-  background: var(--grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--text);
+  letter-spacing: -0.02em;
 }
 
 .empty-state > p {
@@ -611,7 +604,7 @@ select:focus {
   height: 156px;
   border-radius: 50%;
   background: var(--grad);
-  box-shadow: 0 0 60px 0 rgba(109, 124, 255, 0.45);
+  box-shadow: 0 0 60px 0 rgba(94, 106, 210, 0.45);
   transition: transform 0.09s ease-out, box-shadow 0.25s ease;
   display: grid;
   place-items: center;
@@ -629,12 +622,12 @@ select:focus {
 
 .orb-idle .orb {
   opacity: 0.55;
-  box-shadow: 0 0 26px 0 rgba(109, 124, 255, 0.22);
+  box-shadow: 0 0 26px 0 rgba(94, 106, 210, 0.22);
   animation: orbBreathe 5s ease-in-out infinite;
 }
 
 .orb-listening .orb {
-  box-shadow: 0 0 70px 6px rgba(47, 212, 232, 0.45);
+  box-shadow: 0 0 70px 6px rgba(94, 106, 210, 0.45);
 }
 
 .orb-thinking .orb {
@@ -1016,12 +1009,8 @@ select:focus {
 }
 
 .msg.user .msg-content {
-  background: linear-gradient(
-    135deg,
-    rgba(109, 124, 255, 0.2),
-    rgba(47, 212, 232, 0.1)
-  );
-  border: 1px solid rgba(109, 124, 255, 0.32);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid rgba(94, 106, 210, 0.32);
   border-radius: 14px 14px 4px 14px;
   padding: 11px 15px;
   white-space: pre-wrap;
@@ -1356,7 +1345,7 @@ select:focus {
   gap: 9px;
   width: 100%;
   border: none;
-  background: linear-gradient(90deg, rgba(109, 124, 255, 0.14), transparent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
   padding: 9px 13px;
   cursor: pointer;
   color: var(--text);
@@ -1744,8 +1733,8 @@ select:focus {
   gap: 9px;
   padding: 9px 11px;
   border-radius: 10px;
-  background: linear-gradient(90deg, rgba(109, 124, 255, 0.16), rgba(47, 212, 232, 0.06));
-  border: 1px solid rgba(109, 124, 255, 0.3);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid rgba(94, 106, 210, 0.3);
   font-size: 12px;
   color: var(--text);
 }
@@ -2154,10 +2143,14 @@ select:focus {
   animation: fade-in var(--t-base) var(--ease);
 }
 
-.settings-header {
+/* Only the Settings screen pins its header. The class is shared by ModelsView,
+   DiscoverView and others, where a global sticky with no background bled the
+   content up through the title. Scope it, and give it a solid backdrop. */
+.settings-page .settings-header {
   position: sticky;
   top: 0;
   z-index: 5;
+  background: var(--bg);
 }
 
 @media (max-width: 900px) {
@@ -2344,7 +2337,7 @@ select:focus {
 }
 
 .code-editor-ta::selection {
-  background: rgba(109, 124, 255, 0.35);
+  background: rgba(94, 106, 210, 0.35);
 }
 
 .code-view {
@@ -2935,7 +2928,7 @@ select:focus {
   width: 40px;
   height: 40px;
   border-radius: 11px;
-  background: linear-gradient(135deg, rgba(109, 124, 255, 0.16), rgba(47, 212, 232, 0.1));
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   border: 1px solid var(--border);
   display: grid;
   place-items: center;
@@ -3002,7 +2995,7 @@ select:focus {
   width: 40px;
   height: 40px;
   border-radius: 11px;
-  background: linear-gradient(135deg, rgba(109, 124, 255, 0.16), rgba(47, 212, 232, 0.1));
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   border: 1px solid var(--border);
   display: grid;
   place-items: center;
@@ -3434,13 +3427,13 @@ select:focus {
 
 .wf-node.wf-running {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(109, 124, 255, 0.25), 0 0 24px rgba(109, 124, 255, 0.25);
+  box-shadow: 0 0 0 3px rgba(94, 106, 210, 0.25), 0 0 24px rgba(94, 106, 210, 0.25);
   animation: pulse 1.4s ease infinite;
 }
 
 @keyframes pulse {
   50% {
-    box-shadow: 0 0 0 5px rgba(109, 124, 255, 0.12), 0 0 30px rgba(109, 124, 255, 0.3);
+    box-shadow: 0 0 0 5px rgba(94, 106, 210, 0.12), 0 0 30px rgba(94, 106, 210, 0.3);
   }
 }
 
@@ -3471,8 +3464,8 @@ select:focus {
   font-weight: 600;
   padding: 2px 9px;
   border-radius: 20px;
-  background: linear-gradient(120deg, rgba(109, 124, 255, 0.18), rgba(47, 212, 232, 0.12));
-  border: 1px solid rgba(109, 124, 255, 0.3);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid rgba(94, 106, 210, 0.3);
   color: var(--text);
   white-space: nowrap;
 }
@@ -4149,12 +4142,10 @@ select:focus {
 
 .btn.primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(109, 124, 255, 0.45);
 }
 
 .btn.primary:active:not(:disabled) {
   transform: translateY(0) scale(0.99);
-  box-shadow: 0 2px 8px rgba(109, 124, 255, 0.4);
 }
 
 .btn:disabled,

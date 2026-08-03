@@ -186,8 +186,9 @@ export const LogoMark = ({ size = 26 }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
     <defs>
       <linearGradient id="hsLogo" x1="0" y1="0" x2="1" y2="1">
+        {/* Solid: both stops the accent, so the mark is flat, not a gradient. */}
         <stop offset="0" stopColor="var(--accent)" />
-        <stop offset="1" stopColor="var(--accent-2)" />
+        <stop offset="1" stopColor="var(--accent)" />
       </linearGradient>
     </defs>
     <rect x="1" y="1" width="30" height="30" rx="9" fill="url(#hsLogo)" />
