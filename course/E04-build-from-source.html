@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E04 · Building from source</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="This one's optional. If you'd rather audit the code yourself, avoid the unsigned binary, or you want to develop on the app, we'll build HarnessStation from source — and set up the dev loop the developer track uses later.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track A · Beginner · Episode 4</p>
+      <h1>Building from source</h1>
+      <p class="lead">Optional — for auditing, or for developing on the app.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="You need three things installed first: Node, version eighteen or newer; Rust, through rustup; and a C++ toolchain — that's the Visual Studio 2022 Build Tools with the C++ workload on Windows, or build-essential on Linux. The C++ part trips people up, so don't skip it.">
+      <p class="eyebrow">Prerequisites</p>
+      <h2>Three things to install first</h2>
+      <ul>
+        <li>Node <b>18+</b></li>
+        <li>Rust via <b>rustup</b></li>
+        <li class="warn">A C++ toolchain <small>Windows: VS 2022 Build Tools + “Desktop development with C++”. Linux: <code>build-essential</code></small></li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="SWITCH TO TERMINAL: in the repo, run npm install and let it finish."
+      data-narration="Clone the repo, then install the JavaScript dependencies with npm install. This pulls the front-end packages; the Rust crates come on the first build.">
+      <p class="eyebrow">Step 1 — Dependencies</p>
+      <h2>Install the front-end deps</h2>
+      <pre class="term"><span class="c">$</span> <span class="g">npm</span> install</pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="TERMINAL: run npm run tauri dev. WAIT — first Rust build is minutes. Cut to the app window opening; then edit a file to show hot-reload."
+      data-narration="Now run the app in dev mode with npm run tauri dev. Fair warning: the very first build compiles several hundred Rust crates and takes a few minutes — don't panic when it sits there. After that it's incremental and fast, and the front end hot-reloads as you edit.">
+      <p class="eyebrow">Step 2 — Run it in dev</p>
+      <h2>npm run tauri dev</h2>
+      <pre class="term"><span class="c">$</span> <span class="g">npm</span> run tauri dev</pre>
+      <ul>
+        <li class="warn">First build: hundreds of Rust crates, a few minutes</li>
+        <li class="ok">After that: incremental, and the UI hot-reloads</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="8"
+      data-cue="TERMINAL: run npm run tauri build; then show the installer/binary it produced in src-tauri/target/release."
+      data-narration="When you want a real installer — the same kind we downloaded in the earlier episodes — run npm run tauri build. It produces the packaged app for your platform.">
+      <p class="eyebrow">Step 3 — Package it</p>
+      <h2>Build a real installer</h2>
+      <pre class="term"><span class="c">$</span> <span class="g">npm</span> run tauri build</pre>
+      <p class="lead">Outputs the installer / binary for your OS — the same artifact the release ships.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="TERMINAL: run npm test (show the passing count) and npx tsc --noEmit (clean)."
+      data-narration="Two commands worth knowing, and a nice credibility check: npm test runs the project's real test suite — hundreds of tests — and npx tsc --noEmit type-checks the whole thing. If both are green, your build is sound. We'll lean on these in the developer track.">
+      <p class="eyebrow">Prove the build is sound</p>
+      <h2>Tests &amp; type-check</h2>
+      <pre class="term"><span class="c">$</span> <span class="g">npm</span> test          <span class="c"># the full unit suite</span>
+<span class="c">$</span> <span class="g">npx</span> tsc --noEmit  <span class="c"># type-check, no output = clean</span></pre>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="However you installed it, next we look at where the app keeps your data on disk — before you put anything into it — so nothing that follows feels like a black box.">
+      <p class="eyebrow">Up next</p>
+      <h1>E05 · Where your<br/>data lives</h1>
+      <p class="lead">The <code>~/.harnessx</code> folder, before you trust it with anything.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

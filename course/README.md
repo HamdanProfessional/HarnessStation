@@ -1,6 +1,6 @@
 # HarnessStation video course — production kit
 
-Record-ready assets for the first three lectures of the course in
+Record-ready assets for the opening lectures of the course in
 [`../docs/COURSE_CURRICULUM.md`](../docs/COURSE_CURRICULUM.md):
 
 | Ep. | Title | Deck | ~VO runtime |
@@ -8,6 +8,13 @@ Record-ready assets for the first three lectures of the course in
 | E01 | What HarnessStation actually is | `E01-what-is-harnessstation.html` | 1m 15s |
 | E02 | Installing on Windows | `E02-install-windows.html` | 1m 21s |
 | E03 | Installing on Linux | `E03-install-linux.html` | 1m 08s |
+| E04 | Building from source | `E04-build-from-source.html` | 1m 05s |
+| E05 | Where your data lives | `E05-data-location.html` | 1m 05s |
+| E06 | Connecting a free local model (Ollama) | `E06-connect-ollama.html` | 1m 04s |
+| E07 | Connecting a cloud provider | `E07-connect-cloud.html` | 0m 56s |
+
+Modules 1–2 of Track A (install → first model connected). E08 onward continues
+from the curriculum.
 
 Each lecture is an **HTML slideshow** you show in Chrome and screen-record,
 intercut with live screen capture of the app / installer at the marked cue

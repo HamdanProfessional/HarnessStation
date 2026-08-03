@@ -1,0 +1,62 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:00.639
+This one's optional.
+
+2
+00:00:00.639 --> 00:00:07.000
+If you'd rather audit the code yourself, avoid the unsigned binary, or you want to develop on the app, we'll build HarnessStation from source — and set up the dev loop the developer track uses later.
+
+3
+00:00:07.000 --> 00:00:16.064
+You need three things installed first: Node, version eighteen or newer; Rust, through rustup; and a C++ toolchain — that's the Visual Studio 2022 Build Tools with the C++ workload on Windows, or build-essential on Linux.
+
+4
+00:00:16.064 --> 00:00:18.000
+The C++ part trips people up, so don't skip it.
+
+5
+00:00:18.000 --> 00:00:22.470
+Clone the repo, then install the JavaScript dependencies with npm install.
+
+6
+00:00:22.470 --> 00:00:27.000
+This pulls the front-end packages; the Rust crates come on the first build.
+
+7
+00:00:27.000 --> 00:00:29.550
+Now run the app in dev mode with npm run tauri dev.
+
+8
+00:00:29.550 --> 00:00:36.000
+Fair warning: the very first build compiles several hundred Rust crates and takes a few minutes — don't panic when it sits there.
+
+9
+00:00:36.000 --> 00:00:40.000
+After that it's incremental and fast, and the front end hot-reloads as you edit.
+
+10
+00:00:40.000 --> 00:00:45.620
+When you want a real installer — the same kind we downloaded in the earlier episodes — run npm run tauri build.
+
+11
+00:00:45.620 --> 00:00:48.000
+It produces the packaged app for your platform.
+
+12
+00:00:48.000 --> 00:00:55.463
+Two commands worth knowing, and a nice credibility check: npm test runs the project's real test suite — hundreds of tests — and npx tsc --noEmit type-checks the whole thing.
+
+13
+00:00:55.463 --> 00:00:57.145
+If both are green, your build is sound.
+
+14
+00:00:57.145 --> 00:00:59.000
+We'll lean on these in the developer track.
+
+15
+00:00:59.000 --> 00:01:05.000
+However you installed it, next we look at where the app keeps your data on disk — before you put anything into it — so nothing that follows feels like a black box.
+

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E07 · Connecting a cloud provider</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Now the other way to bring a model: a cloud provider with your own API key. It's a couple of fields — and I want to be very clear about exactly where that key ends up.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track A · Beginner · Episode 7</p>
+      <h1>Bring your own<br/>cloud key</h1>
+      <p class="lead">Add a paid provider — and know where the key goes.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="SWITCH TO APP: Settings › Providers › Add provider. Fill Name, Base URL, API key live."
+      data-narration="Open Settings, Providers, and click Add provider. There are three fields: a name you choose, the base URL of the service, and your API key. Let's fill them in for OpenAI.">
+      <p class="eyebrow">Add it</p>
+      <h2>Settings › Providers › Add provider</h2>
+      <ul>
+        <li><b>Name</b> — anything you like</li>
+        <li><b>Base URL</b> — e.g. <code>https://api.openai.com/v1</code></li>
+        <li><b>API key</b> — from the provider's dashboard</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="Most providers speak the same OpenAI-compatible format, so it's just a different base URL each time. Here are the common ones — OpenAI, Anthropic, OpenRouter, Groq, Together. Groq and OpenRouter even have real free tiers, so you can try a cloud model at no cost.">
+      <p class="eyebrow">Common providers</p>
+      <h2>Just a different base URL</h2>
+      <pre class="term"><span class="a">OpenAI</span>      https://api.openai.com/v1
+<span class="a">Anthropic</span>   https://api.anthropic.com
+<span class="a">OpenRouter</span>  https://openrouter.ai/api/v1
+<span class="a">Groq</span>        https://api.groq.com/openai/v1
+<span class="a">Together</span>    https://api.together.xyz/v1</pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="APP: after saving, reopen Settings to show the key field masked / not shown in plain text. Optionally show it's absent from settings.json."
+      data-narration="Here's the important part. When you save, your key is written to your operating system's credential store — not into settings.json on disk. And it's only ever sent to the one provider it belongs to. It never passes through us, and it never touches your transcripts.">
+      <p class="eyebrow">Where the key goes</p>
+      <h2>Into the OS keychain, nowhere else</h2>
+      <ul>
+        <li class="ok">Stored in the <b>OS credential store</b>, not <code>settings.json</code></li>
+        <li class="ok">Sent only to <b>that</b> provider — never through us, never into a chat</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="9"
+      data-narration="One small thing you might notice. Anthropic is listed on its own because it's a native integration — it uses Anthropic's messages API rather than the OpenAI-compatible format. You don't need to do anything different; just pick Anthropic as the kind and it's handled.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Why Anthropic is listed separately</h2>
+      <p class="lead">It's a <b>native</b> integration (the <code>/v1/messages</code> API), not
+        OpenAI-compatible. Pick “Anthropic” as the kind — nothing else to do.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Local or cloud, you've now got a model connected. In the next episode we close the loop — sending your very first message and watching it reply. See you there.">
+      <p class="eyebrow">Up next</p>
+      <h1>E08 · Your first<br/>message</h1>
+      <p class="lead">Close the loop: type, send, watch it stream back.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Slide 1
+Before we put anything into HarnessStation, let's see exactly where it keeps your data on disk. Once you've seen this folder, nothing in the rest of the course feels like a black box.
+
+# Slide 2
+Everything lives in one folder in your home directory, called dot-harnessx. On Windows that's your user profile, backslash dot-harnessx. Open it and you can see the whole layout at a glance.
+
+# Slide 3
+Inside, each thing the app manages has its own place: settings, your conversations, presets, snapshots, exports, agent memory, avatars, downloaded models and engines, and a temp folder. Nothing hidden, nothing proprietary — just folders.
+
+# Slide 4
+Open any single chat file and you'll see it's plain, readable JSON — your messages, right there in text. There's no database, no proprietary format. You can read it, back it up, or move it with an ordinary file copy.
+
+# Slide 5
+There's one deliberate exception, and it matters. Your API keys are NOT in this folder. They live in your operating system's credential store — Windows Credential Manager, or the Secret Service on Linux. So even someone who copies your dot-harnessx folder doesn't get your keys.
+
+# Slide 6
+One gotcha to save you grief: don't hand-edit these files while the app is running. It holds your chats in memory and will overwrite your edits on the next save. Close the app first if you ever need to touch them directly.
+
+# Slide 7
+Now that you know where everything lands, let's put something in it — starting with a free local model. That's the next episode.

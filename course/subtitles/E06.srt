@@ -1,0 +1,72 @@
+1
+00:00:00,000 --> 00:00:03,647
+Let's get a model talking to the app that costs nothing — a local model through Ollama.
+
+2
+00:00:03,647 --> 00:00:07,000
+This is the perfect way to try everything in the course before you spend a cent.
+
+3
+00:00:07,000 --> 00:00:08,895
+First, install Ollama from its site.
+
+4
+00:00:08,895 --> 00:00:13,737
+Then pull a model — I'll use qwen3 here — and make sure Ollama is running in the background.
+
+5
+00:00:13,737 --> 00:00:17,000
+On most systems it starts serving automatically after install.
+
+6
+00:00:17,000 --> 00:00:19,333
+Now open the app, go to Settings, then Providers.
+
+7
+00:00:19,333 --> 00:00:26,048
+HarnessStation ships with an Ollama provider already listed, and it auto-detects the server running on localhost port eleven-four-three-four.
+
+8
+00:00:26,048 --> 00:00:28,000
+If it's found, you'll see it right there.
+
+9
+00:00:28,000 --> 00:00:38,000
+If for some reason it isn't detected, add it by hand: the base URL is http://localhost:11434/v1, and you leave the API key blank — a local server needs no key.
+
+10
+00:00:38,000 --> 00:00:39,681
+Press Save, then hit Fetch models.
+
+11
+00:00:39,681 --> 00:00:45,368
+The app asks Ollama what you've got installed and fills in the list — you should see qwen3, the one we just pulled.
+
+12
+00:00:45,368 --> 00:00:47,000
+That's it: a working, free model.
+
+13
+00:00:47,000 --> 00:00:47,495
+One aside.
+
+14
+00:00:47,495 --> 00:00:50,667
+If you prefer a graphical app, LM Studio is a great alternative.
+
+15
+00:00:50,667 --> 00:00:55,275
+Same idea — but its server isn't on by default: you start it manually from the Developer tab.
+
+16
+00:00:55,275 --> 00:00:58,000
+Once it's serving, you connect it exactly the same way.
+
+17
+00:00:58,000 --> 00:00:59,105
+Free and local is one route.
+
+18
+00:00:59,105 --> 00:01:04,000
+Next we do the other one: connecting a cloud provider with your own API key — and I'll show you exactly where that key goes.
+

@@ -1,0 +1,78 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:03.654
+Before we put anything into HarnessStation, let's see exactly where it keeps your data on disk.
+
+2
+00:00:03.654 --> 00:00:07.000
+Once you've seen this folder, nothing in the rest of the course feels like a black box.
+
+3
+00:00:07.000 --> 00:00:10.590
+Everything lives in one folder in your home directory, called dot-harnessx.
+
+4
+00:00:10.590 --> 00:00:13.463
+On Windows that's your user profile, backslash dot-harnessx.
+
+5
+00:00:13.463 --> 00:00:16.000
+Open it and you can see the whole layout at a glance.
+
+6
+00:00:16.000 --> 00:00:25.407
+Inside, each thing the app manages has its own place: settings, your conversations, presets, snapshots, exports, agent memory, avatars, downloaded models and engines, and a temp folder.
+
+7
+00:00:25.407 --> 00:00:28.000
+Nothing hidden, nothing proprietary — just folders.
+
+8
+00:00:28.000 --> 00:00:32.860
+Open any single chat file and you'll see it's plain, readable JSON — your messages, right there in text.
+
+9
+00:00:32.860 --> 00:00:34.869
+There's no database, no proprietary format.
+
+10
+00:00:34.869 --> 00:00:38.000
+You can read it, back it up, or move it with an ordinary file copy.
+
+11
+00:00:38.000 --> 00:00:40.138
+There's one deliberate exception, and it matters.
+
+12
+00:00:40.138 --> 00:00:41.753
+Your API keys are NOT in this folder.
+
+13
+00:00:41.753 --> 00:00:46.771
+They live in your operating system's credential store — Windows Credential Manager, or the Secret Service on Linux.
+
+14
+00:00:46.771 --> 00:00:50.000
+So even someone who copies your dot-harnessx folder doesn't get your keys.
+
+15
+00:00:50.000 --> 00:00:53.395
+One gotcha to save you grief: don't hand-edit these files while the app is running.
+
+16
+00:00:53.395 --> 00:00:56.545
+It holds your chats in memory and will overwrite your edits on the next save.
+
+17
+00:00:56.545 --> 00:00:59.000
+Close the app first if you ever need to touch them directly.
+
+18
+00:00:59.000 --> 00:01:03.866
+Now that you know where everything lands, let's put something in it — starting with a free local model.
+
+19
+00:01:03.866 --> 00:01:05.000
+That's the next episode.
+

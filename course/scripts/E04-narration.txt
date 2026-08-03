@@ -1,0 +1,20 @@
+# Slide 1
+This one's optional. If you'd rather audit the code yourself, avoid the unsigned binary, or you want to develop on the app, we'll build HarnessStation from source — and set up the dev loop the developer track uses later.
+
+# Slide 2
+You need three things installed first: Node, version eighteen or newer; Rust, through rustup; and a C++ toolchain — that's the Visual Studio 2022 Build Tools with the C++ workload on Windows, or build-essential on Linux. The C++ part trips people up, so don't skip it.
+
+# Slide 3
+Clone the repo, then install the JavaScript dependencies with npm install. This pulls the front-end packages; the Rust crates come on the first build.
+
+# Slide 4
+Now run the app in dev mode with npm run tauri dev. Fair warning: the very first build compiles several hundred Rust crates and takes a few minutes — don't panic when it sits there. After that it's incremental and fast, and the front end hot-reloads as you edit.
+
+# Slide 5
+When you want a real installer — the same kind we downloaded in the earlier episodes — run npm run tauri build. It produces the packaged app for your platform.
+
+# Slide 6
+Two commands worth knowing, and a nice credibility check: npm test runs the project's real test suite — hundreds of tests — and npx tsc --noEmit type-checks the whole thing. If both are green, your build is sound. We'll lean on these in the developer track.
+
+# Slide 7
+However you installed it, next we look at where the app keeps your data on disk — before you put anything into it — so nothing that follows feels like a black box.

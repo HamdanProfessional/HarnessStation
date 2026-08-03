@@ -1,0 +1,76 @@
+1
+00:00:00,000 --> 00:00:03,163
+Now the other way to bring a model: a cloud provider with your own API key.
+
+2
+00:00:03,163 --> 00:00:07,000
+It's a couple of fields — and I want to be very clear about exactly where that key ends up.
+
+3
+00:00:07,000 --> 00:00:09,917
+Open Settings, Providers, and click Add provider.
+
+4
+00:00:09,917 --> 00:00:15,214
+There are three fields: a name you choose, the base URL of the service, and your API key.
+
+5
+00:00:15,214 --> 00:00:17,000
+Let's fill them in for OpenAI.
+
+6
+00:00:17,000 --> 00:00:21,615
+Most providers speak the same OpenAI-compatible format, so it's just a different base URL each time.
+
+7
+00:00:21,615 --> 00:00:24,985
+Here are the common ones — OpenAI, Anthropic, OpenRouter, Groq, Together.
+
+8
+00:00:24,985 --> 00:00:29,000
+Groq and OpenRouter even have real free tiers, so you can try a cloud model at no cost.
+
+9
+00:00:29,000 --> 00:00:30,191
+Here's the important part.
+
+10
+00:00:30,191 --> 00:00:34,725
+When you save, your key is written to your operating system's credential store — not into settings.
+
+11
+00:00:34,725 --> 00:00:35,321
+json on disk.
+
+12
+00:00:35,321 --> 00:00:37,977
+And it's only ever sent to the one provider it belongs to.
+
+13
+00:00:37,977 --> 00:00:41,000
+It never passes through us, and it never touches your transcripts.
+
+14
+00:00:41,000 --> 00:00:42,125
+One small thing you might notice.
+
+15
+00:00:42,125 --> 00:00:46,932
+Anthropic is listed on its own because it's a native integration — it uses Anthropic's messages API rather than the OpenAI-compatible format.
+
+16
+00:00:46,932 --> 00:00:50,000
+You don't need to do anything different; just pick Anthropic as the kind and it's handled.
+
+17
+00:00:50,000 --> 00:00:51,873
+Local or cloud, you've now got a model connected.
+
+18
+00:00:51,873 --> 00:00:55,465
+In the next episode we close the loop — sending your very first message and watching it reply.
+
+19
+00:00:55,465 --> 00:00:56,000
+See you there.
+

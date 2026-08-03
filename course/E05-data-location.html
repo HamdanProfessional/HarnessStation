@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E05 · Where your data lives</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Before we put anything into HarnessStation, let's see exactly where it keeps your data on disk. Once you've seen this folder, nothing in the rest of the course feels like a black box.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track A · Beginner · Episode 5</p>
+      <h1>Where your data lives</h1>
+      <p class="lead">One folder, plain files, no database.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="SWITCH TO FILE EXPLORER: open ~/.harnessx (Windows: %USERPROFILE%\.harnessx). Show the folder listing."
+      data-narration="Everything lives in one folder in your home directory, called dot-harnessx. On Windows that's your user profile, backslash dot-harnessx. Open it and you can see the whole layout at a glance.">
+      <p class="eyebrow">One home for everything</p>
+      <h2>The <code>~/.harnessx</code> folder</h2>
+      <pre class="term"><span class="a">~/.harnessx</span>            <span class="c"># Windows: %USERPROFILE%\.harnessx</span></pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="Inside, each thing the app manages has its own place: settings, your conversations, presets, snapshots, exports, agent memory, avatars, downloaded models and engines, and a temp folder. Nothing hidden, nothing proprietary — just folders.">
+      <p class="eyebrow">What's inside</p>
+      <h2>A folder per thing</h2>
+      <pre class="term"><span class="a">settings.json</span>     <span class="c"># your settings (keys blanked — see next)</span>
+<span class="a">conversations/</span>    <span class="c"># every chat, one file each</span>
+<span class="a">presets/  snapshots/  exports/</span>
+<span class="a">agent-memory/  avatars/</span>
+<span class="a">models/  engines/</span>  <span class="c"># local model weights + runtimes</span>
+<span class="a">tmp/</span></pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="FILE EXPLORER: open one file in conversations/ in a text editor — show it's readable JSON with the messages."
+      data-narration="Open any single chat file and you'll see it's plain, readable JSON — your messages, right there in text. There's no database, no proprietary format. You can read it, back it up, or move it with an ordinary file copy.">
+      <p class="eyebrow">No database</p>
+      <h2>A chat is just a text file</h2>
+      <p class="lead">Open one in <code>conversations/</code>: readable JSON you can back up, diff, or move
+        with a plain copy.</p>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="There's one deliberate exception, and it matters. Your API keys are NOT in this folder. They live in your operating system's credential store — Windows Credential Manager, or the Secret Service on Linux. So even someone who copies your dot-harnessx folder doesn't get your keys.">
+      <p class="eyebrow">The one exception</p>
+      <h2>Your keys aren't here</h2>
+      <ul>
+        <li class="ok">API keys live in the <b>OS credential store</b> <small>Windows Credential Manager · Linux Secret Service</small></li>
+        <li>So copying <code>~/.harnessx</code> never leaks your keys</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="9"
+      data-narration="One gotcha to save you grief: don't hand-edit these files while the app is running. It holds your chats in memory and will overwrite your edits on the next save. Close the app first if you ever need to touch them directly.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Don't edit while it's running</h2>
+      <p class="lead">The app keeps chats in memory and rewrites them on save — hand-edits made while
+        it's open get <b>overwritten</b>. Close it first.</p>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Now that you know where everything lands, let's put something in it — starting with a free local model. That's the next episode.">
+      <p class="eyebrow">Up next</p>
+      <h1>E06 · A free<br/>local model</h1>
+      <p class="lead">Get a zero-cost model talking to the app with Ollama.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>
