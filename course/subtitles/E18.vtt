@@ -1,0 +1,86 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:02.744
+Last in the voice module: putting an actual character on screen instead of the default orb.
+
+2
+00:00:02.744 --> 00:00:06.000
+We'll load one — and cover the licensing question honestly, because it matters if you're recording publicly.
+
+3
+00:00:06.000 --> 00:00:08.510
+In Settings, Voice, there's an On-screen character option.
+
+4
+00:00:08.510 --> 00:00:13.356
+Switch it from the orb to a VRM model and you've got a proper 3D avatar that moves and lip-syncs while it talks.
+
+5
+00:00:13.356 --> 00:00:15.000
+It's the same call — just with a face.
+
+6
+00:00:15.000 --> 00:00:16.355
+Where do models come from?
+
+7
+00:00:16.355 --> 00:00:21.829
+Two easy sources: VRoid Hub, and the app's built-in Open Source Avatars list, which is browsable and CC0.
+
+8
+00:00:21.829 --> 00:00:26.000
+Pick one and hit Import — it's copied into your avatars folder and ready to use.
+
+9
+00:00:26.000 --> 00:00:30.810
+If you want an MMD model instead — the pmx format — there's one wrinkle: it needs its texture folder alongside it to render.
+
+10
+00:00:30.810 --> 00:00:35.000
+So you import MMD models as a zip that contains the model and its textures together, and the app unpacks it.
+
+11
+00:00:35.000 --> 00:00:36.653
+Now the part people skip and regret: licensing.
+
+12
+00:00:36.653 --> 00:00:41.156
+VRoid Hub models carry per-creator conditions — some forbid commercial use, some forbid modification, some forbid corporate use.
+
+13
+00:00:41.156 --> 00:00:43.794
+If you're putting a video on YouTube, that's a use you must be cleared for.
+
+14
+00:00:43.794 --> 00:00:46.749
+The safe defaults are CC0 sources, or a character you make yourself in VRoid Studio.
+
+15
+00:00:46.749 --> 00:00:49.000
+When in doubt, don't put someone else's model in a public video.
+
+16
+00:00:49.000 --> 00:00:51.414
+Two things to set expectations, so you don't troubleshoot non-problems.
+
+17
+00:00:51.414 --> 00:00:56.853
+Mouth movement follows the volume of the speech, not the actual phonemes — so it's an approximation, not perfect lip-sync; that's a known limitation, not a bug.
+
+18
+00:00:56.853 --> 00:01:01.000
+And on a laptop, a 3D avatar is real work for the graphics chip: switch back to the orb on battery or integrated graphics.
+
+19
+00:01:01.000 --> 00:01:02.178
+That completes the voice module.
+
+20
+00:01:02.178 --> 00:01:06.485
+Next module, we start giving the agent whole new toolboxes from the outside world — connecting your first MCP server.
+
+21
+00:01:06.485 --> 00:01:07.000
+See you there.
+

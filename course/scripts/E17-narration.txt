@@ -1,0 +1,17 @@
+# Slide 1
+Let's make a call feel like an actual conversation, not a sequence of announcements. That means being able to interrupt it, and tuning how it delivers speech.
+
+# Slide 2
+Turn on barge-in. Now you can talk over the avatar to interrupt it — the moment you start speaking, it stops and listens, exactly like interrupting a person. No waiting for it to finish a paragraph you've already heard enough of.
+
+# Slide 3
+Here's the important gotcha, and you should demonstrate it. Barge-in through speakers makes the app hear its own voice and interrupt itself, over and over — it's unusable on speakers. Headphones fix it completely. If barge-in seems broken, this is almost always why.
+
+# Slide 4
+In Settings, Voice, a few controls change how it sounds. Human delivery adds natural pacing. Expressiveness goes zero, one, two — flat to lively. Persona shapes its manner. And Speech rewrite is clever: a small model rewrites each reply for the ear — numbers become words, markdown is stripped, sentences get shorter — so it reads aloud naturally.
+
+# Slide 5
+One common complaint: it hears me but doesn't reply. Two controls fix that. The level meter shows whether it's actually picking up your voice. And silence timeout, plus smart endpointing, decide how long a pause means you're done — turn them up if it keeps cutting you off, down if it waits too long.
+
+# Slide 6
+It now converses naturally. Last in the voice module, we replace the plain orb with an actual 3D character — and cover the licensing question before you put one on a public video.

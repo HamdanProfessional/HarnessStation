@@ -1,0 +1,80 @@
+1
+00:00:00,000 --> 00:00:03,210
+Let's make a call feel like an actual conversation, not a sequence of announcements.
+
+2
+00:00:03,210 --> 00:00:06,000
+That means being able to interrupt it, and tuning how it delivers speech.
+
+3
+00:00:06,000 --> 00:00:06,749
+Turn on barge-in.
+
+4
+00:00:06,749 --> 00:00:12,872
+Now you can talk over the avatar to interrupt it — the moment you start speaking, it stops and listens, exactly like interrupting a person.
+
+5
+00:00:12,872 --> 00:00:16,000
+No waiting for it to finish a paragraph you've already heard enough of.
+
+6
+00:00:16,000 --> 00:00:18,692
+Here's the important gotcha, and you should demonstrate it.
+
+7
+00:00:18,692 --> 00:00:24,304
+Barge-in through speakers makes the app hear its own voice and interrupt itself, over and over — it's unusable on speakers.
+
+8
+00:00:24,304 --> 00:00:25,627
+Headphones fix it completely.
+
+9
+00:00:25,627 --> 00:00:28,000
+If barge-in seems broken, this is almost always why.
+
+10
+00:00:28,000 --> 00:00:30,122
+In Settings, Voice, a few controls change how it sounds.
+
+11
+00:00:30,122 --> 00:00:31,449
+Human delivery adds natural pacing.
+
+12
+00:00:31,449 --> 00:00:33,420
+Expressiveness goes zero, one, two — flat to lively.
+
+13
+00:00:33,420 --> 00:00:34,405
+Persona shapes its manner.
+
+14
+00:00:34,405 --> 00:00:41,000
+And Speech rewrite is clever: a small model rewrites each reply for the ear — numbers become words, markdown is stripped, sentences get shorter — so it reads aloud naturally.
+
+15
+00:00:41,000 --> 00:00:43,101
+One common complaint: it hears me but doesn't reply.
+
+16
+00:00:43,101 --> 00:00:43,990
+Two controls fix that.
+
+17
+00:00:43,990 --> 00:00:46,657
+The level meter shows whether it's actually picking up your voice.
+
+18
+00:00:46,657 --> 00:00:53,000
+And silence timeout, plus smart endpointing, decide how long a pause means you're done — turn them up if it keeps cutting you off, down if it waits too long.
+
+19
+00:00:53,000 --> 00:00:53,910
+It now converses naturally.
+
+20
+00:00:53,910 --> 00:00:59,000
+Last in the voice module, we replace the plain orb with an actual 3D character — and cover the licensing question before you put one on a public video.
+

@@ -1,0 +1,82 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:00.809
+Welcome to Track B.
+
+2
+00:00:00.809 --> 00:00:03.447
+We start with voice — actually talking to your agent out loud.
+
+3
+00:00:03.447 --> 00:00:06.000
+In this one we hold a first spoken conversation, end to end.
+
+4
+00:00:06.000 --> 00:00:07.687
+Press New call at the top of the sidebar.
+
+5
+00:00:07.687 --> 00:00:14.765
+A call needs two things: hearing — that's Whisper, running locally to turn your speech into text — and speaking, an engine that voices the reply, which is the next episode.
+
+6
+00:00:14.765 --> 00:00:16.000
+Right now we focus on hearing.
+
+7
+00:00:16.000 --> 00:00:19.436
+On your very first call, the app downloads a Whisper model — a one-time thing.
+
+8
+00:00:19.436 --> 00:00:24.414
+You pick the size: tiny is fastest and roughest, small is slowest and most accurate, and base sits in the middle.
+
+9
+00:00:24.414 --> 00:00:26.000
+Base is a good default; start there.
+
+10
+00:00:26.000 --> 00:00:27.128
+Three ways to talk to it.
+
+11
+00:00:27.128 --> 00:00:30.694
+Auto — it listens continuously and replies when you stop; best with headphones.
+
+12
+00:00:30.694 --> 00:00:34.667
+Push-to-talk — hold Control Shift V, which is global, so it works even from another app.
+
+13
+00:00:34.667 --> 00:00:36.969
+And Wake word — it waits until you say the trigger.
+
+14
+00:00:36.969 --> 00:00:39.000
+Pick Auto for a hands-free chat at your desk.
+
+15
+00:00:39.000 --> 00:00:46.273
+When you end a call, it's saved just like a chat — you'll find it in the sidebar, and reopening it resumes as a call, not a transcript you have to read.
+
+16
+00:00:46.273 --> 00:00:49.000
+Your spoken conversations are first-class, not throwaway.
+
+17
+00:00:49.000 --> 00:00:53.323
+One small gotcha, and it's a nice one: if you start a call and never actually say anything, it isn't saved.
+
+18
+00:00:53.323 --> 00:00:57.000
+A mis-press doesn't leave empty clutter in your sidebar — only real exchanges stick around.
+
+19
+00:00:57.000 --> 00:00:58.026
+It can hear you now.
+
+20
+00:00:58.026 --> 00:01:03.000
+Next we give it a voice — comparing the four synthesis engines and landing on a sensible default.
+

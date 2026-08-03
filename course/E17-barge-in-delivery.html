@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E17 · Making it sound human</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="Let's make a call feel like an actual conversation, not a sequence of announcements. That means being able to interrupt it, and tuning how it delivers speech.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 17</p>
+      <h1>Making it sound human</h1>
+      <p class="lead">Interrupt it, and tune the delivery.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="SWITCH TO APP: Settings › Voice, enable barge-in; back in a call, talk over the avatar to cut it off."
+      data-narration="Turn on barge-in. Now you can talk over the avatar to interrupt it — the moment you start speaking, it stops and listens, exactly like interrupting a person. No waiting for it to finish a paragraph you've already heard enough of.">
+      <p class="eyebrow">Barge-in</p>
+      <h2>Talk over it to interrupt</h2>
+      <p class="lead">With barge-in on, speaking cuts the avatar off mid-sentence and it starts
+        listening — like interrupting a person.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="IMPORTANT DEMO: on speakers, show it interrupting itself; then put on headphones and show it working."
+      data-narration="Here's the important gotcha, and you should demonstrate it. Barge-in through speakers makes the app hear its own voice and interrupt itself, over and over — it's unusable on speakers. Headphones fix it completely. If barge-in seems broken, this is almost always why.">
+      <p class="eyebrow">Gotcha — demo this on camera</p>
+      <h2>Barge-in needs headphones</h2>
+      <ul>
+        <li class="no">On speakers it hears itself and interrupts itself, constantly</li>
+        <li class="ok">Headphones fix it entirely</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="APP: Settings › Voice — point at Human delivery, Expressiveness (0/1/2), Persona, Speech rewrite."
+      data-narration="In Settings, Voice, a few controls change how it sounds. Human delivery adds natural pacing. Expressiveness goes zero, one, two — flat to lively. Persona shapes its manner. And Speech rewrite is clever: a small model rewrites each reply for the ear — numbers become words, markdown is stripped, sentences get shorter — so it reads aloud naturally.">
+      <p class="eyebrow">Delivery controls</p>
+      <h2>From robotic to natural</h2>
+      <ul>
+        <li><b>Human delivery</b> · <b>Expressiveness</b> 0 / 1 / 2 · <b>Persona</b></li>
+        <li><b>Speech rewrite</b> — a small model reshapes replies for the ear <small>numbers as words, no markdown, shorter sentences</small></li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="APP: show the level meter reacting to your voice; open the silence-timeout / smart-endpointing settings."
+      data-narration="One common complaint: it hears me but doesn't reply. Two controls fix that. The level meter shows whether it's actually picking up your voice. And silence timeout, plus smart endpointing, decide how long a pause means you're done — turn them up if it keeps cutting you off, down if it waits too long.">
+      <p class="eyebrow">“It hears me but won't reply”</p>
+      <h2>Level meter + endpointing</h2>
+      <ul>
+        <li><b>Level meter</b> — confirms your mic is getting through</li>
+        <li><b>Silence timeout / smart endpointing</b> — how long a pause means “done”</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="It now converses naturally. Last in the voice module, we replace the plain orb with an actual 3D character — and cover the licensing question before you put one on a public video.">
+      <p class="eyebrow">Up next</p>
+      <h1>E18 · 3D<br/>avatars</h1>
+      <p class="lead">VRM and MMD characters — and their licenses.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

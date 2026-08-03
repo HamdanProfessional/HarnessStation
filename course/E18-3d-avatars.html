@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E18 · 3D avatars</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="Last in the voice module: putting an actual character on screen instead of the default orb. We'll load one — and cover the licensing question honestly, because it matters if you're recording publicly.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 18</p>
+      <h1>3D avatars</h1>
+      <p class="lead">A character on screen — VRM and MMD.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="SWITCH TO APP: Settings › Voice › On-screen character; switch from Orb to a VRM; show it in a call."
+      data-narration="In Settings, Voice, there's an On-screen character option. Switch it from the orb to a VRM model and you've got a proper 3D avatar that moves and lip-syncs while it talks. It's the same call — just with a face.">
+      <p class="eyebrow">Turn it on</p>
+      <h2>Settings › Voice › On-screen character</h2>
+      <p class="lead">Swap the <b>orb</b> for a <b>VRM</b> — a 3D character that animates while it speaks.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: use the in-app Open Source Avatars (CC0) list; pick one and click Import. Mention VRoid Hub too."
+      data-narration="Where do models come from? Two easy sources: VRoid Hub, and the app's built-in Open Source Avatars list, which is browsable and CC0. Pick one and hit Import — it's copied into your avatars folder and ready to use.">
+      <p class="eyebrow">Getting a model</p>
+      <h2>Import a VRM</h2>
+      <ul>
+        <li>VRoid Hub, or the built-in <b>Open Source Avatars</b> (CC0) list</li>
+        <li>Pick one → <b>Import</b> → it lands in your avatars folder</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="9"
+      data-narration="If you want an MMD model instead — the pmx format — there's one wrinkle: it needs its texture folder alongside it to render. So you import MMD models as a zip that contains the model and its textures together, and the app unpacks it.">
+      <p class="eyebrow">MMD models</p>
+      <h2>Import <code>.pmx</code> as a <code>.zip</code></h2>
+      <p class="lead">MMD needs its texture folder alongside the model, so it's imported as a zip of both.</p>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="14"
+      data-narration="Now the part people skip and regret: licensing. VRoid Hub models carry per-creator conditions — some forbid commercial use, some forbid modification, some forbid corporate use. If you're putting a video on YouTube, that's a use you must be cleared for. The safe defaults are CC0 sources, or a character you make yourself in VRoid Studio. When in doubt, don't put someone else's model in a public video.">
+      <p class="eyebrow">Licensing — don't skip this</p>
+      <h2>Check before you publish</h2>
+      <ul>
+        <li class="warn">VRoid Hub models: per-creator terms (commercial / modify / corporate use)</li>
+        <li class="ok">Safe defaults: <b>CC0</b> sources, or your own <b>VRoid Studio</b> character</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="Two things to set expectations, so you don't troubleshoot non-problems. Mouth movement follows the volume of the speech, not the actual phonemes — so it's an approximation, not perfect lip-sync; that's a known limitation, not a bug. And on a laptop, a 3D avatar is real work for the graphics chip: switch back to the orb on battery or integrated graphics.">
+      <p class="eyebrow">Gotchas</p>
+      <h2>Two things that aren't bugs</h2>
+      <ul>
+        <li>Mouth follows speech <b>volume</b>, not phonemes — approximate by design</li>
+        <li class="warn">It's GPU work — use the orb on battery / integrated graphics</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="That completes the voice module. Next module, we start giving the agent whole new toolboxes from the outside world — connecting your first MCP server. See you there.">
+      <p class="eyebrow">Up next · Module 6</p>
+      <h1>E19 · MCP<br/>servers</h1>
+      <p class="lead">Connect external toolboxes to your agent.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

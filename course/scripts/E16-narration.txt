@@ -1,0 +1,17 @@
+# Slide 1
+Now the speaking half. There are four synthesis engines to choose from, and they trade off quality, cost, privacy, and language. Let's compare them and land on a sensible default.
+
+# Slide 2
+Here's the lineup. Kokoro: free, local, genuinely good — but English only. Cloud: the best quality, priced per character, from OpenAI, ElevenLabs, Cartesia or Groq. Piper: free and local too, lighter and faster but more synthetic. System: your OS voice — free, instant, flattest, but often the only offline option for other languages. And Auto, which just picks for you.
+
+# Slide 3
+Let's hear Kokoro — the one I'd default to. First use downloads about ninety megabytes, once. And a nice detail: it generates speech a sentence at a time, so a long reply starts talking almost immediately instead of making you wait for the whole thing.
+
+# Slide 4
+If you want the very best delivery, plug in a cloud engine with a key. The app handles a failed request gracefully — if the cloud call fails mid-reply, it falls back rather than going silent, so a call never just dies on you.
+
+# Slide 5
+The gotcha to remember: Kokoro and Piper are English only. If you need another language, you've got two routes — a cloud engine that supports it, or your system voice with that language pack installed. Don't fight the local engines to speak a language they simply don't have.
+
+# Slide 6
+It can hear and speak. Next we make it feel like a real conversation — barge-in, interruption, and the settings that stop it sounding like a robot reading announcements.

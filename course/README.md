@@ -20,9 +20,16 @@ Record-ready assets for the opening lectures of the course in
 | E13 | Getting better results | `E13-prompting-patterns.html` | 0m 58s |
 | E14 | Working with a codebase | `E14-codebase-end-to-end.html` | 1m 13s |
 
+| E15 | Starting a call | `E15-starting-a-call.html` | 1m 03s |
+| E16 | Picking a voice (engines) | `E16-voice-engines.html` | 0m 58s |
+| E17 | Barge-in &amp; delivery | `E17-barge-in-delivery.html` | 0m 59s |
+| E18 | 3D avatars (VRM / MMD) | `E18-3d-avatars.html` | 1m 07s |
+
 **Track A — Beginner is complete (E01–E14):** install → first model → first
-tool → mental model → a full codebase use case. Track B (Voice, from E15)
-continues from the curriculum.
+tool → mental model → a full codebase use case.
+
+**Track B — Intermediate is in progress.** Module 5 (Voice, E15–E18) done;
+Module 6 (MCP, from E19) continues from the curriculum.
 
 Each lecture is an **HTML slideshow** you show in Chrome and screen-record,
 intercut with live screen capture of the app / installer at the marked cue

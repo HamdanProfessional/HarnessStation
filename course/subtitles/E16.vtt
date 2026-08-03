@@ -1,0 +1,78 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:00.746
+Now the speaking half.
+
+2
+00:00:00.746 --> 00:00:04.305
+There are four synthesis engines to choose from, and they trade off quality, cost, privacy, and language.
+
+3
+00:00:04.305 --> 00:00:06.000
+Let's compare them and land on a sensible default.
+
+4
+00:00:06.000 --> 00:00:06.690
+Here's the lineup.
+
+5
+00:00:06.690 --> 00:00:08.800
+Kokoro: free, local, genuinely good — but English only.
+
+6
+00:00:08.800 --> 00:00:12.214
+Cloud: the best quality, priced per character, from OpenAI, ElevenLabs, Cartesia or Groq.
+
+7
+00:00:12.214 --> 00:00:14.707
+Piper: free and local too, lighter and faster but more synthetic.
+
+8
+00:00:14.707 --> 00:00:18.658
+System: your OS voice — free, instant, flattest, but often the only offline option for other languages.
+
+9
+00:00:18.658 --> 00:00:20.000
+And Auto, which just picks for you.
+
+10
+00:00:20.000 --> 00:00:22.064
+Let's hear Kokoro — the one I'd default to.
+
+11
+00:00:22.064 --> 00:00:24.416
+First use downloads about ninety megabytes, once.
+
+12
+00:00:24.416 --> 00:00:32.000
+And a nice detail: it generates speech a sentence at a time, so a long reply starts talking almost immediately instead of making you wait for the whole thing.
+
+13
+00:00:32.000 --> 00:00:35.125
+If you want the very best delivery, plug in a cloud engine with a key.
+
+14
+00:00:35.125 --> 00:00:42.000
+The app handles a failed request gracefully — if the cloud call fails mid-reply, it falls back rather than going silent, so a call never just dies on you.
+
+15
+00:00:42.000 --> 00:00:44.125
+The gotcha to remember: Kokoro and Piper are English only.
+
+16
+00:00:44.125 --> 00:00:49.326
+If you need another language, you've got two routes — a cloud engine that supports it, or your system voice with that language pack installed.
+
+17
+00:00:49.326 --> 00:00:52.000
+Don't fight the local engines to speak a language they simply don't have.
+
+18
+00:00:52.000 --> 00:00:52.786
+It can hear and speak.
+
+19
+00:00:52.786 --> 00:00:58.000
+Next we make it feel like a real conversation — barge-in, interruption, and the settings that stop it sounding like a robot reading announcements.
+
