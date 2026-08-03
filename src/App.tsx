@@ -56,7 +56,16 @@ export default function App() {
   const [closing, setClosing] = useState(false);
 
   useEffect(() => {
-    void init().then(() => autoConnectMcp());
+    void init().then(async () => {
+      autoConnectMcp();
+      // A shared link can open the app already pointed at a provider/model/style
+      // (and optionally carrying a key). Apply it once settings are loaded.
+      const { readDeepLink, applyDeepLink, startUrlSync } = await import("./lib/deeplink");
+      const cfg = readDeepLink();
+      if (cfg) await applyDeepLink(cfg);
+      // Then keep the address bar mirroring the current selection.
+      return startUrlSync();
+    });
   }, [init, autoConnectMcp]);
 
   useEffect(() => {

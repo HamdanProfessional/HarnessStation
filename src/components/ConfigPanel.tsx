@@ -6,6 +6,8 @@ import { listModels } from "../lib/providers";
 import { useStore } from "../lib/store";
 import { STYLE_PRESETS } from "../lib/styles";
 import { BUILTIN_TOOLSETS } from "../lib/tools";
+import { buildShareLink } from "../lib/deeplink";
+import { toast } from "../lib/toast";
 
 export function ConfigPanel() {
   const {
@@ -43,6 +45,22 @@ export function ConfigPanel() {
   const [loadingModels, setLoadingModels] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [modelError, setModelError] = useState<string | null>(null);
+  const [shareKey, setShareKey] = useState(false);
+
+  const copyShareLink = async () => {
+    const link = buildShareLink({ includeKey: shareKey });
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success(
+        shareKey
+          ? "Link copied — it contains this provider's API key, so share it only with people you trust."
+          : "Share link copied to clipboard.",
+      );
+    } catch {
+      // Clipboard can be blocked (no focus / insecure context) — show it to copy by hand.
+      await promptDialog("Copy this link", { defaultValue: link });
+    }
+  };
   if (!chat) return null;
 
   const provider = settings.providers.find((p) => p.id === chat.providerId);
@@ -217,6 +235,27 @@ export function ConfigPanel() {
           ))}
         </select>
       </label>
+
+      <div className="field">
+        <span>
+          Share setup{" "}
+          <button className="link-btn" onClick={() => void copyShareLink()}>
+            copy link
+          </button>
+        </span>
+        <small className="hint">
+          A link that opens the app on this provider, model and style
+          {chat.kind === "voice" ? ", in voice mode" : ""}.
+        </small>
+        <label
+          className="hint"
+          style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 4 }}
+          title="Include this provider's API key in the link so the recipient needs no key of their own. Anyone with the link can then use the key."
+        >
+          <input type="checkbox" checked={shareKey} onChange={(e) => setShareKey(e.target.checked)} />
+          Include API key (insecure — for trials only)
+        </label>
+      </div>
 
       <label className="field">
         <span>

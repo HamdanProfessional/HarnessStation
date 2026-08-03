@@ -152,6 +152,53 @@ app.get("/api/hf/files", async (req, res) => {
   }
 });
 
+/**
+ * Trial links: a code -> provider bundle, so a shared link can carry a working
+ * key without the key ever appearing in the URL. The recipient's app fetches
+ * /api/trial/:code, gets a provider (base URL, key, models) and adds it.
+ *
+ * Entries live in trials.json on the box (like .env, never in git). Shape:
+ *   [{ "code": "demo", "name": "HarnessStation Demo",
+ *      "kind": "openai-compatible", "baseUrl": "https://api.example.com/v1",
+ *      "apiKey": "sk-...", "models": ["gpt-4o-mini"],
+ *      "note": "rate-limited demo key", "expires": "2026-12-31" }]
+ *
+ * Read fresh per request so you can add or revoke a trial by editing the file —
+ * no restart. It's a tiny file hit rarely, and the rate limiter caps abuse.
+ */
+const TRIALS_FILE = process.env.TRIALS_FILE
+  ? new URL(process.env.TRIALS_FILE, `file://${process.cwd()}/`)
+  : new URL("./trials.json", import.meta.url);
+
+function loadTrials() {
+  try {
+    const rows = JSON.parse(fs.readFileSync(TRIALS_FILE, "utf8"));
+    return Array.isArray(rows) ? rows : [];
+  } catch {
+    return []; // no file / bad JSON -> no trials, which is a valid state
+  }
+}
+
+app.get("/api/trial/:code", (req, res) => {
+  const code = String(req.params.code ?? "").toLowerCase();
+  const entry = loadTrials().find((t) => String(t.code ?? "").toLowerCase() === code);
+  if (!entry) return res.status(404).json({ error: "unknown trial code" });
+  if (entry.expires && Date.now() > Date.parse(entry.expires)) {
+    return res.status(410).json({ error: "trial expired" });
+  }
+  // Hand back only what the client needs to build a provider — never the code
+  // or the expiry bookkeeping.
+  res.json({
+    id: entry.id ?? `trial-${code}`,
+    name: entry.name ?? "Trial provider",
+    kind: entry.kind ?? "openai-compatible",
+    baseUrl: entry.baseUrl,
+    apiKey: entry.apiKey ?? "",
+    models: Array.isArray(entry.models) ? entry.models : [],
+    note: entry.note ?? "",
+  });
+});
+
 /** Curated MCP server list. Edit mcp-directory.json to change what apps see. */
 let directory = [];
 function loadDirectory() {
@@ -174,7 +221,7 @@ app.get("/api/health", (_req, res) => {
       error: hit?.error ?? null,
     };
   }
-  res.json({ ok: true, refreshMinutes: REFRESH_MS / 60_000, feeds });
+  res.json({ ok: true, refreshMinutes: REFRESH_MS / 60_000, feeds, trials: loadTrials().length });
 });
 
 // ---------- boot ----------

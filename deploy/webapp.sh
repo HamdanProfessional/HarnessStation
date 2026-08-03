@@ -15,11 +15,14 @@ HOST="${HOST:-n00bi2761@ssh.testservers.online}"
 BASE="${BASE:-/var/www/hsapp}"
 SITE="${SITE:-https://hsapp.retris.io}"
 KEEP="${KEEP:-3}"   # the WASM is 21 MB per release, so keep fewer than the docs
+# The web build has no local backend, so shared feeds (benchmarks, MCP
+# directory) and trial links go through the gateway. Bake its URL in.
+GATEWAY="${GATEWAY:-https://hsapi.retris.io}"
 
 cd "$(dirname "$0")/.."
 
-echo "==> Building"
-npm run web:build
+echo "==> Building (gateway: $GATEWAY)"
+VITE_GATEWAY_URL="$GATEWAY" npm run web:build
 
 test -s web/dist/index.html || { echo "build produced no index.html"; exit 1; }
 test -d web/dist/assets     || { echo "build produced no assets"; exit 1; }

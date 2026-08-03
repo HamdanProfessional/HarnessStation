@@ -1,0 +1,13 @@
+[
+  {
+    "code": "demo",
+    "id": "trial-demo",
+    "name": "HarnessStation Demo",
+    "kind": "openai-compatible",
+    "baseUrl": "https://api.openai.com/v1",
+    "apiKey": "sk-REPLACE-WITH-A-REAL-KEY",
+    "models": ["gpt-4o-mini"],
+    "note": "shared trial key — rate limited",
+    "expires": "2026-12-31"
+  }
+]
