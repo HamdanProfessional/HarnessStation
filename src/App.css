@@ -4666,3 +4666,39 @@ textarea {
   border-color: color-mix(in srgb, var(--warn) 40%, transparent);
   background: color-mix(in srgb, var(--warn) 12%, transparent);
 }
+
+/* "Get the desktop app" advert — shown in the web build where a feature is
+   desktop-only. Flat card, accent-tinted, never alarming. */
+.desktop-cta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  margin: 12px 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-radius: 12px;
+}
+.desktop-cta.compact { padding: 12px 14px; gap: 12px; }
+.desktop-cta-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+.desktop-cta-body { flex: 1 1 auto; min-width: 0; }
+.desktop-cta-body b { display: block; margin-bottom: 2px; }
+.desktop-cta-body p { margin: 0; color: var(--text-dim); font-size: 13px; line-height: 1.4; }
+.desktop-cta .btn.primary { flex: 0 0 auto; text-decoration: none; }
+
+/* WebLLM model list in the in-browser-models settings card. */
+.webllm-models { list-style: none; padding: 0; margin: 10px 0 0; }
+.webllm-models li {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+}
+.webllm-models li:first-child { border-top: none; }

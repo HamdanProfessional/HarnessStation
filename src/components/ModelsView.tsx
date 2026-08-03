@@ -12,6 +12,8 @@ import {
 } from "../lib/local";
 import { fetch } from "@tauri-apps/plugin-http";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { isWeb } from "../lib/web";
+import { GetDesktopApp } from "./GetDesktopApp";
 import { confirmDialog } from "../lib/dialog";
 import { listModels } from "../lib/providers";
 import { useStore } from "../lib/store";
@@ -289,6 +291,11 @@ export function ModelsView() {
           </button>
         </div>
       </div>
+      {isWeb() && (
+        <GetDesktopApp
+          reason="Downloading and running local GGUF models (llama.cpp) happens on your machine — that needs the desktop app. In the browser, run small models on WebGPU from Settings → Providers."
+        />
+      )}
       {notice && <p className="hint">{notice}</p>}
 
       {hw && (

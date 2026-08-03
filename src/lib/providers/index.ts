@@ -31,6 +31,9 @@ export interface ChatResult {
 
 export async function streamChat(p: ChatParams): Promise<ChatResult> {
   if (p.provider.kind === "anthropic") return streamAnthropic(p);
+  // In-browser model (web build only). Lazily loaded so the WebGPU/WASM engine
+  // is never pulled in unless a webllm provider is actually used.
+  if (p.provider.kind === "webllm") return (await import("./webllm")).streamWebLLM(p);
   return streamOpenAI(p);
 }
 
@@ -50,7 +53,7 @@ function partialTagHold(text: string, tag: string): number {
  * Many models (DeepSeek-R1, Qwen3, GLM, most local GGUF) emit thinking as tags in `content`
  * rather than a dedicated reasoning field. Handles tags split across streamed chunks.
  */
-function makeThinkSplitter(onContent: (t: string) => void, onReasoning?: (t: string) => void) {
+export function makeThinkSplitter(onContent: (t: string) => void, onReasoning?: (t: string) => void) {
   let mode: "content" | "think" = "content";
   let buf = "";
   const push = (chunk: string) => {
@@ -151,7 +154,7 @@ export function sanitizeToolPairs(messages: Message[]): Message[] {
   return out;
 }
 
-function toOpenAIMessages(system: string, messages: Message[]) {
+export function toOpenAIMessages(system: string, messages: Message[]) {
   const out: Record<string, unknown>[] = [];
   if (system) out.push({ role: "system", content: system });
   for (const m of sanitizeToolPairs(messages)) {

@@ -5,6 +5,7 @@ import * as storage from "../lib/storage";
 import { checkForUpdate, installUpdate, type UpdateInfo } from "../lib/updater";
 import { DevicesPanel } from "./DevicesPanel";
 import { SecretsPanel } from "./SecretsPanel";
+import { WebLlmCard } from "./WebLlmCard";
 import { useStore } from "../lib/store";
 import { useModal } from "../lib/useModal";
 import { AvatarGallery } from "./AvatarGallery";
@@ -1558,6 +1559,10 @@ export function SettingsView() {
       </section>
 
       <section hidden={tab !== "providers"}>
+        <WebLlmCard />
+      </section>
+
+      <section hidden={tab !== "providers"}>
         <h2>
           Providers{" "}
           <button className="btn small" onClick={addProvider}>
@@ -1580,6 +1585,7 @@ export function SettingsView() {
               >
                 <option value="openai-compatible">OpenAI-compatible</option>
                 <option value="anthropic">Anthropic</option>
+                <option value="webllm">In-browser (WebGPU)</option>
               </select>
               <button
                 className="icon-btn"

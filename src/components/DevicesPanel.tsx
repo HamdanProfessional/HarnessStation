@@ -20,6 +20,8 @@ import {
 } from "../lib/mesh";
 import { saveMeshPeers, startMesh, stopMesh } from "../lib/meshRuntime";
 import { Spinner } from "./Loading";
+import { isWeb } from "../lib/web";
+import { GetDesktopApp } from "./GetDesktopApp";
 
 /**
  * Settings › Devices.
@@ -146,6 +148,15 @@ export function DevicesPanel() {
 
   const paired = status?.peers.filter((p) => p.paired) ?? [];
   const nearby = status?.peers.filter((p) => !p.paired) ?? [];
+
+  if (isWeb()) {
+    return (
+      <>
+        <h2>Devices</h2>
+        <GetDesktopApp feature="mesh" />
+      </>
+    );
+  }
 
   return (
     <>
