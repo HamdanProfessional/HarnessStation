@@ -4636,3 +4636,8 @@ textarea {
   flex-basis: 100%;
   margin: 0 0 0 2px;
 }
+
+/* Rewind: a destructive message action, tinted so it reads as one. */
+.msg-act-danger:hover {
+  color: var(--danger);
+}

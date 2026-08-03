@@ -163,6 +163,8 @@ interface AppState {
   ensureKnowledgeBases: () => Promise<void>;
   branchAt: (index: number) => void;
   editUserMessage: (index: number, text: string) => Promise<void>;
+  /** Delete a message and everything after it, snapshotting first so it's reversible. */
+  rewindTo: (index: number) => Promise<void>;
 
   sendMessage: (text: string, attachments?: import("./types").Attachment[]) => Promise<void>;
   regenerate: () => Promise<void>;
@@ -683,6 +685,43 @@ export const useStore = create<AppState>((set, get) => ({
     msgs.push({ role: "user", content: text });
     get().updateChat({ messages: msgs });
     await runCompletion(set, get);
+  },
+
+  rewindTo: async (index) => {
+    const id = get().currentId;
+    if (!id || get().streaming) return;
+    await get().hydrateChat(id);
+    const chat = get().chats.find((c) => c.id === id);
+    if (!chat) return;
+    const removed = chat.messages.length - index;
+    if (removed <= 0) return;
+
+    // Snapshot before deleting, so a rewind is reversible — this is what makes it
+    // safe to go back destructively rather than only via a branch. Best-effort:
+    // losing the snapshot shouldn't block the rewind the user asked for.
+    try {
+      await storage.snapshotChat(chat);
+    } catch {
+      /* snapshot is a safety net, not a precondition */
+    }
+
+    // Keep everything before this message; drop it and all that follow.
+    const kept = chat.messages.slice(0, index);
+    get().updateChat({ messages: kept });
+
+    // Persist directly rather than through the coalescing queue: that queue
+    // deliberately refuses to write an empty transcript (its guard against
+    // clobbering a chat before it's hydrated), and rewinding to the very start
+    // legitimately empties it. Force the truncated state — including empty — to
+    // disk so a reload doesn't resurrect the deleted messages.
+    const now = get().chats.find((c) => c.id === id);
+    if (now) {
+      storage.cancelChatSave?.(id);
+      await storage.saveChat(now);
+    }
+    toast.success(
+      `Removed ${removed} message${removed === 1 ? "" : "s"} — restore from the chat's Snapshots if needed`,
+    );
   },
 
   // ---------- messaging ----------

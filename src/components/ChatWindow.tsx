@@ -143,7 +143,7 @@ function ToolResult({
 }
 
 export function ChatWindow() {
-  const { chats, currentId, streaming, error, sendMessage, regenerate, stop, clearError, branchAt, editUserMessage, agents, compactChat, setView, settings, browserDock } =
+  const { chats, currentId, streaming, error, sendMessage, regenerate, stop, clearError, branchAt, editUserMessage, rewindTo, agents, compactChat, setView, settings, browserDock } =
     useStore();
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
@@ -328,6 +328,13 @@ export function ChatWindow() {
                       )}
                       <button className="msg-act" title="Fork the chat here" onClick={() => branchAt(i)}>
                         Branch
+                      </button>
+                      <button
+                        className="msg-act msg-act-danger"
+                        title="Delete this message and everything after it (a snapshot is saved first, so it's reversible)"
+                        onClick={() => void rewindTo(i)}
+                      >
+                        Rewind
                       </button>
                     </span>
                   )}
