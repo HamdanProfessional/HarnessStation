@@ -211,7 +211,7 @@ async function runPipeline(segment: string, ctx: Ctx): Promise<Result> {
   return last;
 }
 
-async function run(command: string, cwd: string): Promise<Result> {
+export async function shellRun(command: string, cwd: string): Promise<Result> {
   const ctx: Ctx = { cwd: cwd.replace(new RegExp(`^/?${WORKSPACE}/?`), "").replace(/^\//, "") };
   if (!(await fs.exists(WORKSPACE))) await fs.mkdir(WORKSPACE);
 
@@ -237,5 +237,5 @@ async function run(command: string, cwd: string): Promise<Result> {
 
 registerCommand("run_command", (args) => {
   const { command, cwd } = (args ?? {}) as { command: string; cwd?: string };
-  return run(String(command ?? ""), String(cwd ?? ""));
+  return shellRun(String(command ?? ""), String(cwd ?? ""));
 });

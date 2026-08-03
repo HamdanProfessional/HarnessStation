@@ -13,18 +13,27 @@
  *
  * Costs, stated plainly: the kernel is a ~10 MB one-time download, boot takes a
  * few seconds, and execution is emulated so it's slower than native. The guest
- * is headless (serial only) and has its own in-memory filesystem — sharing it
- * with the OPFS workspace is the next step and isn't wired here yet.
+ * is headless (serial only); its filesystem is bridged to the OPFS workspace
+ * over 9p, so files created by the file tools and by Linux are the same files.
  *
- * This module boots and runs commands; it does not yet override run_command, so
- * the tested coreutils shell stays the default until the VM is proven in the UI.
+ * run_command routes here when the user enables the real-Linux terminal
+ * (Settings, off by default); otherwise it falls back to the coreutils shell.
+ * The OPFS workspace is bridged in and out over 9p so the file tools and the VM
+ * operate on the same files.
  */
+
+import { registerCommand } from "./core";
+import { shellRun } from "./shell";
+import * as fs from "./fs";
+import { WORKSPACE } from "./vfs";
 
 /** Where the boot assets are served from (web/public/vm → /vm at runtime). */
 const VM_BASE = "/vm";
 
 /** BusyBox's default prompt. Boot is complete once we see it. */
 const PROMPT = "~% ";
+/** Fixed prompt we set post-boot, so it can be stripped from output cleanly. */
+const RUN_PROMPT = "__HSVM__";
 
 const BOOT_TIMEOUT_MS = 40_000;
 const COMMAND_TIMEOUT_MS = 30_000;
@@ -32,8 +41,20 @@ const COMMAND_TIMEOUT_MS = 30_000;
 interface Emulator {
   add_listener: (event: string, fn: (byte: number) => void) => void;
   serial0_send: (text: string) => void;
+  // 9p bridge: create_file/read_file operate on the tree the guest sees at /mnt.
+  create_file: (path: string, data: Uint8Array) => Promise<void>;
+  read_file: (path: string) => Promise<Uint8Array>;
   destroy?: () => void;
 }
+
+/**
+ * The guest mounts the 9p share at /mnt, and host create_file("x") appears there
+ * as /mnt/x. We put the model's workspace under /mnt/workspace and run commands
+ * there, so the file tools (OPFS) and the VM operate on the same files.
+ */
+const GUEST_MOUNT = "/mnt";
+const SHARE_PREFIX = "workspace";
+const GUEST_WORKDIR = `${GUEST_MOUNT}/${SHARE_PREFIX}`;
 
 interface V86Ctor {
   new (opts: Record<string, unknown>): Emulator;
@@ -90,8 +111,8 @@ export function bootVM(): Promise<Emulator> {
       bios: { url: `${VM_BASE}/seabios.bin` },
       vga_bios: { url: `${VM_BASE}/vgabios.bin` },
       bzimage: { url: `${VM_BASE}/buildroot-bzimage68.bin` },
-      // 9p filesystem — empty for now; this is the hook the OPFS workspace will
-      // mount into so the file tools and the VM share files.
+      // The 9p filesystem the OPFS workspace bridges into. v86 auto-mounts it in
+      // the guest at /mnt, tag "host9p".
       filesystem: {},
       cmdline: "tsc=reliable mitigations=off random.trust_cpu=on",
       // 128 MB guest: ample for BusyBox, and well under what the tab can spare
@@ -105,9 +126,18 @@ export function bootVM(): Promise<Emulator> {
     em.add_listener("serial0-output-byte", onSerialByte);
 
     await waitFor((b) => b.includes(PROMPT), BOOT_TIMEOUT_MS, "the shell prompt");
-    // Quiet the shell's own noise so command output is clean to parse.
-    em.serial0_send("export PS1='~% '\n");
     emulator = em;
+    // Turn off input echo. The console otherwise echoes every command back, and
+    // a long one wraps at 80 columns into fragments that leak into the captured
+    // output. With echo off the serial buffer holds only real command output, so
+    // parsing is just "everything up to the exit marker". `stty cols` doesn't
+    // reliably widen the busybox line editor, so `-echo` is the robust fix.
+    await sendRaw(em, `stty -echo`);
+    // A fixed prompt so output parsing can strip it deterministically. The
+    // default is `\w% `, which changes with the working directory (cd into the
+    // workspace makes it `workspace% `) and would otherwise leak into output.
+    await sendRaw(em, `export PS1='${RUN_PROMPT}'`);
+    await sendRaw(em, `mkdir -p ${GUEST_WORKDIR}`);
     return em;
   })();
 
@@ -129,7 +159,93 @@ export interface CommandResult {
 }
 
 /**
- * Run one shell command in the VM and return its output and exit code.
+ * Send one line to the shell and wait for it to complete, discarding output.
+ * Used for setup commands (stty, mkdir) where only completion matters.
+ */
+async function sendRaw(em: Emulator, line: string): Promise<void> {
+  const marker = /__HSR_(\d+)_END__/;
+  const start = serialBuffer.length;
+  em.serial0_send(`${line}\n`);
+  em.serial0_send('echo "__HSR_$?_END__"\n');
+  await waitFor((b) => marker.test(b.slice(start)), COMMAND_TIMEOUT_MS, "setup command");
+}
+
+// --- OPFS ⇆ 9p bridge --------------------------------------------------------
+
+/**
+ * Push every file in the OPFS workspace into the guest's 9p share, so the VM
+ * sees exactly what the file tools have written. Done before each command; the
+ * guest's filesystem is in-memory and doesn't survive a reload, so OPFS stays
+ * the source of truth.
+ */
+async function pushWorkspace(em: Emulator): Promise<void> {
+  const walk = async (opfsDir: string, rel: string): Promise<void> => {
+    let entries: Awaited<ReturnType<typeof fs.readDir>>;
+    try {
+      entries = await fs.readDir(opfsDir);
+    } catch {
+      return; // workspace not created yet
+    }
+    for (const e of entries) {
+      const childRel = rel ? `${rel}/${e.name}` : e.name;
+      if (e.isDirectory) {
+        await walk(`${opfsDir}/${e.name}`, childRel);
+      } else {
+        const bytes = await fs.readFile(`${opfsDir}/${e.name}`);
+        await em.create_file(`${SHARE_PREFIX}/${childRel}`, bytes);
+      }
+    }
+  };
+  await walk(WORKSPACE, "");
+}
+
+/**
+ * Pull files the command created or changed back into OPFS. The guest is
+ * enumerated with `find` (the shell path is proven reliable), then each file is
+ * read over the 9p bridge and written to the workspace.
+ */
+async function pullWorkspace(em: Emulator): Promise<void> {
+  const listing = await rawCapture(em, `find ${GUEST_WORKDIR} -type f 2>/dev/null`);
+  const paths = listing
+    .split("\n")
+    .map((p) => p.trim())
+    .filter((p) => p.startsWith(`${GUEST_WORKDIR}/`));
+  for (const guestPath of paths) {
+    const rel = guestPath.slice(GUEST_WORKDIR.length + 1);
+    try {
+      const bytes = await em.read_file(`${SHARE_PREFIX}/${rel}`);
+      const opfsPath = `${WORKSPACE}/${rel}`;
+      const dir = opfsPath.slice(0, opfsPath.lastIndexOf("/"));
+      await fs.mkdir(dir);
+      await fs.writeFile(opfsPath, bytes);
+    } catch {
+      // A file that vanished between find and read is not worth failing over.
+    }
+  }
+}
+
+/** Run a command purely for its stdout (no exit code), used by the bridge. */
+async function rawCapture(em: Emulator, command: string): Promise<string> {
+  const marker = /__HSC_(\d+)_END__/;
+  const start = serialBuffer.length;
+  em.serial0_send(`${command}\n`);
+  em.serial0_send('echo "__HSC_$?_END__"\n');
+  await waitFor((b) => marker.test(b.slice(start)), COMMAND_TIMEOUT_MS, "capture");
+  // eslint-disable-next-line no-control-regex
+  const seg = serialBuffer.slice(start).replace(/\[[0-9;]*m/g, "");
+  const body = seg.slice(0, seg.search(marker));
+  return body
+    .split(/\r?\n/)
+    .filter((l) => l.trim() !== command.trim())
+    .filter((l) => !l.includes('echo "__HSC_$?_END__"'))
+    .filter((l) => l.trim() !== RUN_PROMPT && l.trim() !== PROMPT.trim())
+    .join("\n");
+}
+
+/**
+ * Run one shell command in the VM and return its output and exit code, with the
+ * OPFS workspace bridged in and out around it. `cwd` is the workspace-relative
+ * directory the file tools use, so a command sees the same current directory.
  *
  * The console echoes back what we type and merges stdout with stderr, so the
  * output has to be fished out precisely. The trick: wrap the command with a
@@ -138,11 +254,13 @@ export interface CommandResult {
  * it's expanded to a number (`__HSX_0_END__`). Matching the numeric form finds
  * the real marker and never the echo.
  */
-export async function vmRunCommand(command: string): Promise<CommandResult> {
+export async function vmRunCommand(command: string, cwd = ""): Promise<CommandResult> {
   const em = await bootVM();
+  await pushWorkspace(em);
 
-  // One line: newlines would each get their own echo and prompt.
-  const oneLine = command.replace(/\r?\n/g, "; ");
+  // Run inside the shared workspace so paths line up with the file tools.
+  const dir = cwd ? `${GUEST_WORKDIR}/${cwd}` : GUEST_WORKDIR;
+  const oneLine = `cd ${dir} 2>/dev/null; ` + command.replace(/\r?\n/g, "; ");
   const marker = /__HSX_(\d+)_END__/;
 
   const start = serialBuffer.length;
@@ -165,9 +283,12 @@ export async function vmRunCommand(command: string): Promise<CommandResult> {
   const cleaned = lines
     .filter((l) => l.trim() !== oneLine.trim())
     .filter((l) => !l.includes('echo "__HSX_$?_END__"'))
-    .filter((l) => l.trim() !== PROMPT.trim())
+    .filter((l) => l.trim() !== RUN_PROMPT && l.trim() !== PROMPT.trim())
     .join("\n")
     .replace(/^\n+|\n+$/g, "");
+
+  // Bring anything the command wrote back into OPFS so the file tools see it.
+  await pullWorkspace(em);
 
   return { stdout: cleaned + (cleaned ? "\n" : ""), stderr: "", code };
 }
@@ -180,3 +301,39 @@ export function shutdownVM(): void {
   serialBuffer = "";
   watchers.length = 0;
 }
+
+// --- routing -----------------------------------------------------------------
+
+const VM_FLAG = "hs-web-vm";
+
+/** Whether the user has opted into the real-Linux terminal. Default off. */
+export function vmEnabled(): boolean {
+  return localStorage.getItem(VM_FLAG) === "1";
+}
+
+export function setVmEnabled(on: boolean): void {
+  localStorage.setItem(VM_FLAG, on ? "1" : "0");
+}
+
+/**
+ * run_command routes here. With the VM enabled it runs the command in real
+ * Linux; if the VM is off — or fails to boot — it falls back to the instant
+ * coreutils shell, so the terminal always works and the download/boot cost is
+ * only paid by users who ask for it.
+ */
+registerCommand("run_command", async (args) => {
+  const { command, cwd } = (args ?? {}) as { command: string; cwd?: string };
+  if (vmEnabled()) {
+    try {
+      return await vmRunCommand(String(command ?? ""), String(cwd ?? ""));
+    } catch (e) {
+      return {
+        stdout: "",
+        stderr: `real-Linux terminal unavailable (${(e as Error).message}); using the built-in shell`,
+        code: 127,
+      };
+    }
+  }
+  return shellRun(String(command ?? ""), String(cwd ?? ""));
+});
+
