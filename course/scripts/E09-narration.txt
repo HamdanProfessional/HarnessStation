@@ -1,0 +1,20 @@
+# Slide 1
+This is the most important episode in the whole series. We give the model a tool, and watch it go from answering questions to actually doing things on your machine. This is the moment a chat becomes an agent.
+
+# Slide 2
+Open the tools panel on the right of the chat and switch on Files. That's it — the model can now read and write files, but only where you allow, which is the next step.
+
+# Slide 3
+When prompted, set a working directory. This is a hard boundary: the model can only see and touch files inside this folder — nothing above it, nowhere else on your disk. Point it at a real project you don't mind it reading.
+
+# Slide 4
+Now the prompt. Ask it: read the README in this folder and tell me what the project does. Watch what happens next.
+
+# Slide 5
+Here's the aha. A tool-call card appears in the conversation. You can see the call it made, the exact arguments it chose, and the result that came back — all inspectable. It decided to read the file, read it, and answered from what it found. That's the call, read, respond loop, and it's the heart of everything.
+
+# Slide 6
+One crucial gotcha. Small local models often can't call tools reliably, no matter what their model card promises. If this step fails on a local model, that's almost always the reason — not a misconfiguration on your end. Before you go debugging, test the exact same prompt with a bigger model. If it works there, the small model was the problem.
+
+# Slide 7
+Now you've seen the core idea. Next we take a proper tour of the sidebar, so the deeper episodes can dive in without stopping to explain where everything is.

@@ -12,9 +12,17 @@ Record-ready assets for the opening lectures of the course in
 | E05 | Where your data lives | `E05-data-location.html` | 1m 05s |
 | E06 | Connecting a free local model (Ollama) | `E06-connect-ollama.html` | 1m 04s |
 | E07 | Connecting a cloud provider | `E07-connect-cloud.html` | 0m 56s |
+| E08 | Sending your first message | `E08-first-message.html` | 0m 41s |
+| E09 | Giving it a tool (it becomes an agent) | `E09-first-tool.html` | 1m 06s |
+| E10 | A tour of the sidebar | `E10-sidebar-tour.html` | 1m 00s |
+| E11 | The agent loop | `E11-agent-loop.html` | 1m 13s |
+| E12 | Local vs cloud, exactly | `E12-local-cloud-split.html` | 1m 01s |
+| E13 | Getting better results | `E13-prompting-patterns.html` | 0m 58s |
+| E14 | Working with a codebase | `E14-codebase-end-to-end.html` | 1m 13s |
 
-Modules 1–2 of Track A (install → first model connected). E08 onward continues
-from the curriculum.
+**Track A — Beginner is complete (E01–E14):** install → first model → first
+tool → mental model → a full codebase use case. Track B (Voice, from E15)
+continues from the curriculum.
 
 Each lecture is an **HTML slideshow** you show in Chrome and screen-record,
 intercut with live screen capture of the app / installer at the marked cue

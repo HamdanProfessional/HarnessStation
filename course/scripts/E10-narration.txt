@@ -1,0 +1,20 @@
+# Slide 1
+Before we go deep on features, let's map the whole app once — the sidebar, the composer, and the per-chat panel — so later episodes can dive in without stopping to explain where things are.
+
+# Slide 2
+At the top: New chat for typing, and New call for a spoken conversation — yes, you can talk to it, that's Module 5. Below them, a search box that looks inside your conversations, not just their titles.
+
+# Slide 3
+Then Projects — think of a project as a workspace that scopes your chats and gives shared instructions; full episode later. Under Chats, every conversation has a menu: pin it, rename, file it in a folder, duplicate, snapshot, export, or delete.
+
+# Slide 4
+Two grouped sections hold the power features. Library is about models: Discover to get them, My Models, Compare, Evals, and Benchmarks. Automation is about capability: Agents, Skills, Knowledge, Tools, Workflows, Schedules, MCP Servers, and the Browser. Each of these gets its own episode.
+
+# Slide 5
+Down at the composer you've got Attach, Dictate, Compact, and Regenerate. And on the right, the per-chat panel — this is where each conversation sets its own model, temperature, system prompt, tools, and working directory. Settings that live with the chat, not globally.
+
+# Slide 6
+Finally, Settings — eight panels. The nicest touch: the search box matches on what a setting does, not just its name. Type “interrupt” and it finds barge-in. If you can describe the behavior, you can find the setting.
+
+# Slide 7
+You can now find anything in the app. Next module builds the mental model — what actually happens when you send a turn, so nearly every “why did it do that” answers itself.

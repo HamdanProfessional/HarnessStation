@@ -1,0 +1,94 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:06.000
+Time for the mental model that explains almost every “why did it do that” moment for the rest of the series: what actually happens when you send a single turn.
+
+2
+00:00:06.000 --> 00:00:06.686
+Here's the loop.
+
+3
+00:00:06.686 --> 00:00:10.286
+The app assembles a prompt and sends it, along with the list of tools, to the model.
+
+4
+00:00:10.286 --> 00:00:12.429
+The model replies with either text or a tool call.
+
+5
+00:00:12.429 --> 00:00:15.686
+If it's a tool call, the app runs it, adds the result, and goes round again.
+
+6
+00:00:15.686 --> 00:00:16.929
+If it's text, the turn stops.
+
+7
+00:00:16.929 --> 00:00:18.000
+That's the entire engine.
+
+8
+00:00:18.000 --> 00:00:22.378
+The consequence that surprises people: every trip around that loop is a separate, separately-billed request to the model.
+
+9
+00:00:22.378 --> 00:00:24.586
+A task that makes eight tool calls is nine requests, not one.
+
+10
+00:00:24.586 --> 00:00:29.000
+That's why an agentic task costs far more than a single question — and why it's worth being specific so it doesn't wander.
+
+11
+00:00:29.000 --> 00:00:30.779
+What actually goes into that prompt, in order?
+
+12
+00:00:30.779 --> 00:00:40.177
+Global instructions, then project instructions, then this chat's instructions, then any recalled memory, then retrieved knowledge, then the skill index, then the tool definitions, then the conversation history — and your new message goes last.
+
+13
+00:00:40.177 --> 00:00:43.000
+Knowing this order explains a lot about what the model pays attention to.
+
+14
+00:00:43.000 --> 00:00:44.376
+And why does the loop ever stop?
+
+15
+00:00:44.376 --> 00:00:50.828
+Five reasons: it answered you; it hit the step limit; it caught itself repeating unproductively; you stopped it; a spend cap kicked in; or it errored.
+
+16
+00:00:50.828 --> 00:00:55.000
+If a task ends earlier than you expected, it's one of these — usually the step limit or a repeat.
+
+17
+00:00:55.000 --> 00:00:56.460
+One gotcha that saves hours of confusion.
+
+18
+00:00:56.460 --> 00:00:58.739
+Those instruction layers add up — they don't replace each other.
+
+19
+00:00:58.739 --> 00:01:01.445
+A chat prompt does not override the global one; they're all present at once.
+
+20
+00:01:01.445 --> 00:01:04.543
+So the commonest cause of an ignored instruction is a contradiction between two layers.
+
+21
+00:01:04.543 --> 00:01:07.000
+When something's ignored, look for what's fighting it, not for a bug.
+
+22
+00:01:07.000 --> 00:01:08.233
+Now you know how a turn works.
+
+23
+00:01:08.233 --> 00:01:13.000
+Next we make the privacy picture concrete: exactly what runs on your machine versus what leaves it for the provider.
+

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E12 · Local vs cloud, exactly</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="Everyone asks: what actually leaves my machine? Let's make the local-versus-cloud boundary concrete instead of hand-wavy — because with an agent, it matters.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track A · Beginner · Episode 12</p>
+      <h1>Local vs cloud, exactly</h1>
+      <p class="lead">What runs here, and what leaves.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="On your machine: the whole interface, all file and terminal work, every tool execution, Whisper transcription, local speech synthesis, the browser panel, and all your storage. Everything with hands — anything that touches your files or your system — happens locally, always.">
+      <p class="eyebrow">On your machine</p>
+      <h2>Everything with hands</h2>
+      <ul>
+        <li class="ok">The interface, and all storage</li>
+        <li class="ok">Every file / terminal action and tool run</li>
+        <li class="ok">Whisper transcription, local speech, the browser panel</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="On the provider, if you use a cloud model: the model, and only the model. It receives the assembled prompt and returns text. It never touches your files directly — when the agent reads a file, that happens on your machine, and only what the model needs to see is put into the prompt.">
+      <p class="eyebrow">On the provider (cloud model)</p>
+      <h2>The model, and nothing else</h2>
+      <ul>
+        <li>Receives the assembled prompt → returns text</li>
+        <li class="ok">Never touches your files — the app does that locally</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="Here's the same question across five real setups. A local model with no tools: nothing leaves. Local model with local embeddings: still nothing. A cloud model: your prompts and the file snippets it's shown leave. Cloud embeddings, and cloud voice: those leave too. Match your setup to the row you're comfortable with.">
+      <p class="eyebrow">What leaves your machine</p>
+      <h2>Five setups</h2>
+      <pre class="term"><span class="g">local model, no tools</span>          nothing leaves
+<span class="g">local model + local embeddings</span> nothing leaves
+cloud model                    prompts + shown snippets
+cloud embeddings               your indexed text
+cloud voice                    your spoken words / replies</pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="And the row that surprises everyone, worth its own beat: cloud embeddings upload every document in a knowledge base to build the index — not just the passages that get retrieved. If a knowledge base is sensitive, use local embeddings. This is the single most misunderstood part of the privacy picture.">
+      <p class="eyebrow">Gotcha — the surprising row</p>
+      <h2>Cloud embeddings upload <u>everything</u></h2>
+      <ul>
+        <li class="warn">Building the index sends <b>every</b> document, not just retrieved passages</li>
+        <li class="ok">Sensitive knowledge base? Use <b>local</b> embeddings</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="You now know how a turn works and where it runs. Next: the handful of prompting patterns that actually make a tool-using agent better — with before-and-after examples on camera.">
+      <p class="eyebrow">Up next</p>
+      <h1>E13 · Getting<br/>better results</h1>
+      <p class="lead">The prompt patterns that measurably help.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

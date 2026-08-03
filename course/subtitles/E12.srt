@@ -1,0 +1,72 @@
+1
+00:00:00,000 --> 00:00:01,808
+Everyone asks: what actually leaves my machine?
+
+2
+00:00:01,808 --> 00:00:06,000
+Let's make the local-versus-cloud boundary concrete instead of hand-wavy — because with an agent, it matters.
+
+3
+00:00:06,000 --> 00:00:13,692
+On your machine: the whole interface, all file and terminal work, every tool execution, Whisper transcription, local speech synthesis, the browser panel, and all your storage.
+
+4
+00:00:13,692 --> 00:00:18,000
+Everything with hands — anything that touches your files or your system — happens locally, always.
+
+5
+00:00:18,000 --> 00:00:20,858
+On the provider, if you use a cloud model: the model, and only the model.
+
+6
+00:00:20,858 --> 00:00:22,815
+It receives the assembled prompt and returns text.
+
+7
+00:00:22,815 --> 00:00:29,000
+It never touches your files directly — when the agent reads a file, that happens on your machine, and only what the model needs to see is put into the prompt.
+
+8
+00:00:29,000 --> 00:00:31,042
+Here's the same question across five real setups.
+
+9
+00:00:31,042 --> 00:00:32,875
+A local model with no tools: nothing leaves.
+
+10
+00:00:32,875 --> 00:00:34,917
+Local model with local embeddings: still nothing.
+
+11
+00:00:34,917 --> 00:00:37,708
+A cloud model: your prompts and the file snippets it's shown leave.
+
+12
+00:00:37,708 --> 00:00:39,833
+Cloud embeddings, and cloud voice: those leave too.
+
+13
+00:00:39,833 --> 00:00:42,000
+Match your setup to the row you're comfortable with.
+
+14
+00:00:42,000 --> 00:00:49,739
+And the row that surprises everyone, worth its own beat: cloud embeddings upload every document in a knowledge base to build the index — not just the passages that get retrieved.
+
+15
+00:00:49,739 --> 00:00:52,130
+If a knowledge base is sensitive, use local embeddings.
+
+16
+00:00:52,130 --> 00:00:55,000
+This is the single most misunderstood part of the privacy picture.
+
+17
+00:00:55,000 --> 00:00:56,636
+You now know how a turn works and where it runs.
+
+18
+00:00:56,636 --> 00:01:01,000
+Next: the handful of prompting patterns that actually make a tool-using agent better — with before-and-after examples on camera.
+

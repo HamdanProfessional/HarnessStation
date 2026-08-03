@@ -1,0 +1,106 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:03.349
+Let's put all of Track A together on something real: working with a codebase, end to end.
+
+2
+00:00:03.349 --> 00:00:07.000
+Files tool, working directory, and the prompting patterns — all at once, on an actual repository.
+
+3
+00:00:07.000 --> 00:00:12.050
+Start by setting the working directory to a real project folder — that's the boundary from Episode 9.
+
+4
+00:00:12.050 --> 00:00:13.350
+Switch on the Files tools.
+
+5
+00:00:13.350 --> 00:00:16.000
+Now the agent can read this repo, and only this repo.
+
+6
+00:00:16.000 --> 00:00:18.834
+First, understand unfamiliar code — but scope the question.
+
+7
+00:00:18.834 --> 00:00:21.332
+Not “explain this repo,” which wastes a dozen reads.
+
+8
+00:00:21.332 --> 00:00:23.205
+Instead: “How does authentication work?
+
+9
+00:00:23.205 --> 00:00:24.502
+Start from the login route.
+
+10
+00:00:24.502 --> 00:00:27.000
+” A specific entry point keeps it focused and cheap.
+
+11
+00:00:27.000 --> 00:00:28.186
+Next, review a recent change.
+
+12
+00:00:28.186 --> 00:00:32.482
+Ask it to look at the latest commit or a diff and tell you what changed and whether anything looks risky.
+
+13
+00:00:32.482 --> 00:00:36.000
+Notice it reads exactly the files it needs and shows you each one in a tool-call card.
+
+14
+00:00:36.000 --> 00:00:38.967
+Now make a small, contained edit — one file, one clear change.
+
+15
+00:00:38.967 --> 00:00:43.273
+Watch the write show up as a tool-call card you can inspect and verify before trusting it.
+
+16
+00:00:43.273 --> 00:00:46.000
+Small and contained means easy to check and easy to undo.
+
+17
+00:00:46.000 --> 00:00:50.426
+For anything bigger — a change across several files — use the plan-before-work pattern from Episode 13.
+
+18
+00:00:50.426 --> 00:00:52.875
+Ask for the plan first, read it, correct it, then say go.
+
+19
+00:00:52.875 --> 00:00:57.000
+Fixing a wrong plan costs a sentence; fixing wrong edits across five files costs your afternoon.
+
+20
+00:00:57.000 --> 00:01:00.000
+The gotcha the docs themselves call out: vague requests cause wasted exploration.
+
+21
+00:01:00.000 --> 00:01:02.519
+“Fix the bug” sends it reading half the repo to guess what you mean.
+
+22
+00:01:02.519 --> 00:01:04.037
+Name the file, the function, the symptom.
+
+23
+00:01:04.037 --> 00:01:07.000
+Specificity is the difference between a focused agent and an expensive wanderer.
+
+24
+00:01:07.000 --> 00:01:10.141
+That's Track A — you can install it, connect a model, and put a capable agent to work on real files.
+
+25
+00:01:10.141 --> 00:01:12.372
+Track B goes intermediate, starting with voice: actually talking to it.
+
+26
+00:01:12.372 --> 00:01:13.000
+See you in Module 5.
+

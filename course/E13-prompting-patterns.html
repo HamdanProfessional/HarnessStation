@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E13 · Getting better results</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="Let's talk about getting genuinely better results — the handful of prompt patterns that measurably help a tool-using agent. I'll show before-and-after on camera so you can see the difference, not just take my word for it.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track A · Beginner · Episode 13</p>
+      <h1>Getting better results</h1>
+      <p class="lead">Prompt patterns that actually move the needle.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="OPTIONAL: run a vague prompt vs. a scoped one side by side to show the quality jump."
+      data-narration="Three that pay off immediately. Say what you don't want — “skip style comments, only real bugs.” Give it explicit permission to find nothing — that single line kills padded, low-signal answers. And ask it to show its evidence or quote the source — the best defense against confident invention.">
+      <p class="eyebrow">The high-value three</p>
+      <h2>Constrain, permit, demand evidence</h2>
+      <ul>
+        <li>Say what you <b>don't</b> want — “only bugs, skip style”</li>
+        <li>Permit it to find <b>nothing</b> — kills padded output</li>
+        <li>Ask it to <b>quote the source</b> — beats confident invention</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Three more about how you drive it. Ask for a plan before any multi-file work — cheaper to fix a plan than an edit. Work in small steps instead of one giant ask. And tell it what to do when stuck: ask you, or make an assumption and flag it — so it doesn't silently guess.">
+      <p class="eyebrow">How you drive it</p>
+      <h2>Plan, step, and handle “stuck”</h2>
+      <ul>
+        <li>Ask for a <b>plan</b> before multi-file work</li>
+        <li>Small steps beat one long ask</li>
+        <li>Say what to do when stuck — <b>ask</b>, or <b>assume-and-flag</b></li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="And what doesn't help, so you can stop wasting words on it: politeness, “you are a senior engineer” role-play framing, very long instructions, and — importantly — repeating an instruction it already ignored. None of these measurably improve a modern tool-using model.">
+      <p class="eyebrow">What doesn't help</p>
+      <h2>Stop spending words here</h2>
+      <ul>
+        <li class="no">Politeness, and “you are a senior engineer” framing</li>
+        <li class="no">Very long instructions</li>
+        <li class="no">Repeating an instruction it already ignored</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="That last one deserves a gotcha. Repeating an ignored instruction almost never works, because the problem usually isn't emphasis — it's that something else in the prompt is contradicting it. Go back to the layering model from Episode 11 and find the conflict instead of shouting louder.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Repeating ≠ fixing</h2>
+      <p class="lead">If it ignored something, another layer is probably contradicting it. Find the conflict
+        (Episode 11), don't just say it again, louder.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="That's the whole beginner toolkit. Next episode we put all of Track A together on a real codebase — the first proper end-to-end use case. See you there.">
+      <p class="eyebrow">Up next · Module 4</p>
+      <h1>E14 · Working with<br/>a codebase</h1>
+      <p class="lead">Everything in Track A, on a real repo.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

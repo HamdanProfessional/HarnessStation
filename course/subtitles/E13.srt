@@ -1,0 +1,72 @@
+1
+00:00:00,000 --> 00:00:03,355
+Let's talk about getting genuinely better results — the handful of prompt patterns that measurably help a tool-using agent.
+
+2
+00:00:03,355 --> 00:00:06,000
+I'll show before-and-after on camera so you can see the difference, not just take my word for it.
+
+3
+00:00:06,000 --> 00:00:07,278
+Three that pay off immediately.
+
+4
+00:00:07,278 --> 00:00:09,876
+Say what you don't want — “skip style comments, only real bugs.
+
+5
+00:00:09,876 --> 00:00:13,918
+” Give it explicit permission to find nothing — that single line kills padded, low-signal answers.
+
+6
+00:00:13,918 --> 00:00:18,000
+And ask it to show its evidence or quote the source — the best defense against confident invention.
+
+7
+00:00:18,000 --> 00:00:19,401
+Three more about how you drive it.
+
+8
+00:00:19,401 --> 00:00:22,655
+Ask for a plan before any multi-file work — cheaper to fix a plan than an edit.
+
+9
+00:00:22,655 --> 00:00:24,509
+Work in small steps instead of one giant ask.
+
+10
+00:00:24,509 --> 00:00:29,000
+And tell it what to do when stuck: ask you, or make an assumption and flag it — so it doesn't silently guess.
+
+11
+00:00:29,000 --> 00:00:38,338
+And what doesn't help, so you can stop wasting words on it: politeness, “you are a senior engineer” role-play framing, very long instructions, and — importantly — repeating an instruction it already ignored.
+
+12
+00:00:38,338 --> 00:00:41,000
+None of these measurably improve a modern tool-using model.
+
+13
+00:00:41,000 --> 00:00:42,239
+That last one deserves a gotcha.
+
+14
+00:00:42,239 --> 00:00:48,320
+Repeating an ignored instruction almost never works, because the problem usually isn't emphasis — it's that something else in the prompt is contradicting it.
+
+15
+00:00:48,320 --> 00:00:52,000
+Go back to the layering model from Episode 11 and find the conflict instead of shouting louder.
+
+16
+00:00:52,000 --> 00:00:53,360
+That's the whole beginner toolkit.
+
+17
+00:00:53,360 --> 00:00:57,440
+Next episode we put all of Track A together on a real codebase — the first proper end-to-end use case.
+
+18
+00:00:57,440 --> 00:00:58,000
+See you there.
+

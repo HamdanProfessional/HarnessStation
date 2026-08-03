@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E14 · Working with a codebase</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Let's put all of Track A together on something real: working with a codebase, end to end. Files tool, working directory, and the prompting patterns — all at once, on an actual repository.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track A · Beginner · Episode 14 · Module 4</p>
+      <h1>Working with a codebase</h1>
+      <p class="lead">The first full, real use case.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="SWITCH TO APP: set the working directory to a real project folder; enable Files (and read-only tools)."
+      data-narration="Start by setting the working directory to a real project folder — that's the boundary from Episode 9. Switch on the Files tools. Now the agent can read this repo, and only this repo.">
+      <p class="eyebrow">Set up</p>
+      <h2>Point it at a real repo</h2>
+      <p class="lead">Working directory → the project folder. Files tools on. That folder is the whole
+        world the agent can see.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: ask a scoped question about a specific area; let it read a few files and answer."
+      data-narration="First, understand unfamiliar code — but scope the question. Not “explain this repo,” which wastes a dozen reads. Instead: “How does authentication work? Start from the login route.” A specific entry point keeps it focused and cheap.">
+      <p class="eyebrow">Understand it</p>
+      <h2>Ask a <u>scoped</u> question</h2>
+      <ul>
+        <li class="no">“Explain this whole repo” — wastes reads</li>
+        <li class="ok">“How does auth work? Start from the login route.”</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="APP: ask it to review the latest change / a diff (use the terminal or git tool if enabled)."
+      data-narration="Next, review a recent change. Ask it to look at the latest commit or a diff and tell you what changed and whether anything looks risky. Notice it reads exactly the files it needs and shows you each one in a tool-call card.">
+      <p class="eyebrow">Review a change</p>
+      <h2>“What changed in the last commit —<br/>anything risky?”</h2>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="APP: request a small, single-file edit; watch the write tool-call card appear; verify the diff."
+      data-narration="Now make a small, contained edit — one file, one clear change. Watch the write show up as a tool-call card you can inspect and verify before trusting it. Small and contained means easy to check and easy to undo.">
+      <p class="eyebrow">Make a small edit</p>
+      <h2>One file, one change, visible</h2>
+      <p class="lead">The edit appears as a tool-call card — inspect the diff before you trust it.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="For anything bigger — a change across several files — use the plan-before-work pattern from Episode 13. Ask for the plan first, read it, correct it, then say go. Fixing a wrong plan costs a sentence; fixing wrong edits across five files costs your afternoon.">
+      <p class="eyebrow">For multi-file work</p>
+      <h2>Plan first, then execute</h2>
+      <ul>
+        <li>“Plan the change across these files, then wait.”</li>
+        <li class="ok">Correcting a plan is cheap; correcting five bad edits isn't</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="The gotcha the docs themselves call out: vague requests cause wasted exploration. “Fix the bug” sends it reading half the repo to guess what you mean. Name the file, the function, the symptom. Specificity is the difference between a focused agent and an expensive wanderer.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Vague requests = wasted exploration</h2>
+      <p class="lead">“Fix the bug” makes it read half the repo guessing. Name the <b>file</b>, the
+        <b>function</b>, the <b>symptom</b>.</p>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="That's Track A — you can install it, connect a model, and put a capable agent to work on real files. Track B goes intermediate, starting with voice: actually talking to it. See you in Module 5.">
+      <p class="eyebrow">End of Track A · Up next</p>
+      <h1>E15 · Track B<br/>begins: Voice</h1>
+      <p class="lead">Hold a spoken conversation with your agent.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

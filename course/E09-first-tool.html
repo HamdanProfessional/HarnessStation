@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E09 · Giving it a tool</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="This is the most important episode in the whole series. We give the model a tool, and watch it go from answering questions to actually doing things on your machine. This is the moment a chat becomes an agent.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track A · Beginner · Episode 9</p>
+      <h1>Giving it a tool</h1>
+      <p class="lead">The single most important “aha” of the series.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="8"
+      data-cue="SWITCH TO APP: open the tools panel on the right of the chat, toggle on the Files tool group."
+      data-narration="Open the tools panel on the right of the chat and switch on Files. That's it — the model can now read and write files, but only where you allow, which is the next step.">
+      <p class="eyebrow">Step 1 — Switch on Files</p>
+      <h2>The tools panel, right of the chat</h2>
+      <p class="lead">Toggle on <b>Files</b>. The model can now read and write — within a boundary you set.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: when prompted, set a working directory to a real folder. Emphasise the folder picker."
+      data-narration="When prompted, set a working directory. This is a hard boundary: the model can only see and touch files inside this folder — nothing above it, nowhere else on your disk. Point it at a real project you don't mind it reading.">
+      <p class="eyebrow">Step 2 — Set the boundary</p>
+      <h2>The working directory is a hard wall</h2>
+      <ul>
+        <li class="ok">The model can only reach files <b>inside</b> this folder</li>
+        <li>Nothing above it, nothing elsewhere on disk</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="APP: type the prompt and send. Let the model call the file tool."
+      data-narration="Now the prompt. Ask it: read the README in this folder and tell me what the project does. Watch what happens next.">
+      <p class="eyebrow">Step 3 — Ask it to act</p>
+      <h2>“Read the README and tell me<br/>what this project does.”</h2>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="APP: point the cursor at the tool-call card — expand it to show the call name, arguments, and returned result."
+      data-narration="Here's the aha. A tool-call card appears in the conversation. You can see the call it made, the exact arguments it chose, and the result that came back — all inspectable. It decided to read the file, read it, and answered from what it found. That's the call, read, respond loop, and it's the heart of everything.">
+      <p class="eyebrow">The aha</p>
+      <h2>Call → read → respond, in the open</h2>
+      <ul>
+        <li>The tool-call card shows the <b>call</b>, its <b>arguments</b>, and the <b>result</b></li>
+        <li>All inspectable — nothing hidden behind the answer</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="One crucial gotcha. Small local models often can't call tools reliably, no matter what their model card promises. If this step fails on a local model, that's almost always the reason — not a misconfiguration on your end. Before you go debugging, test the exact same prompt with a bigger model. If it works there, the small model was the problem.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>If it won't call the tool…</h2>
+      <ul>
+        <li class="warn">Small local models are unreliable at tool calls — regardless of their model card</li>
+        <li class="ok">Test the same prompt on a bigger model before assuming it's broken</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Now you've seen the core idea. Next we take a proper tour of the sidebar, so the deeper episodes can dive in without stopping to explain where everything is.">
+      <p class="eyebrow">Up next</p>
+      <h1>E10 · A tour<br/>of the sidebar</h1>
+      <p class="lead">Map every panel, once.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

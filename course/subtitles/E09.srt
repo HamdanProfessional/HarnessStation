@@ -1,0 +1,92 @@
+1
+00:00:00,000 --> 00:00:01,869
+This is the most important episode in the whole series.
+
+2
+00:00:01,869 --> 00:00:05,539
+We give the model a tool, and watch it go from answering questions to actually doing things on your machine.
+
+3
+00:00:05,539 --> 00:00:07,000
+This is the moment a chat becomes an agent.
+
+4
+00:00:07,000 --> 00:00:10,162
+Open the tools panel on the right of the chat and switch on Files.
+
+5
+00:00:10,162 --> 00:00:15,000
+That's it — the model can now read and write files, but only where you allow, which is the next step.
+
+6
+00:00:15,000 --> 00:00:16,941
+When prompted, set a working directory.
+
+7
+00:00:16,941 --> 00:00:23,362
+This is a hard boundary: the model can only see and touch files inside this folder — nothing above it, nowhere else on your disk.
+
+8
+00:00:23,362 --> 00:00:26,000
+Point it at a real project you don't mind it reading.
+
+9
+00:00:26,000 --> 00:00:27,205
+Now the prompt.
+
+10
+00:00:27,205 --> 00:00:33,071
+Ask it: read the README in this folder and tell me what the project does.
+
+11
+00:00:33,071 --> 00:00:35,000
+Watch what happens next.
+
+12
+00:00:35,000 --> 00:00:35,584
+Here's the aha.
+
+13
+00:00:35,584 --> 00:00:37,338
+A tool-call card appears in the conversation.
+
+14
+00:00:37,338 --> 00:00:41,545
+You can see the call it made, the exact arguments it chose, and the result that came back — all inspectable.
+
+15
+00:00:41,545 --> 00:00:44,273
+It decided to read the file, read it, and answered from what it found.
+
+16
+00:00:44,273 --> 00:00:47,000
+That's the call, read, respond loop, and it's the heart of everything.
+
+17
+00:00:47,000 --> 00:00:47,724
+One crucial gotcha.
+
+18
+00:00:47,724 --> 00:00:51,270
+Small local models often can't call tools reliably, no matter what their model card promises.
+
+19
+00:00:51,270 --> 00:00:55,311
+If this step fails on a local model, that's almost always the reason — not a misconfiguration on your end.
+
+20
+00:00:55,311 --> 00:00:58,056
+Before you go debugging, test the exact same prompt with a bigger model.
+
+21
+00:00:58,056 --> 00:01:00,000
+If it works there, the small model was the problem.
+
+22
+00:01:00,000 --> 00:01:01,154
+Now you've seen the core idea.
+
+23
+00:01:01,154 --> 00:01:06,000
+Next we take a proper tour of the sidebar, so the deeper episodes can dive in without stopping to explain where everything is.
+

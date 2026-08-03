@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E08 · Sending your first message</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="5"
+      data-narration="You've got a model connected. Let's close the loop and actually talk to it — and cover the three errors you might hit on the way.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track A · Beginner · Episode 8</p>
+      <h1>Your first message</h1>
+      <p class="lead">Type, send, watch it stream back.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="SWITCH TO APP: pick a model in the selector at the top of the chat, type a question, press Enter."
+      data-narration="Pick a model from the selector at the top of the chat, type a message, and press Enter. Nothing more to it — this is the plain chat you already know from other apps.">
+      <p class="eyebrow">Send one</p>
+      <h2>Model → type → Enter</h2>
+      <p class="lead">Choose a model in the selector atop the chat, type, and hit Enter.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="8"
+      data-cue="APP: let a reply stream in that includes a code block, so the markdown + syntax highlighting is visible."
+      data-narration="The reply streams in live and renders as formatted markdown — headings, lists, and syntax-highlighted code blocks. Ask it for a snippet to show that off on camera.">
+      <p class="eyebrow">The reply</p>
+      <h2>Streams in as rich markdown</h2>
+      <p class="lead">Formatted text and <b>syntax-highlighted code</b> render as it streams.</p>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="Three errors catch almost everyone at least once. “No provider configured” means you skipped connecting a model — go back to Providers. “Connection refused” means your local server, Ollama or LM Studio, isn't actually running. And a 401 or 403 means a bad key, or a cloud account with no credit. Each one tells you exactly which of those it is.">
+      <p class="eyebrow">The three first-message errors</p>
+      <h2>And their fixes</h2>
+      <ul>
+        <li class="no">“No provider configured” <small>you haven't connected a model yet — Settings › Providers</small></li>
+        <li class="no">“Connection refused” <small>your local server (Ollama / LM Studio) isn't running</small></li>
+        <li class="no">401 / 403 <small>bad API key, or a cloud account with no credit</small></li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="That's a plain chat. Next episode is the big one — we give the model a tool, and watch it stop being a chat box and start being an agent.">
+      <p class="eyebrow">Up next</p>
+      <h1>E09 · Giving it<br/>a tool</h1>
+      <p class="lead">The moment it becomes an agent.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

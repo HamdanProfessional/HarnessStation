@@ -1,0 +1,23 @@
+# Slide 1
+Let's put all of Track A together on something real: working with a codebase, end to end. Files tool, working directory, and the prompting patterns — all at once, on an actual repository.
+
+# Slide 2
+Start by setting the working directory to a real project folder — that's the boundary from Episode 9. Switch on the Files tools. Now the agent can read this repo, and only this repo.
+
+# Slide 3
+First, understand unfamiliar code — but scope the question. Not “explain this repo,” which wastes a dozen reads. Instead: “How does authentication work? Start from the login route.” A specific entry point keeps it focused and cheap.
+
+# Slide 4
+Next, review a recent change. Ask it to look at the latest commit or a diff and tell you what changed and whether anything looks risky. Notice it reads exactly the files it needs and shows you each one in a tool-call card.
+
+# Slide 5
+Now make a small, contained edit — one file, one clear change. Watch the write show up as a tool-call card you can inspect and verify before trusting it. Small and contained means easy to check and easy to undo.
+
+# Slide 6
+For anything bigger — a change across several files — use the plan-before-work pattern from Episode 13. Ask for the plan first, read it, correct it, then say go. Fixing a wrong plan costs a sentence; fixing wrong edits across five files costs your afternoon.
+
+# Slide 7
+The gotcha the docs themselves call out: vague requests cause wasted exploration. “Fix the bug” sends it reading half the repo to guess what you mean. Name the file, the function, the symptom. Specificity is the difference between a focused agent and an expensive wanderer.
+
+# Slide 8
+That's Track A — you can install it, connect a model, and put a capable agent to work on real files. Track B goes intermediate, starting with voice: actually talking to it. See you in Module 5.

@@ -1,0 +1,74 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:06.000
+Before we go deep on features, let's map the whole app once — the sidebar, the composer, and the per-chat panel — so later episodes can dive in without stopping to explain where things are.
+
+2
+00:00:06.000 --> 00:00:10.600
+At the top: New chat for typing, and New call for a spoken conversation — yes, you can talk to it, that's Module 5.
+
+3
+00:00:10.600 --> 00:00:14.000
+Below them, a search box that looks inside your conversations, not just their titles.
+
+4
+00:00:14.000 --> 00:00:19.062
+Then Projects — think of a project as a workspace that scopes your chats and gives shared instructions; full episode later.
+
+5
+00:00:19.062 --> 00:00:24.000
+Under Chats, every conversation has a menu: pin it, rename, file it in a folder, duplicate, snapshot, export, or delete.
+
+6
+00:00:24.000 --> 00:00:25.731
+Two grouped sections hold the power features.
+
+7
+00:00:25.731 --> 00:00:29.154
+Library is about models: Discover to get them, My Models, Compare, Evals, and Benchmarks.
+
+8
+00:00:29.154 --> 00:00:33.654
+Automation is about capability: Agents, Skills, Knowledge, Tools, Workflows, Schedules, MCP Servers, and the Browser.
+
+9
+00:00:33.654 --> 00:00:35.000
+Each of these gets its own episode.
+
+10
+00:00:35.000 --> 00:00:37.724
+Down at the composer you've got Attach, Dictate, Compact, and Regenerate.
+
+11
+00:00:37.724 --> 00:00:43.246
+And on the right, the per-chat panel — this is where each conversation sets its own model, temperature, system prompt, tools, and working directory.
+
+12
+00:00:43.246 --> 00:00:45.000
+Settings that live with the chat, not globally.
+
+13
+00:00:45.000 --> 00:00:46.388
+Finally, Settings — eight panels.
+
+14
+00:00:46.388 --> 00:00:49.879
+The nicest touch: the search box matches on what a setting does, not just its name.
+
+15
+00:00:49.879 --> 00:00:51.519
+Type “interrupt” and it finds barge-in.
+
+16
+00:00:51.519 --> 00:00:54.000
+If you can describe the behavior, you can find the setting.
+
+17
+00:00:54.000 --> 00:00:55.298
+You can now find anything in the app.
+
+18
+00:00:55.298 --> 00:01:00.000
+Next module builds the mental model — what actually happens when you send a turn, so nearly every “why did it do that” answers itself.
+

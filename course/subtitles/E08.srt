@@ -1,0 +1,52 @@
+1
+00:00:00,000 --> 00:00:01,133
+You've got a model connected.
+
+2
+00:00:01,133 --> 00:00:05,000
+Let's close the loop and actually talk to it — and cover the three errors you might hit on the way.
+
+3
+00:00:05,000 --> 00:00:09,774
+Pick a model from the selector at the top of the chat, type a message, and press Enter.
+
+4
+00:00:09,774 --> 00:00:14,000
+Nothing more to it — this is the plain chat you already know from other apps.
+
+5
+00:00:14,000 --> 00:00:19,630
+The reply streams in live and renders as formatted markdown — headings, lists, and syntax-highlighted code blocks.
+
+6
+00:00:19,630 --> 00:00:22,000
+Ask it for a snippet to show that off on camera.
+
+7
+00:00:22,000 --> 00:00:23,874
+Three errors catch almost everyone at least once.
+
+8
+00:00:23,874 --> 00:00:27,124
+“No provider configured” means you skipped connecting a model — go back to Providers.
+
+9
+00:00:27,124 --> 00:00:30,565
+“Connection refused” means your local server, Ollama or LM Studio, isn't actually running.
+
+10
+00:00:30,565 --> 00:00:33,165
+And a 401 or 403 means a bad key, or a cloud account with no credit.
+
+11
+00:00:33,165 --> 00:00:35,000
+Each one tells you exactly which of those it is.
+
+12
+00:00:35,000 --> 00:00:35,882
+That's a plain chat.
+
+13
+00:00:35,882 --> 00:00:41,000
+Next episode is the big one — we give the model a tool, and watch it stop being a chat box and start being an agent.
+

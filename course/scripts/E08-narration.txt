@@ -1,0 +1,14 @@
+# Slide 1
+You've got a model connected. Let's close the loop and actually talk to it — and cover the three errors you might hit on the way.
+
+# Slide 2
+Pick a model from the selector at the top of the chat, type a message, and press Enter. Nothing more to it — this is the plain chat you already know from other apps.
+
+# Slide 3
+The reply streams in live and renders as formatted markdown — headings, lists, and syntax-highlighted code blocks. Ask it for a snippet to show that off on camera.
+
+# Slide 4
+Three errors catch almost everyone at least once. “No provider configured” means you skipped connecting a model — go back to Providers. “Connection refused” means your local server, Ollama or LM Studio, isn't actually running. And a 401 or 403 means a bad key, or a cloud account with no credit. Each one tells you exactly which of those it is.
+
+# Slide 5
+That's a plain chat. Next episode is the big one — we give the model a tool, and watch it stop being a chat box and start being an agent.
