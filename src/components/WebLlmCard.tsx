@@ -8,17 +8,18 @@ import { toast } from "../lib/toast";
 const PROVIDER_ID = "webllm";
 
 /**
- * Settings card for running a model inside the browser tab (WebGPU / WebLLM).
- * Web-only. Explains the trade (a big one-time download, small models), lets you
- * pre-download each model, and — when the browser can't do it — points at the
- * desktop app.
+ * Settings card for running a model on WebGPU — inside the browser tab on the
+ * web build, and inside the app's WebView on desktop (Windows WebView2 has
+ * WebGPU). Zero setup: no key, no server, no separate engine download; after the
+ * one-time model download it runs offline. It complements — doesn't replace —
+ * the desktop's native llama.cpp models, which go bigger and use the GPU harder.
  */
 export function WebLlmCard() {
-  const { settings, saveSettings } = useStore();
+  const { settings, saveSettings, setView } = useStore();
   const [cached, setCached] = useState<Record<string, boolean>>({});
   const [prog, setProg] = useState<Record<string, { pct: number; text: string }>>({});
   const [downloading, setDownloading] = useState<string | null>(null);
-  const supported = isWeb() && hasWebGPU();
+  const supported = hasWebGPU();
 
   // Which models are already downloaded, so we can show "Downloaded" vs "Download".
   useEffect(() => {
@@ -32,19 +33,34 @@ export function WebLlmCard() {
     };
   }, [supported]);
 
-  if (!isWeb()) return null; // desktop already runs real local models
-
   const existing = settings.providers.find((p) => p.id === PROVIDER_ID);
 
-  if (!hasWebGPU()) {
+  // No WebGPU: on the web build, point at the desktop app; on desktop (e.g. the
+  // Linux WebView, which lacks WebGPU), point at the native local models instead
+  // — never tell a desktop user to "download the desktop app".
+  if (!supported) {
     return (
       <>
-        <h2>Run a model in your browser</h2>
-        <p className="hint">
-          Running a model in the tab needs <b>WebGPU</b>, which this browser doesn't have. Use a
-          recent Chrome or Edge — or run full local models on the desktop app.
-        </p>
-        <GetDesktopApp feature="local-models" />
+        <h2>Run a model with WebGPU</h2>
+        {isWeb() ? (
+          <>
+            <p className="hint">
+              Running a model in the tab needs <b>WebGPU</b>, which this browser doesn't have. Use a
+              recent Chrome or Edge — or run full local models on the desktop app.
+            </p>
+            <GetDesktopApp feature="local-models" />
+          </>
+        ) : (
+          <p className="hint">
+            This system's WebView has no WebGPU, so in-tab models aren't available here. You can still
+            run full local models natively —{" "}
+            <button className="link-btn" onClick={() => setView("models")}>
+              open My Models
+            </button>{" "}
+            or <button className="link-btn" onClick={() => setView("discover")}>Discover</button> to
+            download a GGUF and run it with llama.cpp.
+          </p>
+        )}
       </>
     );
   }
@@ -89,10 +105,10 @@ export function WebLlmCard() {
 
   return (
     <>
-      <h2>Run a model in your browser</h2>
+      <h2>Run a model with WebGPU</h2>
       <p className="hint">
-        Runs entirely in this tab on WebGPU — no key, no server, and after the first download
-        (cached here), no network. Best for a quick, private try; browsers cap this at small models.
+        Runs entirely on your GPU {isWeb() ? "in this tab" : "inside the app"} — no key, no server,
+        and after the first download (cached here), no network. Zero setup; capped at small models.
         Download one now so your first message is instant.
       </p>
       <div className="provider-card">
@@ -113,7 +129,7 @@ export function WebLlmCard() {
                   )}
                 </span>
                 {isDone ? (
-                  <span className="pill ok" title="Weights cached in this browser">
+                  <span className="pill ok" title="Weights cached here">
                     Downloaded ✓
                   </span>
                 ) : (
@@ -139,11 +155,23 @@ export function WebLlmCard() {
           )}
         </p>
       </div>
-      <p className="hint">
-        Want bigger models, or fully offline llama.cpp with any GGUF from Hugging Face?{" "}
-        That's the desktop app.
-      </p>
-      <GetDesktopApp feature="local-models" compact />
+      {isWeb() ? (
+        <>
+          <p className="hint">
+            Want bigger models, or fully offline llama.cpp with any GGUF from Hugging Face?{" "}
+            That's the desktop app.
+          </p>
+          <GetDesktopApp feature="local-models" compact />
+        </>
+      ) : (
+        <p className="hint">
+          For bigger models and full GPU offload, use native local models —{" "}
+          <button className="link-btn" onClick={() => setView("discover")}>
+            Discover
+          </button>{" "}
+          downloads any GGUF from Hugging Face and runs it with llama.cpp.
+        </p>
+      )}
     </>
   );
 }

@@ -103,7 +103,7 @@ export async function webllmCached(model: string): Promise<boolean> {
 export async function streamWebLLM(p: ChatParams): Promise<ChatResult> {
   if (!("gpu" in navigator)) {
     throw new Error(
-      "This browser has no WebGPU, so it can't run a model in the tab. Use Chrome or Edge, or install the desktop app for full local models.",
+      "No WebGPU here, so this in-app model can't run. On the web use Chrome or Edge; on desktop use native local models (Discover → download a GGUF).",
     );
   }
   const eng = await getEngine(p.model);
