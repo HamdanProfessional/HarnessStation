@@ -26,6 +26,7 @@ import { ContextMenu } from "./components/ContextMenu";
 import { Toaster } from "./components/Toaster";
 import { CommandPalette } from "./components/CommandPalette";
 import { Onboarding, hasOnboarded } from "./components/Onboarding";
+import { hasDeepLink } from "./lib/deeplink";
 import { ClosingOverlay, Splash, ViewLoading } from "./components/Loading";
 import { useStore } from "./lib/store";
 import { flushChatSaves } from "./lib/storage";
@@ -184,7 +185,9 @@ export default function App() {
 
   if (!ready) return <Splash status={bootStatus} />;
 
-  const showOnboard = !hasOnboarded();
+  // Arriving via a share link means the setup is already chosen — don't block it
+  // with the getting-started chooser.
+  const showOnboard = !hasOnboarded() && !hasDeepLink();
 
   return (
     <div className="app">

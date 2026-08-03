@@ -44,6 +44,11 @@ export function isWeb(): boolean {
   return !!(globalThis as unknown as { __HS_WEB__?: boolean }).__HS_WEB__;
 }
 
+/** True when the page URL carries a deep-link config — used to skip onboarding. */
+export function hasDeepLink(search = typeof location !== "undefined" ? location.search : ""): boolean {
+  return readDeepLink(search) !== null;
+}
+
 /** Read a deep-link config from a query string (defaults to the live URL). */
 export function readDeepLink(search = typeof location !== "undefined" ? location.search : ""): DeepLinkConfig | null {
   const q = new URLSearchParams(search);

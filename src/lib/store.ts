@@ -51,7 +51,9 @@ function newChatObj(settings: Settings): Chat {
     styleId: "normal",
     temperature: 0.7,
     maxTokens: 0,
-    enabledTools: [],
+    // Every built-in tool on by default — a new chat can act right away. Turn any
+    // off per-chat in the config panel.
+    enabledTools: BUILTIN_TOOLS.map((t) => t.id),
     messages: [],
   };
 }
