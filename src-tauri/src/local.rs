@@ -580,6 +580,72 @@ fn find_server_exe(dir: &Path) -> Option<PathBuf> {
     None
 }
 
+/// Optional performance flags for llama-server.
+///
+/// All are opt-in: only what the caller sets is passed. Newer flags
+/// (`--n-cpu-moe`, `--fit-target`, `--flash-attn on`) fail on an old engine
+/// that doesn't know them, so leaving a field unset keeps the launch compatible.
+#[derive(serde::Deserialize, Default)]
+#[serde(default, rename_all = "camelCase")]
+pub struct LaunchOpts {
+    /// CPU threads for inference (`--threads`). Best around physical core count.
+    threads: Option<u32>,
+    /// MoE expert offload to system RAM: 0 = all experts (`--cpu-moe`), N =
+    /// first N layers (`--n-cpu-moe N`). The trick for big MoE models on a small
+    /// GPU: keep attention on the GPU, experts in RAM.
+    cpu_moe: Option<u32>,
+    /// Flash attention (`--flash-attn on`) — a near-universal speed/memory win.
+    flash_attn: bool,
+    /// Lock the model in RAM so it can't be swapped to disk (`--mlock`).
+    mlock: bool,
+    /// Load fully into RAM instead of memory-mapping (`--no-mmap`).
+    no_mmap: bool,
+    /// Turn off llama.cpp's auto-fit (`--fit off`); it's on by default.
+    fit_off: bool,
+    /// Memory margin per GPU in MB for auto-fit (`--fit-target`).
+    fit_target: Option<u32>,
+}
+
+/// Build just the optional flag arguments for a set of launch options.
+///
+/// Pure and separate so the flag translation — the part that silently breaks a
+/// launch if a name or shape is wrong — can be unit-tested without spawning a
+/// process. Nothing is emitted for an unset field, keeping older engines happy.
+fn launch_flag_args(o: &LaunchOpts) -> Vec<String> {
+    let mut a: Vec<String> = Vec::new();
+    if let Some(t) = o.threads {
+        a.push("--threads".into());
+        a.push(t.to_string());
+    }
+    match o.cpu_moe {
+        Some(0) => a.push("--cpu-moe".into()),
+        Some(n) => {
+            a.push("--n-cpu-moe".into());
+            a.push(n.to_string());
+        }
+        None => {}
+    }
+    if o.flash_attn {
+        a.push("--flash-attn".into());
+        a.push("on".into());
+    }
+    if o.mlock {
+        a.push("--mlock".into());
+    }
+    if o.no_mmap {
+        a.push("--no-mmap".into());
+    }
+    if o.fit_off {
+        a.push("--fit".into());
+        a.push("off".into());
+    }
+    if let Some(m) = o.fit_target {
+        a.push("--fit-target".into());
+        a.push(m.to_string());
+    }
+    a
+}
+
 #[tauri::command]
 pub fn start_server(
     state: State<LocalServer>,
@@ -588,6 +654,7 @@ pub fn start_server(
     port: u16,
     ctx: u32,
     gpu_layers: i32,
+    opts: Option<LaunchOpts>,
 ) -> Result<(), String> {
     stop_inner(&state);
     let engine_root = harness_root().join(&engine_dir);
@@ -597,22 +664,27 @@ pub fn start_server(
     if !model_abs.exists() {
         return Err(format!("model file not found: {}", model_abs.display()));
     }
+
+    // Base args, always safe.
+    let mut args: Vec<String> = vec![
+        "--model".into(),
+        model_abs.to_string_lossy().into_owned(),
+        "--host".into(),
+        "127.0.0.1".into(),
+        "--port".into(),
+        port.to_string(),
+        "--ctx-size".into(),
+        ctx.to_string(),
+        "--n-gpu-layers".into(),
+        gpu_layers.to_string(),
+        "--jinja".into(),
+    ];
+
+    // Optional performance flags, added only when requested.
+    args.extend(launch_flag_args(&opts.unwrap_or_default()));
+
     let mut cmd = Command::new(&exe);
-    cmd.args([
-        "--model",
-        &model_abs.to_string_lossy(),
-        "--host",
-        "127.0.0.1",
-        "--port",
-        &port.to_string(),
-        "--ctx-size",
-        &ctx.to_string(),
-        "--n-gpu-layers",
-        &gpu_layers.to_string(),
-        "--jinja",
-    ])
-    .stdout(Stdio::null())
-    .stderr(Stdio::null());
+    cmd.args(&args).stdout(Stdio::null()).stderr(Stdio::null());
     no_window(&mut cmd);
     let child = cmd.spawn().map_err(|e| e.to_string())?;
     *state.0.lock().unwrap() = Some(ServerInfo { child, model: model_path, port });
@@ -662,4 +734,64 @@ pub fn stop_inner(state: &State<LocalServer>) {
 pub fn kill_on_exit(app: &AppHandle) {
     let state: State<LocalServer> = tauri::Manager::state(app);
     stop_inner(&state);
+}
+
+#[cfg(test)]
+mod launch_tests {
+    use super::*;
+
+    #[test]
+    fn unset_options_emit_nothing() {
+        // The compatibility guarantee: a default launch adds no new flags, so an
+        // older engine that doesn't know them still starts.
+        assert!(launch_flag_args(&LaunchOpts::default()).is_empty());
+    }
+
+    #[test]
+    fn cpu_moe_zero_means_all_experts() {
+        let o = LaunchOpts { cpu_moe: Some(0), ..Default::default() };
+        assert_eq!(launch_flag_args(&o), vec!["--cpu-moe"]);
+    }
+
+    #[test]
+    fn cpu_moe_n_offloads_first_n_layers() {
+        let o = LaunchOpts { cpu_moe: Some(24), ..Default::default() };
+        assert_eq!(launch_flag_args(&o), vec!["--n-cpu-moe", "24"]);
+    }
+
+    #[test]
+    fn flash_attention_is_on_not_a_bare_flag() {
+        // --flash-attn takes on/off in recent llama.cpp; a bare --flash-attn errors.
+        let o = LaunchOpts { flash_attn: true, ..Default::default() };
+        assert_eq!(launch_flag_args(&o), vec!["--flash-attn", "on"]);
+    }
+
+    #[test]
+    fn boolean_flags_are_bare() {
+        let o = LaunchOpts { mlock: true, no_mmap: true, ..Default::default() };
+        assert_eq!(launch_flag_args(&o), vec!["--mlock", "--no-mmap"]);
+    }
+
+    #[test]
+    fn fit_controls() {
+        let off = LaunchOpts { fit_off: true, ..Default::default() };
+        assert_eq!(launch_flag_args(&off), vec!["--fit", "off"]);
+        let target = LaunchOpts { fit_target: Some(256), ..Default::default() };
+        assert_eq!(launch_flag_args(&target), vec!["--fit-target", "256"]);
+    }
+
+    #[test]
+    fn a_full_moe_setup_composes_in_order() {
+        let o = LaunchOpts {
+            threads: Some(8),
+            cpu_moe: Some(0),
+            flash_attn: true,
+            mlock: true,
+            ..Default::default()
+        };
+        assert_eq!(
+            launch_flag_args(&o),
+            vec!["--threads", "8", "--cpu-moe", "--flash-attn", "on", "--mlock"]
+        );
+    }
 }

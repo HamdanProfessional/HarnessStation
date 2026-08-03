@@ -28,13 +28,38 @@ export const hwInfo = () => invoke<HwInfo>("hw_info");
 export const serverStatus = () => invoke<ServerStatus>("server_status");
 export const stopServer = () => invoke("stop_server");
 
-export const startServer = (engineDir: string, modelPath: string, ctx: number, gpuLayers: number) =>
+/** Optional llama-server performance flags. Only what's set is passed through. */
+export interface LaunchOpts {
+  /** CPU threads (`--threads`). */
+  threads?: number;
+  /** MoE expert offload: 0 = all experts to RAM (`--cpu-moe`), N = first N layers. */
+  cpuMoe?: number;
+  /** Flash attention (`--flash-attn on`) — on by default; a broad speed/memory win. */
+  flashAttn?: boolean;
+  /** Pin the model in RAM (`--mlock`). */
+  mlock?: boolean;
+  /** Load fully into RAM rather than mmap (`--no-mmap`). */
+  noMmap?: boolean;
+  /** Disable llama.cpp auto-fit (`--fit off`). */
+  fitOff?: boolean;
+  /** Auto-fit VRAM margin per GPU, MB (`--fit-target`). */
+  fitTarget?: number;
+}
+
+export const startServer = (
+  engineDir: string,
+  modelPath: string,
+  ctx: number,
+  gpuLayers: number,
+  opts: LaunchOpts = {},
+) =>
   invoke("start_server", {
     engineDir,
     modelPath,
     port: LOCAL_PORT,
     ctx,
     gpuLayers,
+    opts,
   });
 
 export const downloadFile = (url: string, dest: string, id: string) =>

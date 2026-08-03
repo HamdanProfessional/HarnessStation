@@ -4611,3 +4611,28 @@ textarea {
 [hidden] {
   display: none !important;
 }
+
+/* Advanced local-model launch flags: a compact stack under the load options. */
+.load-opts-advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  animation: fade-in var(--t-base) var(--ease);
+}
+
+.load-opts-advanced label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.load-opts-advanced .hint {
+  flex-basis: 100%;
+  margin: 0 0 0 2px;
+}

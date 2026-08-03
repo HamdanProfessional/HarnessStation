@@ -34,6 +34,13 @@ export function ModelsView() {
   const [error, setError] = useState<string | null>(null);
   const [ctx, setCtx] = useState(4096);
   const [gpuLayers, setGpuLayers] = useState(-1);
+  // Advanced launch flags. Sensible defaults: flash attention on (broad win),
+  // everything else off/auto so nothing breaks an older engine.
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [flashAttn, setFlashAttn] = useState(true);
+  const [mlock, setMlock] = useState(false);
+  const [cpuMoe, setCpuMoe] = useState<string>(""); // blank = off; "0" = all experts to RAM
+  const [threads, setThreads] = useState<string>("");
   const [notice, setNotice] = useState<string | null>(null);
   const [colibriUrl, setColibriUrl] = useState("http://localhost:8080/v1");
 
@@ -182,7 +189,12 @@ export function ModelsView() {
       setBusy("Preparing engine…");
       const engine = await ensureEngine();
       setBusy(`Loading ${m.file}…`);
-      await startServer(engine, m.relPath, ctx, gpuLayers);
+      await startServer(engine, m.relPath, ctx, gpuLayers, {
+        flashAttn,
+        mlock,
+        cpuMoe: cpuMoe.trim() === "" ? undefined : Number(cpuMoe),
+        threads: threads.trim() === "" ? undefined : Number(threads),
+      });
       // wait for the server to answer, then register the Local provider
       let modelIds: string[] = [];
       for (let i = 0; i < 60; i++) {
@@ -441,7 +453,47 @@ export function ModelsView() {
             GPU layers (-1 = all){" "}
             <input type="number" value={gpuLayers} min={-1} onChange={(e) => setGpuLayers(Number(e.target.value))} />
           </label>
+          <button className="link-btn" onClick={() => setShowAdvanced((v) => !v)}>
+            {showAdvanced ? "Hide advanced" : "Advanced ▾"}
+          </button>
         </div>
+
+        {showAdvanced && (
+          <div className="load-opts-advanced">
+            <label className="check">
+              <input type="checkbox" checked={flashAttn} onChange={(e) => setFlashAttn(e.target.checked)} />
+              Flash attention — faster, less memory (needs a recent engine)
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={mlock} onChange={(e) => setMlock(e.target.checked)} />
+              Lock in RAM (no swap to disk) — needs enough RAM
+            </label>
+            <label>
+              MoE experts → RAM{" "}
+              <input
+                type="number"
+                min={0}
+                placeholder="off"
+                value={cpuMoe}
+                style={{ width: 70 }}
+                onChange={(e) => setCpuMoe(e.target.value)}
+              />
+              <span className="hint"> 0 = all experts in RAM; N = first N layers. Runs big MoE models on a small GPU.</span>
+            </label>
+            <label>
+              CPU threads{" "}
+              <input
+                type="number"
+                min={1}
+                placeholder={hw ? "auto" : ""}
+                value={threads}
+                style={{ width: 60 }}
+                onChange={(e) => setThreads(e.target.value)}
+              />
+              <span className="hint"> Blank = engine default. Around your physical core count.</span>
+            </label>
+          </div>
+        )}
         {models.length === 0 && (
           <EmptyState
             icon={<IconBox size={22} />}
