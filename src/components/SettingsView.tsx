@@ -91,6 +91,11 @@ const MEDIA_ENGINES: { value: MediaEngine; label: string; kind: MediaKind }[] = 
   { value: "replicate", label: "Replicate (image / audio / video / 3D)", kind: "video" },
 ];
 
+/** True only in the browser build, which sets this global at startup. */
+function isWebBuild(): boolean {
+  return typeof window !== "undefined" && (window as unknown as { __HS_WEB__?: boolean }).__HS_WEB__ === true;
+}
+
 export function SettingsView() {
   const { settings, saveSettings, setView, init } = useStore();
   const [draft, setDraft] = useState<Settings>(() => structuredClone(settings));
@@ -1467,6 +1472,28 @@ export function SettingsView() {
           <option value="system">System</option>
         </select>
       </section>
+
+      {/* Web build only: the real-Linux terminal. The desktop already runs a
+          native shell, so this toggle would mean nothing there. */}
+      {isWebBuild() && (
+        <section hidden={tab !== "general"}>
+          <h2>Terminal</h2>
+          <label className="check">
+            <input
+              type="checkbox"
+              defaultChecked={localStorage.getItem("hs-web-vm") === "1"}
+              onChange={(e) => localStorage.setItem("hs-web-vm", e.target.checked ? "1" : "0")}
+            />
+            Use a real Linux terminal (experimental)
+          </label>
+          <p className="hint">
+            Runs commands in an actual Linux VM in your browser — real busybox, real programs —
+            instead of the lightweight built-in shell. The first use downloads a ~10&nbsp;MB kernel
+            and takes a few seconds to boot; after that it's instant. Your workspace files are
+            shared with it both ways. Off uses the fast built-in shell.
+          </p>
+        </section>
+      )}
 
       <section hidden={tab !== "data"}>
         <h2>Data</h2>

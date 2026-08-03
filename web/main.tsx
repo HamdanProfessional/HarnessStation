@@ -2,6 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "../src/App";
 import "../src/App.css";
+
+// Marks this as the browser build so shared components can show web-only UI.
+(window as unknown as { __HS_WEB__?: boolean }).__HS_WEB__ = true;
 // Registers the browser backends (mic capture, …) into the invoke() dispatcher.
 import "./shims/mic";
 import "./shims/secret";
