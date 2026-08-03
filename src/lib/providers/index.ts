@@ -111,10 +111,50 @@ function textWithAttachments(m: Message): string {
   return m.content + blocks;
 }
 
+/**
+ * Drop tool calls and tool responses that have lost their partner.
+ *
+ * The user can delete individual items from a conversation — a tool call, its
+ * response, either on its own. That's useful for trimming context, but a
+ * tool_call with no matching tool message (or vice versa) is rejected by the
+ * OpenAI API. So a pair only survives here if BOTH halves are present; a
+ * half-deleted pair is dropped rather than sent malformed. An assistant message
+ * left with neither text nor a surviving call goes too.
+ */
+export function sanitizeToolPairs(messages: Message[]): Message[] {
+  const responded = new Set<string>();
+  const called = new Set<string>();
+  for (const m of messages) {
+    if (m.role === "tool" && m.toolCallId) responded.add(m.toolCallId);
+    if (m.role === "assistant") for (const c of m.toolCalls ?? []) called.add(c.id);
+  }
+  const valid = new Set([...called].filter((id) => responded.has(id)));
+
+  const out: Message[] = [];
+  for (const m of messages) {
+    if (m.role === "tool") {
+      if (m.toolCallId && valid.has(m.toolCallId)) out.push(m);
+      continue;
+    }
+    if (m.role === "assistant" && m.toolCalls?.length) {
+      const kept = m.toolCalls.filter((c) => valid.has(c.id));
+      if (kept.length === m.toolCalls.length) {
+        out.push(m);
+      } else if (kept.length || m.content.trim()) {
+        out.push({ ...m, toolCalls: kept.length ? kept : undefined });
+      }
+      // else: an assistant turn that was only tool calls, all now orphaned — drop.
+      continue;
+    }
+    out.push(m);
+  }
+  return out;
+}
+
 function toOpenAIMessages(system: string, messages: Message[]) {
   const out: Record<string, unknown>[] = [];
   if (system) out.push({ role: "system", content: system });
-  for (const m of messages) {
+  for (const m of sanitizeToolPairs(messages)) {
     if (m.role === "tool") {
       out.push({ role: "tool", content: m.content, tool_call_id: m.toolCallId });
     } else if (m.role === "assistant" && m.toolCalls?.length) {

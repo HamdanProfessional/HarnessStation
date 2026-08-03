@@ -74,6 +74,9 @@ export type View =
   | "mcp"
   | "browser";
 
+/** What `deleteItem` removes: a whole message, its text, its reasoning, or one tool call. */
+export type DeletePart = "message" | "content" | "reasoning" | { toolCallId: string };
+
 interface AppState {
   ready: boolean;
   view: View;
@@ -165,6 +168,9 @@ interface AppState {
   editUserMessage: (index: number, text: string) => Promise<void>;
   /** Delete a message and everything after it, snapshotting first so it's reversible. */
   rewindTo: (index: number) => Promise<void>;
+  /** Delete one item — a whole message, its text, its reasoning, or a single tool
+   * call — to trim context. Tool-pair validity is repaired at send time. */
+  deleteItem: (index: number, part: DeletePart) => Promise<void>;
 
   sendMessage: (text: string, attachments?: import("./types").Attachment[]) => Promise<void>;
   regenerate: () => Promise<void>;
@@ -685,6 +691,57 @@ export const useStore = create<AppState>((set, get) => ({
     msgs.push({ role: "user", content: text });
     get().updateChat({ messages: msgs });
     await runCompletion(set, get);
+  },
+
+  deleteItem: async (index, part) => {
+    const id = get().currentId;
+    if (!id || get().streaming) return;
+    await get().hydrateChat(id);
+    const chat = get().chats.find((c) => c.id === id);
+    if (!chat) return;
+    const m = chat.messages[index];
+    if (!m) return;
+
+    const { estimateContextTokens } = await import("./tokens");
+    const before = estimateContextTokens(chat.messages);
+
+    const msgs = [...chat.messages];
+    let next: Message | null = { ...m };
+    if (part === "message") {
+      next = null;
+    } else if (part === "content") {
+      next.content = "";
+    } else if (part === "reasoning") {
+      next.reasoning = undefined;
+    } else {
+      // a single tool call, by id
+      const kept = (m.toolCalls ?? []).filter((c) => c.id !== part.toolCallId);
+      next.toolCalls = kept.length ? kept : undefined;
+    }
+
+    // A message left with no content, no tool calls, no reasoning and no
+    // attachments carries nothing — remove it rather than send an empty turn.
+    const empty =
+      next &&
+      !next.content.trim() &&
+      !next.toolCalls?.length &&
+      !next.reasoning &&
+      !next.attachments?.length;
+    if (next === null || empty) msgs.splice(index, 1);
+    else msgs[index] = next;
+
+    get().updateChat({ messages: msgs });
+
+    // Force-persist — the coalescing queue skips an empty transcript, and
+    // deleting the last item legitimately empties the chat.
+    const nowChat = get().chats.find((c) => c.id === id);
+    if (nowChat) {
+      storage.cancelChatSave(id);
+      await storage.saveChat(nowChat);
+    }
+
+    const freed = Math.max(0, before - estimateContextTokens(msgs));
+    toast.success(`Deleted — freed ~${freed} token${freed === 1 ? "" : "s"} of context`);
   },
 
   rewindTo: async (index) => {

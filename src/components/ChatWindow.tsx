@@ -52,7 +52,7 @@ function prettyArgs(raw: string): string {
   }
 }
 
-function Reasoning({ text }: { text: string }) {
+function Reasoning({ text, onDelete }: { text: string; onDelete?: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="reasoning">
@@ -60,9 +60,30 @@ function Reasoning({ text }: { text: string }) {
         <span className="reasoning-dot" />
         <span className="toolcall-label">Thinking</span>
         <span className="toolcall-toggle">{open ? "hide" : "show"}</span>
+        {onDelete && <DeleteItemBtn label="Delete this thinking from context" onDelete={onDelete} />}
       </button>
       {open && <div className="reasoning-body">{text}</div>}
     </div>
+  );
+}
+
+/** A small ✕ that removes one item from the conversation to trim context. */
+function DeleteItemBtn({ label, onDelete }: { label: string; onDelete: () => void }) {
+  return (
+    <span
+      className="item-del"
+      role="button"
+      tabIndex={0}
+      title={label}
+      aria-label={label}
+      onClick={(e) => {
+        e.stopPropagation();
+        onDelete();
+      }}
+      onKeyDown={(e) => e.key === "Enter" && onDelete()}
+    >
+      ×
+    </span>
   );
 }
 
@@ -79,7 +100,7 @@ function MsgMeta({ model, m }: { model: string; m: { promptTokens?: number; comp
   );
 }
 
-function ToolCall({ name, args }: { name: string; args: string }) {
+function ToolCall({ name, args, onDelete }: { name: string; args: string; onDelete?: () => void }) {
   const [open, setOpen] = useState(false);
   const hasArgs = args && args.trim() !== "{}" && args.trim() !== "";
   return (
@@ -90,6 +111,7 @@ function ToolCall({ name, args }: { name: string; args: string }) {
           Called <b>{prettyName(name)}</b>
         </span>
         {hasArgs && <span className="toolcall-toggle">{open ? "hide args" : "args"}</span>}
+        {onDelete && <DeleteItemBtn label="Delete this tool call from context" onDelete={onDelete} />}
       </button>
       {open && hasArgs && <pre className="toolcall-args">{prettyArgs(args)}</pre>}
     </div>
@@ -111,10 +133,12 @@ function ToolResult({
   name,
   content,
   attachments,
+  onDelete,
 }: {
   name?: string;
   content: string;
   attachments?: Attachment[];
+  onDelete?: () => void;
 }) {
   // Show tool responses by default; only long dumps start collapsed to reduce noise.
   const [open, setOpen] = useState((content?.length ?? 0) <= 1500);
@@ -136,6 +160,7 @@ function ToolResult({
           Result{name ? <> from <b>{prettyName(name)}</b></> : ""}
         </span>
         <span className="toolcall-toggle">{open ? "hide" : "show"}</span>
+        {onDelete && <DeleteItemBtn label="Delete this tool response from context" onDelete={onDelete} />}
       </button>
       {open && <pre className="toolcall-args">{content.slice(0, 4000)}</pre>}
     </div>
@@ -143,7 +168,7 @@ function ToolResult({
 }
 
 export function ChatWindow() {
-  const { chats, currentId, streaming, error, sendMessage, regenerate, stop, clearError, branchAt, editUserMessage, rewindTo, agents, compactChat, setView, settings, browserDock } =
+  const { chats, currentId, streaming, error, sendMessage, regenerate, stop, clearError, branchAt, editUserMessage, rewindTo, deleteItem, agents, compactChat, setView, settings, browserDock } =
     useStore();
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
@@ -272,6 +297,7 @@ export function ChatWindow() {
                   name={callName[m.toolCallId ?? ""]}
                   content={m.content}
                   attachments={m.attachments}
+                  onDelete={streaming ? undefined : () => void deleteItem(i, "message")}
                 />
               );
             }
@@ -336,6 +362,20 @@ export function ChatWindow() {
                       >
                         Rewind
                       </button>
+                      <button
+                        className="msg-act msg-act-danger"
+                        title="Delete just this message from context"
+                        onClick={() =>
+                          void deleteItem(
+                            i,
+                            m.role === "assistant" && (m.toolCalls?.length || m.reasoning)
+                              ? "content"
+                              : "message",
+                          )
+                        }
+                      >
+                        Delete
+                      </button>
                     </span>
                   )}
                 </div>
@@ -348,8 +388,20 @@ export function ChatWindow() {
                     <MediaAttachment key={k} a={a} />
                   ),
                 )}
-                {m.reasoning && m.role === "assistant" && <Reasoning text={m.reasoning} />}
-                {m.toolCalls?.map((c) => <ToolCall key={c.id} name={c.name} args={c.arguments} />)}
+                {m.reasoning && m.role === "assistant" && (
+                  <Reasoning
+                    text={m.reasoning}
+                    onDelete={streaming ? undefined : () => void deleteItem(i, "reasoning")}
+                  />
+                )}
+                {m.toolCalls?.map((c) => (
+                  <ToolCall
+                    key={c.id}
+                    name={c.name}
+                    args={c.arguments}
+                    onDelete={streaming ? undefined : () => void deleteItem(i, { toolCallId: c.id })}
+                  />
+                ))}
                 {(hasText || m.role === "user" || (!m.toolCalls?.length && streaming)) && (
                   <div className="msg-content">
                     {m.role === "assistant" ? (

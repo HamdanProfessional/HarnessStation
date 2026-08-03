@@ -4467,7 +4467,12 @@ textarea {
 /* The chat list keeps its own scroll inside that region, capped, so a long
    history doesn't push Library and Automation out of reach. */
 .sidebar-scroll .chat-list {
-  flex: 0 1 auto;
+  /* Must NOT shrink: as a flex-shrink child it would collapse to zero height
+     under vertical pressure (a shorter window, the browser build's chrome),
+     hiding the chat list entirely while the count still read 1. It takes its
+     content height up to a cap and scrolls within that; the sidebar scrolls
+     around it. */
+  flex: 0 0 auto;
   max-height: 46vh;
 }
 
@@ -4640,4 +4645,23 @@ textarea {
 /* Rewind: a destructive message action, tinted so it reads as one. */
 .msg-act-danger:hover {
   color: var(--danger);
+}
+
+/* Per-item delete: a faint ✕ that appears on hover, for trimming context. */
+.item-del {
+  margin-left: auto;
+  padding: 0 6px;
+  color: var(--text-dim);
+  opacity: 0;
+  cursor: pointer;
+  font-size: 13px;
+  transition: opacity var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.toolcall-head:hover .item-del,
+.item-del:focus-visible {
+  opacity: 0.7;
+}
+.item-del:hover {
+  color: var(--danger);
+  opacity: 1;
 }
