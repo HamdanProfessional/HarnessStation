@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E01 · What HarnessStation actually is</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="Welcome to HarnessStation. Before we install anything, let's be clear about what this app actually is — and what it deliberately isn't.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track A · Beginner · Episode 1</p>
+      <h1>What HarnessStation<br/>actually is</h1>
+      <p class="lead">Setting expectations before you install a thing.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="9"
+      data-narration="Here's the one-line version, straight from the project's own README: it's a desktop app for running AI models as agents. Not another chat box — a harness that lets a model do real work on your machine.">
+      <p class="eyebrow">The one-line pitch</p>
+      <h2>“A desktop app for running<br/>AI models as <em>agents</em>.”</h2>
+      <p class="lead">The keyword is <b>agents</b> — a model that reads your files, runs commands,
+        browses the web and remembers, not just one that answers.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="Optional B-roll: Ollama running in a terminal, and the OpenAI/Anthropic keys page."
+      data-narration="One thing to get straight early: HarnessStation does not include a model. You bring your own. That can be a free local model through Ollama or LM Studio, or a cloud model like OpenAI or Anthropic using your own API key. The app is the harness around whatever model you choose.">
+      <p class="eyebrow">It's a harness, not a model</p>
+      <h2>You bring the model.</h2>
+      <div class="two-col">
+        <div class="card">
+          <h3>Local &amp; free</h3>
+          <p>Run models on your own hardware via <b>Ollama</b> or <b>LM Studio</b>. No key, no bill, fully offline.</p>
+        </div>
+        <div class="card">
+          <h3>Cloud &amp; your key</h3>
+          <p>Point it at <b>OpenAI, Anthropic, Groq, OpenRouter…</b> with your own API key. You pay them directly.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="What the app supplies is everything the model needs to be useful: a place to hold conversations, tools to act with, your files and knowledge, long-term memory, a real browser it can drive, a voice to talk to, and automation to run things on a schedule. That's the whole point of the series — we'll cover each of these.">
+      <p class="eyebrow">What HarnessStation gives the model</p>
+      <h2>The capabilities you plug a model into</h2>
+      <ul>
+        <li>Conversations — typed or spoken, saved as plain readable files</li>
+        <li>Tools — read files, run commands, search the web, call APIs</li>
+        <li>Knowledge &amp; memory — your documents, and facts it recalls across chats</li>
+        <li>Browser control, voice, automation, MCP servers, a device mesh</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="And just as important — what it deliberately doesn't do. No API keys ship inside the app. There's no account to create, no telemetry phoning home, and no cloud sync. Your keys live in your operating system's credential store, and your conversations stay on your disk. That's a design choice, not a missing feature.">
+      <p class="eyebrow">What it deliberately does <u>not</u> do</p>
+      <h2>Private by design</h2>
+      <ul>
+        <li class="no">No API keys ship with the app <small>you add your own; they go to the OS credential store</small></li>
+        <li class="no">No account, no sign-up <small>nothing to register, nothing to log into</small></li>
+        <li class="no">No telemetry <small>it isn't phoning anything home</small></li>
+        <li class="no">No cloud sync <small>your chats and data stay on your machine</small></li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="Think of this as the map for the whole course. Everything you see here is a module we'll work through — starting simple with a first conversation, and building up to local models, agents, automation and the developer internals.">
+      <p class="eyebrow">The series roadmap</p>
+      <h2>Where we're headed</h2>
+      <div class="two-col">
+        <div class="card">
+          <h3>Beginner → Intermediate</h3>
+          <p>Install · first chat · providers · tools · voice · MCP · projects · knowledge · agents · schedules.</p>
+        </div>
+        <div class="card">
+          <h3>Advanced → Developer</h3>
+          <p>Local llama.cpp tuning · device mesh · the in-browser Linux VM · context surgery · architecture &amp; contributing.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide"
+      data-seconds="9"
+      data-narration="One honest note before we go on. This is early software, and the project says so itself — the docs call out rough edges on purpose. You'll hit the occasional sharp corner, and that's fine. I'll point them out as we go instead of pretending they aren't there.">
+      <p class="eyebrow">A straight word</p>
+      <h2>It's early software — and honest about it</h2>
+      <p class="lead">The docs deliberately call out rough edges. I'll flag them on camera as
+        <span class="pill warn">Gotcha</span> moments rather than oversell.</p>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="That's the what and the why. Next episode, we install it on Windows — including the security warning every viewer is going to see. See you there.">
+      <p class="eyebrow">Up next</p>
+      <h1>E02 · Installing<br/>on Windows</h1>
+      <p class="lead">Including the SmartScreen warning — and why it's expected.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

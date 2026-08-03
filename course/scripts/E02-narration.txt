@@ -1,0 +1,29 @@
+# Slide 1
+In this episode we get HarnessStation running on Windows — including the security warning that every single viewer is going to run into, and why it's nothing to worry about.
+
+# Slide 2
+The whole flow is four steps: download the installer, run it, get past Windows SmartScreen, and launch. Let's do it live.
+
+# Slide 3
+First, grab the Windows installer from the releases page. It's a normal Windows installer — download it and let it land in your Downloads folder.
+
+# Slide 4
+Double-click the installer to run it. And this is where Windows steps in.
+
+# Slide 5
+You'll see this blue box: “Windows protected your PC.” Don't panic — this is expected. It shows up because the app isn't code-signed yet. Code signing is a paid certificate that tells Windows who published the software; this project doesn't have one yet, so Windows shows the warning for any unknown publisher. It is not a sign that anything is wrong with the download.
+
+# Slide 6
+To continue, click “More info,” and then “Run anyway.” The installer proceeds normally from here — next, next, finish.
+
+# Slide 7
+You do not need to install any extra runtime. HarnessStation uses WebView2 for its interface, and that already ships with Windows 10 and 11 — so there's nothing else to download.
+
+# Slide 8
+Launch it, and you're in. That's Windows done.
+
+# Slide 9
+One more thing. If you'd rather not run unsigned software at all, you don't have to — you can build the app yourself from source and inspect every line first. We cover that path in Episode 4.
+
+# Slide 10
+Next up: the same thing on Linux — AppImage or dot-deb, plus the one dependency that trips people up. See you there.

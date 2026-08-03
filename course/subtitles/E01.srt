@@ -1,0 +1,96 @@
+1
+00:00:00,000 --> 00:00:01,164
+Welcome to HarnessStation.
+
+2
+00:00:01,164 --> 00:00:06,000
+Before we install anything, let's be clear about what this app actually is — and what it deliberately isn't.
+
+3
+00:00:06,000 --> 00:00:11,400
+Here's the one-line version, straight from the project's own README: it's a desktop app for running AI models as agents.
+
+4
+00:00:11,400 --> 00:00:15,000
+Not another chat box — a harness that lets a model do real work on your machine.
+
+5
+00:00:15,000 --> 00:00:17,941
+One thing to get straight early: HarnessStation does not include a model.
+
+6
+00:00:17,941 --> 00:00:18,707
+You bring your own.
+
+7
+00:00:18,707 --> 00:00:23,744
+That can be a free local model through Ollama or LM Studio, or a cloud model like OpenAI or Anthropic using your own API key.
+
+8
+00:00:23,744 --> 00:00:26,000
+The app is the harness around whatever model you choose.
+
+9
+00:00:26,000 --> 00:00:35,539
+What the app supplies is everything the model needs to be useful: a place to hold conversations, tools to act with, your files and knowledge, long-term memory, a real browser it can drive, a voice to talk to, and automation to run things on a schedule.
+
+10
+00:00:35,539 --> 00:00:38,000
+That's the whole point of the series — we'll cover each of these.
+
+11
+00:00:38,000 --> 00:00:40,168
+And just as important — what it deliberately doesn't do.
+
+12
+00:00:40,168 --> 00:00:41,406
+No API keys ship inside the app.
+
+13
+00:00:41,406 --> 00:00:44,310
+There's no account to create, no telemetry phoning home, and no cloud sync.
+
+14
+00:00:44,310 --> 00:00:48,219
+Your keys live in your operating system's credential store, and your conversations stay on your disk.
+
+15
+00:00:48,219 --> 00:00:50,000
+That's a design choice, not a missing feature.
+
+16
+00:00:50,000 --> 00:00:52,035
+Think of this as the map for the whole course.
+
+17
+00:00:52,035 --> 00:01:00,000
+Everything you see here is a module we'll work through — starting simple with a first conversation, and building up to local models, agents, automation and the developer internals.
+
+18
+00:01:00,000 --> 00:01:01,129
+One honest note before we go on.
+
+19
+00:01:01,129 --> 00:01:04,588
+This is early software, and the project says so itself — the docs call out rough edges on purpose.
+
+20
+00:01:04,588 --> 00:01:06,565
+You'll hit the occasional sharp corner, and that's fine.
+
+21
+00:01:06,565 --> 00:01:09,000
+I'll point them out as we go instead of pretending they aren't there.
+
+22
+00:01:09,000 --> 00:01:10,175
+That's the what and the why.
+
+23
+00:01:10,175 --> 00:01:14,413
+Next episode, we install it on Windows — including the security warning every viewer is going to see.
+
+24
+00:01:14,413 --> 00:01:15,000
+See you there.
+

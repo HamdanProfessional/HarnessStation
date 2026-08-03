@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E03 · Installing on Linux</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="Let's install HarnessStation on Linux. Two ways to do it, and one common launch failure that has a one-line fix.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track A · Beginner · Episode 3</p>
+      <h1>Installing on Linux</h1>
+      <p class="lead">AppImage or .deb — plus the fix for a stubborn first launch.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="8"
+      data-narration="You've got two options. The AppImage is a single portable file that runs anywhere — nothing to install. Or, on Debian and Ubuntu, install the dot-deb package system-wide. Pick whichever you prefer.">
+      <p class="eyebrow">Two ways in</p>
+      <h2>AppImage or .deb</h2>
+      <div class="two-col">
+        <div class="card">
+          <h3>AppImage</h3>
+          <p>One portable file. Make it executable and run it — no system install, works across distros.</p>
+        </div>
+        <div class="card">
+          <h3>.deb package</h3>
+          <p>For Debian / Ubuntu. Installs system-wide with your package manager.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="SWITCH TO TERMINAL: cd to the download, run the two commands, then the app window opens."
+      data-narration="For the AppImage, mark it executable with chmod plus x, then run it. That's it — the app launches straight from the file.">
+      <p class="eyebrow">Option A — AppImage</p>
+      <h2>Make it executable, run it</h2>
+      <pre class="term"><span class="c">$</span> <span class="g">chmod</span> +x HarnessStation*.AppImage
+<span class="c">$</span> ./HarnessStation*.AppImage</pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="8"
+      data-cue="TERMINAL: run the dpkg install (show sudo password prompt), then launch from the app menu."
+      data-narration="Prefer a proper install? On Debian or Ubuntu, install the dot-deb with dpkg, and it'll show up in your application menu like any other program.">
+      <p class="eyebrow">Option B — .deb</p>
+      <h2>Install with dpkg</h2>
+      <pre class="term"><span class="c">$</span> <span class="g">sudo</span> dpkg -i HarnessStation*.deb</pre>
+      <p class="lead">Then launch it from your applications menu.</p>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="14"
+      data-cue="OPTIONAL: reproduce the silent-fail (run AppImage, nothing happens), then run the apt fix, then it launches."
+      data-narration="Now the gotcha. On a fresh system the AppImage sometimes just… doesn't start — no window, no obvious error. Nearly always it's a missing WebKit library. Install these two packages with apt, run it again, and it comes up. This is the single most common Linux issue, so keep this command handy.">
+      <p class="eyebrow">The one common failure</p>
+      <h2>“It won't start” → missing WebKit</h2>
+      <pre class="term"><span class="c">$</span> <span class="g">sudo</span> apt install libwebkit2gtk-4.1-0 libjavascriptcoregtk-4.1-0</pre>
+      <ul>
+        <li class="warn">Symptom: AppImage runs but no window appears</li>
+        <li class="ok">Fix: install the two libraries above, then relaunch</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="One optional extra. If you want the app to speak using your system's built-in voices, install espeak-ng and speech-dispatcher. This is only for the system voice — the app's own neural voice, Kokoro, runs locally and needs none of this. So it's genuinely optional; skip it for now if you're not sure.">
+      <p class="eyebrow">Optional — system speech</p>
+      <h2>Want system voices? Two more packages</h2>
+      <pre class="term"><span class="c">$</span> <span class="g">sudo</span> apt install espeak-ng speech-dispatcher</pre>
+      <ul>
+        <li>Only needed for the <b>system</b> voice</li>
+        <li class="ok">The built-in neural voice (Kokoro) is local and needs none of this</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide"
+      data-seconds="6"
+      data-cue="SWITCH TO APP: show HarnessStation open on the Linux desktop."
+      data-narration="Launch it, and you're running on Linux.">
+      <p class="eyebrow">Launch</p>
+      <h2>You're in</h2>
+      <p class="lead">The same app, the same window — now on your Linux desktop.</p>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="That covers installing on both platforms. Next, for anyone who wants to audit or avoid the unsigned binary, we build HarnessStation from source — and then we start our first real conversation. See you in the next one.">
+      <p class="eyebrow">Up next</p>
+      <h1>E04 · Building<br/>from source</h1>
+      <p class="lead">Then Module 2 — your first conversation.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

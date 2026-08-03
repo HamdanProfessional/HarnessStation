@@ -1,0 +1,259 @@
+/*
+ * HarnessStation course — slideshow engine styles.
+ *
+ * Flat, professional, matched to the app's tokens (accent #5e6ad2, dark shell).
+ * No gradients, no glow — the same design language as the product. Every deck is
+ * a single 1920×1080 stage so screen-recording Chrome at 1080p is pixel-clean.
+ */
+:root {
+  --bg: #0e0f13;
+  --panel: #16181f;
+  --panel-2: #1c1f28;
+  --border: #262a35;
+  --text: #e7e9ee;
+  --text-dim: #9aa0ad;
+  --accent: #5e6ad2;
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --ok: #3fb984;
+  --warn: #e0a44a;
+  --danger: #e5484d;
+  --font: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", "Cascadia Code", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  color: var(--text);
+  font-family: var(--font);
+  overflow: hidden;
+}
+
+/* The stage keeps a fixed 16:9 canvas and scales to fit the window, so the deck
+   looks identical whether you record fullscreen or in a window. */
+#stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #000;
+}
+
+.canvas {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  background: var(--bg);
+  overflow: hidden;
+  transform-origin: center center;
+}
+
+/* ---- slides ---- */
+.slide {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  padding: 120px 150px;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.slide.current { display: flex; opacity: 1; }
+.slide.title { justify-content: center; align-items: flex-start; }
+
+.eyebrow {
+  font-size: 26px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin: 0 0 24px;
+}
+.slide h1 {
+  font-size: 92px;
+  line-height: 1.02;
+  margin: 0 0 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  max-width: 1500px;
+}
+.slide h2 {
+  font-size: 58px;
+  line-height: 1.08;
+  margin: 0 0 40px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.slide p.lead { font-size: 40px; line-height: 1.4; color: var(--text-dim); max-width: 1400px; margin: 0; }
+
+.slide ul { list-style: none; padding: 0; margin: 0; }
+.slide ul li {
+  font-size: 38px;
+  line-height: 1.35;
+  padding: 20px 0 20px 62px;
+  position: relative;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.slide ul li:last-child { border-bottom: none; }
+.slide ul li::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 34px;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--accent);
+}
+.slide ul li.ok::before { background: var(--ok); }
+.slide ul li.warn::before { background: var(--warn); }
+.slide ul li.no::before { background: var(--danger); }
+.slide ul li small { display: block; font-size: 27px; color: var(--text-dim); margin-top: 4px; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 44px 48px;
+}
+.card h3 { font-size: 40px; margin: 0 0 20px; }
+.card p { font-size: 30px; line-height: 1.4; color: var(--text-dim); margin: 0; }
+
+.pill {
+  display: inline-block;
+  font-size: 26px;
+  font-weight: 600;
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.pill.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); background: color-mix(in srgb, var(--ok) 12%, transparent); }
+.pill.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+
+code, .mono { font-family: var(--mono); }
+.slide code {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 14px;
+  font-size: 0.86em;
+  color: #cdd3ff;
+}
+pre.term {
+  background: #0a0b0e;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 34px 40px;
+  font-family: var(--mono);
+  font-size: 32px;
+  line-height: 1.5;
+  color: #cdd3e0;
+  overflow: hidden;
+}
+pre.term .c { color: var(--text-dim); }
+pre.term .g { color: var(--ok); }
+pre.term .a { color: #9db2ff; }
+
+/* Logo mark — the app's H-in-a-square, flat */
+.logo { display: flex; align-items: center; gap: 26px; margin-bottom: 60px; }
+.logo svg { width: 76px; height: 76px; }
+.logo .name { font-size: 40px; font-weight: 700; letter-spacing: -0.01em; }
+.logo .name span { color: var(--accent); }
+
+/* ---- chrome: progress, counter, captions, director cue ---- */
+.bar {
+  position: absolute;
+  left: 0; bottom: 0;
+  height: 6px;
+  background: var(--accent);
+  width: 0;
+  transition: width 0.35s ease;
+  z-index: 20;
+}
+.counter {
+  position: absolute;
+  right: 46px; bottom: 34px;
+  font-size: 24px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  z-index: 20;
+}
+.kicker {
+  position: absolute;
+  left: 150px; top: 90px;
+  font-size: 26px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  z-index: 20;
+}
+
+/* Caption bar — the narration line, so you can pace the silent take and, if you
+   want, burn it in. Toggle with C. */
+.captions {
+  position: absolute;
+  left: 50%; bottom: 70px;
+  transform: translateX(-50%);
+  max-width: 1500px;
+  width: max-content;
+  background: rgba(0, 0, 0, 0.82);
+  color: #fff;
+  font-size: 36px;
+  line-height: 1.35;
+  text-align: center;
+  padding: 18px 34px;
+  border-radius: 12px;
+  z-index: 30;
+  display: none;
+}
+.captions.on { display: block; }
+
+/* Director cue — an action to perform (switch to the app, click X). Only visible
+   in presenter mode so it never lands in the recording. */
+.cue {
+  position: absolute;
+  left: 150px; bottom: 120px;
+  max-width: 1400px;
+  font-size: 30px;
+  color: var(--accent);
+  font-weight: 600;
+  z-index: 25;
+  display: none;
+}
+.cue::before { content: "▶ "; }
+body.presenter .cue.has { display: block; }
+
+/* Presenter notes drawer (press N) — off-screen unless recording a rehearsal. */
+.notes {
+  position: fixed;
+  right: 0; top: 0; bottom: 0;
+  width: 460px;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  padding: 40px 34px;
+  overflow: auto;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  z-index: 40;
+  font-size: 20px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+body.presenter .notes { transform: none; }
+.notes h4 { color: var(--text); font-size: 22px; margin: 0 0 10px; }
+.notes .n-narr { color: var(--text); margin-bottom: 24px; }
+
+.help {
+  position: fixed;
+  left: 20px; top: 20px;
+  font-size: 18px;
+  color: #555;
+  z-index: 40;
+  font-family: var(--mono);
+}

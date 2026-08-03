@@ -1,0 +1,92 @@
+1
+00:00:00,000 --> 00:00:06,000
+In this episode we get HarnessStation running on Windows — including the security warning that every single viewer is going to run into, and why it's nothing to worry about.
+
+2
+00:00:06,000 --> 00:00:12,867
+The whole flow is four steps: download the installer, run it, get past Windows SmartScreen, and launch.
+
+3
+00:00:12,867 --> 00:00:14,000
+Let's do it live.
+
+4
+00:00:14,000 --> 00:00:17,167
+First, grab the Windows installer from the releases page.
+
+5
+00:00:17,167 --> 00:00:22,000
+It's a normal Windows installer — download it and let it land in your Downloads folder.
+
+6
+00:00:22,000 --> 00:00:25,597
+Double-click the installer to run it.
+
+7
+00:00:25,597 --> 00:00:29,000
+And this is where Windows steps in.
+
+8
+00:00:29,000 --> 00:00:31,027
+You'll see this blue box: “Windows protected your PC.
+
+9
+00:00:31,027 --> 00:00:32,290
+” Don't panic — this is expected.
+
+10
+00:00:32,290 --> 00:00:34,202
+It shows up because the app isn't code-signed yet.
+
+11
+00:00:34,202 --> 00:00:40,781
+Code signing is a paid certificate that tells Windows who published the software; this project doesn't have one yet, so Windows shows the warning for any unknown publisher.
+
+12
+00:00:40,781 --> 00:00:43,000
+It is not a sign that anything is wrong with the download.
+
+13
+00:00:43,000 --> 00:00:47,042
+To continue, click “More info,” and then “Run anyway.
+
+14
+00:00:47,042 --> 00:00:52,000
+” The installer proceeds normally from here — next, next, finish.
+
+15
+00:00:52,000 --> 00:00:54,034
+You do not need to install any extra runtime.
+
+16
+00:00:54,034 --> 00:01:00,000
+HarnessStation uses WebView2 for its interface, and that already ships with Windows 10 and 11 — so there's nothing else to download.
+
+17
+00:01:00,000 --> 00:01:03,889
+Launch it, and you're in.
+
+18
+00:01:03,889 --> 00:01:07,000
+That's Windows done.
+
+19
+00:01:07,000 --> 00:01:07,714
+One more thing.
+
+20
+00:01:07,714 --> 00:01:14,476
+If you'd rather not run unsigned software at all, you don't have to — you can build the app yourself from source and inspect every line first.
+
+21
+00:01:14,476 --> 00:01:16,000
+We cover that path in Episode 4.
+
+22
+00:01:16,000 --> 00:01:20,391
+Next up: the same thing on Linux — AppImage or dot-deb, plus the one dependency that trips people up.
+
+23
+00:01:20,391 --> 00:01:21,000
+See you there.
+

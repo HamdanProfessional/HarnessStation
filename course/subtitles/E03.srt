@@ -1,0 +1,92 @@
+1
+00:00:00,000 --> 00:00:02,054
+Let's install HarnessStation on Linux.
+
+2
+00:00:02,054 --> 00:00:06,000
+Two ways to do it, and one common launch failure that has a one-line fix.
+
+3
+00:00:06,000 --> 00:00:06,948
+You've got two options.
+
+4
+00:00:06,948 --> 00:00:10,206
+The AppImage is a single portable file that runs anywhere — nothing to install.
+
+5
+00:00:10,206 --> 00:00:12,928
+Or, on Debian and Ubuntu, install the dot-deb package system-wide.
+
+6
+00:00:12,928 --> 00:00:14,000
+Pick whichever you prefer.
+
+7
+00:00:14,000 --> 00:00:19,100
+For the AppImage, mark it executable with chmod plus x, then run it.
+
+8
+00:00:19,100 --> 00:00:23,000
+That's it — the app launches straight from the file.
+
+9
+00:00:23,000 --> 00:00:24,352
+Prefer a proper install?
+
+10
+00:00:24,352 --> 00:00:31,000
+On Debian or Ubuntu, install the dot-deb with dpkg, and it'll show up in your application menu like any other program.
+
+11
+00:00:31,000 --> 00:00:31,729
+Now the gotcha.
+
+12
+00:00:31,729 --> 00:00:36,153
+On a fresh system the AppImage sometimes just… doesn't start — no window, no obvious error.
+
+13
+00:00:36,153 --> 00:00:38,292
+Nearly always it's a missing WebKit library.
+
+14
+00:00:38,292 --> 00:00:41,549
+Install these two packages with apt, run it again, and it comes up.
+
+15
+00:00:41,549 --> 00:00:45,000
+This is the single most common Linux issue, so keep this command handy.
+
+16
+00:00:45,000 --> 00:00:45,706
+One optional extra.
+
+17
+00:00:45,706 --> 00:00:49,645
+If you want the app to speak using your system's built-in voices, install espeak-ng and speech-dispatcher.
+
+18
+00:00:49,645 --> 00:00:53,659
+This is only for the system voice — the app's own neural voice, Kokoro, runs locally and needs none of this.
+
+19
+00:00:53,659 --> 00:00:56,000
+So it's genuinely optional; skip it for now if you're not sure.
+
+20
+00:00:56,000 --> 00:01:02,000
+Launch it, and you're running on Linux.
+
+21
+00:01:02,000 --> 00:01:03,144
+That covers installing on both platforms.
+
+22
+00:01:03,144 --> 00:01:07,330
+Next, for anyone who wants to audit or avoid the unsigned binary, we build HarnessStation from source — and then we start our first real conversation.
+
+23
+00:01:07,330 --> 00:01:08,000
+See you in the next one.
+

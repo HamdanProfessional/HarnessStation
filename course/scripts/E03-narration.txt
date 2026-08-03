@@ -1,0 +1,23 @@
+# Slide 1
+Let's install HarnessStation on Linux. Two ways to do it, and one common launch failure that has a one-line fix.
+
+# Slide 2
+You've got two options. The AppImage is a single portable file that runs anywhere — nothing to install. Or, on Debian and Ubuntu, install the dot-deb package system-wide. Pick whichever you prefer.
+
+# Slide 3
+For the AppImage, mark it executable with chmod plus x, then run it. That's it — the app launches straight from the file.
+
+# Slide 4
+Prefer a proper install? On Debian or Ubuntu, install the dot-deb with dpkg, and it'll show up in your application menu like any other program.
+
+# Slide 5
+Now the gotcha. On a fresh system the AppImage sometimes just… doesn't start — no window, no obvious error. Nearly always it's a missing WebKit library. Install these two packages with apt, run it again, and it comes up. This is the single most common Linux issue, so keep this command handy.
+
+# Slide 6
+One optional extra. If you want the app to speak using your system's built-in voices, install espeak-ng and speech-dispatcher. This is only for the system voice — the app's own neural voice, Kokoro, runs locally and needs none of this. So it's genuinely optional; skip it for now if you're not sure.
+
+# Slide 7
+Launch it, and you're running on Linux.
+
+# Slide 8
+That covers installing on both platforms. Next, for anyone who wants to audit or avoid the unsigned binary, we build HarnessStation from source — and then we start our first real conversation. See you in the next one.

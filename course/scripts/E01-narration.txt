@@ -1,0 +1,23 @@
+# Slide 1
+Welcome to HarnessStation. Before we install anything, let's be clear about what this app actually is — and what it deliberately isn't.
+
+# Slide 2
+Here's the one-line version, straight from the project's own README: it's a desktop app for running AI models as agents. Not another chat box — a harness that lets a model do real work on your machine.
+
+# Slide 3
+One thing to get straight early: HarnessStation does not include a model. You bring your own. That can be a free local model through Ollama or LM Studio, or a cloud model like OpenAI or Anthropic using your own API key. The app is the harness around whatever model you choose.
+
+# Slide 4
+What the app supplies is everything the model needs to be useful: a place to hold conversations, tools to act with, your files and knowledge, long-term memory, a real browser it can drive, a voice to talk to, and automation to run things on a schedule. That's the whole point of the series — we'll cover each of these.
+
+# Slide 5
+And just as important — what it deliberately doesn't do. No API keys ship inside the app. There's no account to create, no telemetry phoning home, and no cloud sync. Your keys live in your operating system's credential store, and your conversations stay on your disk. That's a design choice, not a missing feature.
+
+# Slide 6
+Think of this as the map for the whole course. Everything you see here is a module we'll work through — starting simple with a first conversation, and building up to local models, agents, automation and the developer internals.
+
+# Slide 7
+One honest note before we go on. This is early software, and the project says so itself — the docs call out rough edges on purpose. You'll hit the occasional sharp corner, and that's fine. I'll point them out as we go instead of pretending they aren't there.
+
+# Slide 8
+That's the what and the why. Next episode, we install it on Windows — including the security warning every viewer is going to see. See you there.

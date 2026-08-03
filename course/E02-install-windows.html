@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E02 · Installing on Windows</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="In this episode we get HarnessStation running on Windows — including the security warning that every single viewer is going to run into, and why it's nothing to worry about.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track A · Beginner · Episode 2</p>
+      <h1>Installing on Windows</h1>
+      <p class="lead">Four clicks — one of which looks scarier than it is.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="8"
+      data-narration="The whole flow is four steps: download the installer, run it, get past Windows SmartScreen, and launch. Let's do it live.">
+      <p class="eyebrow">The whole flow</p>
+      <h2>Four steps, start to finish</h2>
+      <ul>
+        <li>1 — Download the installer</li>
+        <li>2 — Run it</li>
+        <li>3 — Get past the SmartScreen warning <small>the one that looks alarming</small></li>
+        <li>4 — Launch the app</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="8"
+      data-cue="SWITCH TO CHROME: open the Releases/downloads page, click the Windows .msi / .exe installer. Show it landing in Downloads."
+      data-narration="First, grab the Windows installer from the releases page. It's a normal Windows installer — download it and let it land in your Downloads folder.">
+      <p class="eyebrow">Step 1 — Download</p>
+      <h2>Get the Windows installer</h2>
+      <p class="lead">From the releases page, download the <code>.msi</code> / <code>.exe</code>.
+        No runtime to install alongside it.</p>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="7"
+      data-cue="SWITCH TO FILE EXPLORER: double-click the downloaded installer."
+      data-narration="Double-click the installer to run it. And this is where Windows steps in.">
+      <p class="eyebrow">Step 2 — Run it</p>
+      <h2>Double-click to install</h2>
+      <p class="lead">Run the file you just downloaded…</p>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="14"
+      data-cue="SCREEN: let the blue 'Windows protected your PC' SmartScreen dialog appear on camera. Hover it."
+      data-narration="You'll see this blue box: “Windows protected your PC.” Don't panic — this is expected. It shows up because the app isn't code-signed yet. Code signing is a paid certificate that tells Windows who published the software; this project doesn't have one yet, so Windows shows the warning for any unknown publisher. It is not a sign that anything is wrong with the download.">
+      <p class="eyebrow">Step 3 — The warning everyone hits</p>
+      <h2>“Windows protected your PC”</h2>
+      <ul>
+        <li class="warn">This is <b>expected</b>, not a problem</li>
+        <li>It appears because the app isn't <b>code-signed</b> yet</li>
+        <li>Signing is a paid certificate identifying the publisher — not a safety scan</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="SCREEN: click 'More info', then click 'Run anyway'. Let the installer proceed."
+      data-narration="To continue, click “More info,” and then “Run anyway.” The installer proceeds normally from here — next, next, finish.">
+      <p class="eyebrow">Getting past it</p>
+      <h2>More info → Run anyway</h2>
+      <p class="lead">Click <span class="pill">More info</span> to reveal the button, then
+        <span class="pill ok">Run anyway</span>. The install proceeds as normal.</p>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide"
+      data-seconds="8"
+      data-narration="You do not need to install any extra runtime. HarnessStation uses WebView2 for its interface, and that already ships with Windows 10 and 11 — so there's nothing else to download.">
+      <p class="eyebrow">No extra runtime</p>
+      <h2>WebView2 is already there</h2>
+      <p class="lead">The UI runs on <b>WebView2</b>, which is built into Windows 10 and 11.
+        Nothing else to install.</p>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide"
+      data-seconds="7"
+      data-cue="SWITCH TO APP: launch HarnessStation, show the first-run window / splash coming up."
+      data-narration="Launch it, and you're in. That's Windows done.">
+      <p class="eyebrow">Step 4 — Launch</p>
+      <h2>First run</h2>
+      <p class="lead">Open HarnessStation from the Start menu — the app window comes up. You're installed.</p>
+    </section>
+
+    <!-- 9 -->
+    <section class="slide"
+      data-seconds="9"
+      data-narration="One more thing. If you'd rather not run unsigned software at all, you don't have to — you can build the app yourself from source and inspect every line first. We cover that path in Episode 4.">
+      <p class="eyebrow">Gotcha / alternative</p>
+      <h2>Don't want to run unsigned?</h2>
+      <p class="lead">Build it yourself from source and audit it first — that's
+        <span class="pill">Episode 4</span>.</p>
+    </section>
+
+    <!-- 10 -->
+    <section class="slide title"
+      data-seconds="5"
+      data-narration="Next up: the same thing on Linux — AppImage or dot-deb, plus the one dependency that trips people up. See you there.">
+      <p class="eyebrow">Up next</p>
+      <h1>E03 · Installing<br/>on Linux</h1>
+      <p class="lead">AppImage or .deb — and the fix for “it won't start.”</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>
