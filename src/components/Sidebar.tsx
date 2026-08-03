@@ -25,6 +25,8 @@ import {
   IconSpeaker,
   IconWrench,
   LogoMark,
+  IconChevron,
+  IconX,
 } from "./icons";
 import { NotificationBell } from "./NotificationBell";
 
@@ -65,8 +67,6 @@ export function Sidebar() {
     saveProject,
     deleteProject,
     newProjectChat,
-    browserDock,
-    setBrowserDock,
   } = useStore();
   const [query, setQuery] = useState("");
   const [menuFor, setMenuFor] = useState<{ id: string; top: number; left: number } | null>(null);
@@ -277,7 +277,7 @@ export function Sidebar() {
           aria-expanded={!collapsed.projects}
         >
           <span className={`nav-caret ${collapsed.projects ? "closed" : ""}`} aria-hidden="true">
-            ▾
+            <IconChevron size={13} />
           </span>
           Projects
           <span className="grow" />
@@ -330,7 +330,7 @@ export function Sidebar() {
                     void removeProject(p.id, p.name);
                   }}
                 >
-                  ×
+                  <IconX size={13} />
                 </button>
               </div>
             ))}
@@ -344,7 +344,7 @@ export function Sidebar() {
         aria-expanded={!collapsed.chats}
       >
         <span className={`nav-caret ${collapsed.chats ? "closed" : ""}`} aria-hidden="true">
-          ▾
+          <IconChevron size={13} />
         </span>
         {activeProjectId
           ? `Chats in ${projects.find((p) => p.id === activeProjectId)?.name ?? "project"}`
@@ -370,7 +370,7 @@ export function Sidebar() {
                 aria-expanded={open}
               >
                 <span className={`nav-caret ${open ? "" : "closed"}`} aria-hidden="true">
-                  ▾
+                  <IconChevron size={12} />
                 </span>
                 {f}
                 <span className="tool-group-count">{byFolder[f].length}</span>
@@ -417,7 +417,7 @@ export function Sidebar() {
           aria-expanded={!collapsed.library}
         >
           <span className={`nav-caret ${collapsed.library ? "closed" : ""}`} aria-hidden="true">
-            ▾
+            <IconChevron size={13} />
           </span>
           Library
         </button>
@@ -438,7 +438,7 @@ export function Sidebar() {
           aria-expanded={!collapsed.automation}
         >
           <span className={`nav-caret ${collapsed.automation ? "closed" : ""}`} aria-hidden="true">
-            ▾
+            <IconChevron size={13} />
           </span>
           Automation
         </button>
@@ -451,20 +451,9 @@ export function Sidebar() {
             {navBtn("workflows", "Workflows", <IconFlow size={15} />)}
             {navBtn("schedules", "Schedules", <IconClock size={15} />)}
             {navBtn("mcp", "MCP Servers", <IconPlug size={15} />)}
-            {/* The browser docks beside the conversation rather than taking
-                over the window — you can watch the model use it while you talk. */}
-            <button
-              className={`nav-btn ${browserDock ? "active" : ""}`}
-              onClick={() => {
-                if (view !== "chat" && view !== "voice") setView("chat");
-                setBrowserDock(!browserDock);
-              }}
-            >
-              <span className="nav-icon">
-                <IconCompass size={15} />
-              </span>
-              Browser
-            </button>
+            {/* No Browser nav item: the browser opens on its own in the
+                conversation when the model uses it, so a sidebar toggle was
+                redundant clutter. */}
           </>
         )}
       </div>

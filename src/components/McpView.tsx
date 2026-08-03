@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { MCP_CATEGORIES, mcpDirectory, type McpDirEntry } from "../lib/gateway";
 import { EmptyState } from "./EmptyState";
-import { IconPlug, IconSearch } from "./icons";
+import { IconPlug, IconSearch, IconX } from "./icons";
 import {
   mcpConnect,
   mcpDisconnect,
@@ -239,6 +239,8 @@ export function McpView() {
                 )}
                 <button
                   className="icon-btn"
+                  title={`Remove ${s.name}`}
+                  aria-label={`Remove ${s.name}`}
                   onClick={async () => {
                     if (await confirmDialog(`Remove server ${s.name}?`, { danger: true })) {
                       void disconnect(s.id);
@@ -248,7 +250,7 @@ export function McpView() {
                     }
                   }}
                 >
-                  x
+                  <IconX size={14} />
                 </button>
               </div>
               {s.transport === "http" && (
@@ -322,7 +324,11 @@ export function McpView() {
                   <div className="grow">
                     <b>{e.name}</b>{" "}
                     <span className="tool-tag">{e.transport}</span>
-                    {e.needsAuth && <span className="fit-tight"> · auth</span>}
+                    {e.needsAuth && (
+                      <span className="tool-tag tag-auth" title="Requires signing in with OAuth before use">
+                        sign-in
+                      </span>
+                    )}
                   </div>
                   <button
                     className="btn small"

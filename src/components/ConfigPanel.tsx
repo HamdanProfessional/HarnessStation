@@ -1,3 +1,4 @@
+import { IconChevron } from "./icons";
 import { useEffect, useState } from "react";
 import { promptDialog } from "../lib/dialog";
 import { prettyName } from "../lib/format";
@@ -397,7 +398,9 @@ export function ConfigPanel() {
                           className="tool-group-title"
                           onClick={() => setOpenGroups((s) => ({ ...s, [g]: !open }))}
                         >
-                          <span className={`nav-caret ${open ? "" : "closed"}`}>▾</span>
+                          <span className={`nav-caret ${open ? "" : "closed"}`}>
+                            <IconChevron size={12} />
+                          </span>
                           {g}
                           <span className="tool-group-count">
                             {onCount}/{list.length}

@@ -421,9 +421,11 @@ select:focus {
 }
 
 .nav-caret {
-  font-size: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
   transition: transform 0.15s ease;
-  display: inline-block;
 }
 
 .nav-caret.closed {
@@ -4655,4 +4657,12 @@ textarea {
 .item-del:hover {
   color: var(--danger);
   opacity: 1;
+}
+
+/* MCP directory: a server that needs OAuth sign-in before it works. Amber, so
+   it reads as "action needed" rather than a neutral transport tag. */
+.tag-auth {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 40%, transparent);
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
 }
