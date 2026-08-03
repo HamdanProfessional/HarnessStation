@@ -132,6 +132,34 @@ function resolveProvider(settings: Settings, ref: string): Provider | undefined 
 }
 
 /**
+ * Add a known cloud provider (from the catalog) that the link named but which
+ * isn't set up yet — e.g. `?provider=groq`. Returns its id, or null if it isn't
+ * a provider we recognise. The key is still the user's to add.
+ */
+async function provisionKnownProvider(ref: string, model?: string): Promise<string | null> {
+  const { CLOUD_PROVIDERS } = await import("./catalog");
+  const key = ref.toLowerCase();
+  const known = CLOUD_PROVIDERS.find((c) => c.id === key || c.name.toLowerCase() === key);
+  if (!known) return null;
+  const settings = structuredClone(useStore.getState().settings);
+  if (!settings.providers.some((p) => p.id === known.id)) {
+    // Keep the model the link asked for even if it's newer than our catalog list.
+    const models = model && !known.models.includes(model) ? [model, ...known.models] : known.models;
+    settings.providers.unshift({
+      id: known.id,
+      name: known.name,
+      kind: known.kind,
+      baseUrl: known.baseUrl,
+      apiKey: "",
+      models,
+    });
+    await useStore.getState().saveSettings(settings);
+    toast.success(`Added the ${known.name} provider. Paste your API key to start — Settings → Providers, or add &key=… to the link.`);
+  }
+  return known.id;
+}
+
+/**
  * Apply a deep-link config: redeem any trial, inject a shared key, then point
  * the current chat at the chosen provider/model/style. Called once after boot.
  */
@@ -144,11 +172,16 @@ export async function applyDeepLink(cfg: DeepLinkConfig): Promise<void> {
     targetProviderId = (await redeemTrial(cfg.trial)) ?? undefined;
   }
 
-  // 2. Otherwise the provider is named directly.
+  // 2. Otherwise the provider is named directly. If it isn't set up yet but it's
+  //    a provider we know (Groq, OpenRouter, Gemini…), add it from the catalog so
+  //    the link works on a fresh install — the user just needs to supply the key.
   if (!targetProviderId && cfg.provider) {
     const p = resolveProvider(useStore.getState().settings, cfg.provider);
     if (p) targetProviderId = p.id;
-    else toast.error(`No provider "${cfg.provider}" is set up on this device.`);
+    else targetProviderId = (await provisionKnownProvider(cfg.provider, cfg.model)) ?? undefined;
+    if (!targetProviderId) {
+      toast.error(`No provider "${cfg.provider}" is set up, and it isn't one I can add automatically. Add it under Settings → Providers.`);
+    }
   }
 
   // 3. A raw key in the link is applied to that provider — and flagged, since a
