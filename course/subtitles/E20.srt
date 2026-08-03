@@ -1,0 +1,80 @@
+1
+00:00:00,000 --> 00:00:04,895
+Here's a genuinely unusual thing the app does, worth understanding: how it lets you connect ten MCP servers without drowning the model in tool definitions.
+
+2
+00:00:04,895 --> 00:00:06,000
+It's called progressive disclosure.
+
+3
+00:00:06,000 --> 00:00:06,981
+The naive problem first.
+
+4
+00:00:06,981 --> 00:00:09,558
+Every tool the model can use has to be described in the prompt.
+
+5
+00:00:09,558 --> 00:00:17,000
+Connect several servers with dozens of tools each, and that's a huge, ever-growing block of definitions sent on every single request — expensive, and it makes the model choose worse.
+
+6
+00:00:17,000 --> 00:00:20,787
+The app's fix: instead of exposing every server's tools, it exposes just four small meta-tools.
+
+7
+00:00:20,787 --> 00:00:22,183
+mcp_servers lists what's connected.
+
+8
+00:00:22,183 --> 00:00:23,777
+mcp_tools lists the tools on one server.
+
+9
+00:00:23,777 --> 00:00:25,731
+mcp_describe gets the details of a specific tool.
+
+10
+00:00:25,731 --> 00:00:26,927
+And mcp_call actually runs it.
+
+11
+00:00:26,927 --> 00:00:29,000
+The model discovers what it needs, when it needs it.
+
+12
+00:00:29,000 --> 00:00:29,636
+Watch it live.
+
+13
+00:00:29,636 --> 00:00:31,636
+Ask for something a connected server can do.
+
+14
+00:00:31,636 --> 00:00:38,227
+The model calls mcp_servers to see what's available, then mcp_tools to find the right one, then mcp_call to run it — narrowing down step by step.
+
+15
+00:00:38,227 --> 00:00:41,000
+Only the tools it actually needs ever enter the conversation.
+
+16
+00:00:41,000 --> 00:00:45,635
+The tradeoff, said out loud: this costs an extra round-trip or two before the first real action, while the model looks around.
+
+17
+00:00:45,635 --> 00:00:48,615
+For one server it's not worth it; past about two connected servers it clearly is.
+
+18
+00:00:48,615 --> 00:00:52,000
+The app makes the right call automatically, but it's good to know why there's a small pause.
+
+19
+00:00:52,000 --> 00:00:53,445
+Now you understand how it scales.
+
+20
+00:00:53,445 --> 00:00:58,000
+Last in the MCP module: fast triage for the three things that actually go wrong when connecting servers.
+

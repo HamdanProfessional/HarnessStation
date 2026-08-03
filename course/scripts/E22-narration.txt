@@ -1,0 +1,17 @@
+# Slide 1
+You've met the Files tool. But there's a whole toolbox built in. Let's walk every group so you know what the agent can actually do out of the box.
+
+# Slide 2
+Here's the whole set, grouped. Files and Terminal for your machine. Web and Browser for the internet. Media for generating images, speech, video. MCP for everything you connected last module. Skills, Agents, and Workflows for reusable behavior. UI for the side panel. And Swarm for multi-agent work. That's the built-in toolbox.
+
+# Slide 3
+Let's try Terminal. Switch it on and run a real command in the working directory. But say this plainly on camera: the working directory limits files, not the network. A command runs with your user's permissions and can reach out over the internet. Terminal is powerful — treat it that way.
+
+# Slide 4
+A quick one: the Web group. Switch it on and the agent can search the web and fetch pages — useful whenever a question needs something current that isn't in your files or the model's training.
+
+# Slide 5
+A word on enabling. Tools are chosen per conversation — you decide which are on in each chat. A new chat starts with the built-ins enabled so it can act immediately, but the habit that matters is trimming: turn off what a task doesn't need. Because — and this is a theme for the rest of the course — forty enabled tools choose worse than five. When you want a fixed, reusable set, that's an agent, in Module 10.
+
+# Slide 6
+The built-ins cover a lot — but the real power is that you can add your own. Next, we write a custom tool in JavaScript, end to end.

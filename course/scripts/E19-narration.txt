@@ -1,0 +1,20 @@
+# Slide 1
+Module 6 is about MCP servers — the standard way to plug whole toolboxes from the outside world into your agent. In this one we connect a real one, and cover the two ways they talk.
+
+# Slide 2
+MCP — the Model Context Protocol — is an open standard for exposing tools to an AI. Instead of the app building every integration, anyone can ship an MCP server, and the app just connects to it. There are hundreds already: GitHub, databases, file systems, search, you name it.
+
+# Slide 3
+Go to Automation, MCP Servers, Add server. There are two transports — two ways a server can run. Stdio, a local command the app launches; and http, a remote server you connect to over the network. Let's do one of each.
+
+# Slide 4
+A stdio example: many servers run through npx, launched with an environment variable for a token — the GitHub server is a classic. You give the command, add the token as an env var, save, and the app spawns it locally and lists its tools.
+
+# Slide 5
+An http example: a remote server you reach by URL. Many use OAuth — you click sign in, authorize in your browser, and the token comes back and is stored in your OS credential store, not in a settings file. Same as your provider keys.
+
+# Slide 6
+The gotcha that saves a support ticket: for npx servers, run the exact command once in a real terminal first. The very first run downloads the package, which can take long enough to time out inside the app and look like a failure. Once it's cached, connecting from the app is instant.
+
+# Slide 7
+One server is easy. But what happens when you connect ten? Next episode explains the app's clever answer to not drowning the model in tool definitions.

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E25 · Auto-enabling tools &amp; reading cards</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="Two habits to close the tools module: letting the model switch on tools it needs by itself, and reading tool-call cards to understand exactly what happened.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 25</p>
+      <h1>Auto-enable &amp; reading cards</h1>
+      <p class="lead">Semi-automatic tools, and inspecting results.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="SWITCH TO APP: Settings › General; toggle 'let the model switch on tools it finds itself'."
+      data-narration="In Settings, General, there's an option to let the model switch on tools it finds itself. When on, if a task needs a capability, it can enable it mid-conversation instead of you doing it manually. Handy — but note the boundary.">
+      <p class="eyebrow">Semi-automatic tools</p>
+      <h2>“Let the model switch on tools itself”</h2>
+      <p class="lead">Settings › General. The agent can enable a capability it needs, mid-task, instead of
+        you toggling it by hand.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="The important boundary: it can turn on tools that need no credentials — file search, web fetch, and the like — but it cannot connect anything that needs your API key or a sign-in. So it can help itself to safe capabilities, but it can never quietly wire up something that spends your money or touches an account. That line is deliberate.">
+      <p class="eyebrow">The credential boundary</p>
+      <h2>Free capabilities only</h2>
+      <ul>
+        <li class="ok">Can enable credential-free tools (file search, web fetch…)</li>
+        <li class="no">Cannot connect anything needing your key or a sign-in</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: expand a tool-call card mid-conversation; point at the exact arguments and the result."
+      data-narration="Second habit: read the cards. When a result surprises you, expand the tool-call card and look at the exact arguments the model used. Nine times out of ten the surprise is in there — it searched for the wrong term, or read the wrong file. The answer to “why did it do that” is usually one expand away.">
+      <p class="eyebrow">Read what it actually did</p>
+      <h2>Expand the tool-call card</h2>
+      <p class="lead">Surprising result? The exact arguments are in the card — usually the whole
+        explanation.</p>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="And the theme that runs through everything from here on, worth stating flatly: forty enabled tools choose worse than five. More options make the model's job harder, not easier. Keep each chat's toolset tight. We'll come back to this with agents, workflows, and cost — it's the single most repeated lesson in the course.">
+      <p class="eyebrow">The recurring theme</p>
+      <h2>Fewer tools choose better</h2>
+      <p class="lead"><b>40 enabled tools choose worse than 5.</b> Keep each chat tight — this returns with
+        agents, workflows, and cost.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="That completes the tools module. Next we organize work itself — Projects, which stop context from bleeding between unrelated things. See you in Module 8.">
+      <p class="eyebrow">Up next · Module 8</p>
+      <h1>E26 · Projects</h1>
+      <p class="lead">Stop context bleeding between unrelated work.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

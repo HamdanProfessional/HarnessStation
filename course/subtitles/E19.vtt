@@ -1,0 +1,82 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:04.356
+Module 6 is about MCP servers — the standard way to plug whole toolboxes from the outside world into your agent.
+
+2
+00:00:04.356 --> 00:00:07.000
+In this one we connect a real one, and cover the two ways they talk.
+
+3
+00:00:07.000 --> 00:00:09.726
+MCP — the Model Context Protocol — is an open standard for exposing tools to an AI.
+
+4
+00:00:09.726 --> 00:00:13.339
+Instead of the app building every integration, anyone can ship an MCP server, and the app just connects to it.
+
+5
+00:00:13.339 --> 00:00:16.000
+There are hundreds already: GitHub, databases, file systems, search, you name it.
+
+6
+00:00:16.000 --> 00:00:17.758
+Go to Automation, MCP Servers, Add server.
+
+7
+00:00:17.758 --> 00:00:19.977
+There are two transports — two ways a server can run.
+
+8
+00:00:19.977 --> 00:00:24.121
+Stdio, a local command the app launches; and http, a remote server you connect to over the network.
+
+9
+00:00:24.121 --> 00:00:25.000
+Let's do one of each.
+
+10
+00:00:25.000 --> 00:00:31.034
+A stdio example: many servers run through npx, launched with an environment variable for a token — the GitHub server is a classic.
+
+11
+00:00:31.034 --> 00:00:36.000
+You give the command, add the token as an env var, save, and the app spawns it locally and lists its tools.
+
+12
+00:00:36.000 --> 00:00:38.381
+An http example: a remote server you reach by URL.
+
+13
+00:00:38.381 --> 00:00:45.714
+Many use OAuth — you click sign in, authorize in your browser, and the token comes back and is stored in your OS credential store, not in a settings file.
+
+14
+00:00:45.714 --> 00:00:47.000
+Same as your provider keys.
+
+15
+00:00:47.000 --> 00:00:51.638
+The gotcha that saves a support ticket: for npx servers, run the exact command once in a real terminal first.
+
+16
+00:00:51.638 --> 00:00:56.745
+The very first run downloads the package, which can take long enough to time out inside the app and look like a failure.
+
+17
+00:00:56.745 --> 00:00:59.000
+Once it's cached, connecting from the app is instant.
+
+18
+00:00:59.000 --> 00:00:59.765
+One server is easy.
+
+19
+00:00:59.765 --> 00:01:01.295
+But what happens when you connect ten?
+
+20
+00:01:01.295 --> 00:01:05.000
+Next episode explains the app's clever answer to not drowning the model in tool definitions.
+

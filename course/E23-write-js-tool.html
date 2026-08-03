@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E23 · Writing your own JavaScript tool</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="The built-in tools cover common ground, but the real power is writing your own. Let's build a custom JavaScript tool end to end — and see why the description field, not the code, is the real interface.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 23</p>
+      <h1>Write your own tool (JS)</h1>
+      <p class="lead">And why the description is the real interface.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="SWITCH TO APP: Automation › Tools › New tool. Show the four fields."
+      data-narration="Go to Automation, Tools, New tool. A tool is four things: a name, a description, its parameters as a JSON schema, and a JavaScript body that does the work. The app runs that body when the model calls the tool.">
+      <p class="eyebrow">Anatomy of a tool</p>
+      <h2>Four fields</h2>
+      <ul>
+        <li><b>Name</b> · <b>Description</b></li>
+        <li><b>Parameters</b> — a JSON Schema</li>
+        <li><b>Body</b> — JavaScript that runs on call</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="APP: write a small tool live — e.g. a fake order lookup or unit converter. Fill schema + body, save, test in a chat."
+      data-narration="Let's write one live — a simple order lookup. One parameter, an order ID; a few lines of JavaScript that return a status. Save it, switch it on in a chat, and ask about an order — the model calls your tool and uses the result. You just extended the agent.">
+      <p class="eyebrow">Build one live</p>
+      <h2>A tiny order-lookup tool</h2>
+      <pre class="term"><span class="c">// params: { orderId: string }</span>
+<span class="a">return</span> `Order ${args.orderId}: shipped, arrives Tue.`;</pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="14"
+      data-narration="Now the key insight. The model never reads your code. It chooses whether and how to call the tool purely from the name, the description, and the parameter descriptions. So a vague description like “looks up an order” is a bad interface. A good one says what it does and when to use it: “Look up an order by its ID. Use when the user mentions an order number.” That sentence is doing the real work.">
+      <p class="eyebrow">The real lesson</p>
+      <h2>The description <u>is</u> the interface</h2>
+      <ul>
+        <li class="no">“Looks up an order.”</li>
+        <li class="ok">“Look up an order by its ID. Use when the user mentions an order number.”</li>
+        <li>The model chooses from that text — never from your code</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="That's JavaScript. If you'd rather use Python — and its libraries — the next episode is the same idea with the one extra requirement Python has.">
+      <p class="eyebrow">Up next</p>
+      <h1>E24 · Write your<br/>own tool (Python)</h1>
+      <p class="lead">Same idea, one extra requirement.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

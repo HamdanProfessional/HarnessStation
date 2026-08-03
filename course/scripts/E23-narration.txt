@@ -1,0 +1,14 @@
+# Slide 1
+The built-in tools cover common ground, but the real power is writing your own. Let's build a custom JavaScript tool end to end — and see why the description field, not the code, is the real interface.
+
+# Slide 2
+Go to Automation, Tools, New tool. A tool is four things: a name, a description, its parameters as a JSON schema, and a JavaScript body that does the work. The app runs that body when the model calls the tool.
+
+# Slide 3
+Let's write one live — a simple order lookup. One parameter, an order ID; a few lines of JavaScript that return a status. Save it, switch it on in a chat, and ask about an order — the model calls your tool and uses the result. You just extended the agent.
+
+# Slide 4
+Now the key insight. The model never reads your code. It chooses whether and how to call the tool purely from the name, the description, and the parameter descriptions. So a vague description like “looks up an order” is a bad interface. A good one says what it does and when to use it: “Look up an order by its ID. Use when the user mentions an order number.” That sentence is doing the real work.
+
+# Slide 5
+That's JavaScript. If you'd rather use Python — and its libraries — the next episode is the same idea with the one extra requirement Python has.

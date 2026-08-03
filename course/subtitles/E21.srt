@@ -1,0 +1,60 @@
+1
+00:00:00,000 --> 00:00:06,000
+A short, practical one to close the MCP module: the three things that actually go wrong when you connect a server, and how to fix each one fast.
+
+2
+00:00:06,000 --> 00:00:07,636
+One: the server won't start at all.
+
+3
+00:00:07,636 --> 00:00:10,766
+Almost always the command is wrong, or the package didn't download.
+
+4
+00:00:10,766 --> 00:00:16,000
+Run the exact command in a real terminal — you'll see the real error there, where it isn't swallowed by the app.
+
+5
+00:00:16,000 --> 00:00:17,581
+Two: it connects, but lists no tools.
+
+6
+00:00:17,581 --> 00:00:20,701
+Some servers only expose their tools after they've finished initializing.
+
+7
+00:00:20,701 --> 00:00:23,393
+The fix is almost silly but it works: disconnect and reconnect.
+
+8
+00:00:23,393 --> 00:00:26,000
+The second connection catches the tools the first one missed.
+
+9
+00:00:26,000 --> 00:00:27,254
+Three: authentication failures.
+
+10
+00:00:27,254 --> 00:00:31,217
+For a stdio server, check the env token you set — a typo or an expired token is the usual culprit.
+
+11
+00:00:31,217 --> 00:00:35,261
+For an http server, just redo the OAuth sign-in; tokens expire, and re-authorizing gets a fresh one.
+
+12
+00:00:35,261 --> 00:00:37,000
+Two different fixes for the two transports.
+
+13
+00:00:37,000 --> 00:00:38,056
+That's MCP end to end.
+
+14
+00:00:38,056 --> 00:00:42,328
+Module 7 goes deep on tools themselves — every built-in group, and how to write your own.
+
+15
+00:00:42,328 --> 00:00:43,000
+See you there.
+

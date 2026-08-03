@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E20 · Progressive disclosure</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="Here's a genuinely unusual thing the app does, worth understanding: how it lets you connect ten MCP servers without drowning the model in tool definitions. It's called progressive disclosure.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 20</p>
+      <h1>Progressive disclosure</h1>
+      <p class="lead">Ten servers, without flooding the model.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="The naive problem first. Every tool the model can use has to be described in the prompt. Connect several servers with dozens of tools each, and that's a huge, ever-growing block of definitions sent on every single request — expensive, and it makes the model choose worse.">
+      <p class="eyebrow">The problem</p>
+      <h2>Tool definitions add up fast</h2>
+      <p class="lead"><b>N servers × M tools</b> = a giant block of definitions on <b>every</b> request.
+        Costly, and it degrades the model's choices.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="The app's fix: instead of exposing every server's tools, it exposes just four small meta-tools. mcp_servers lists what's connected. mcp_tools lists the tools on one server. mcp_describe gets the details of a specific tool. And mcp_call actually runs it. The model discovers what it needs, when it needs it.">
+      <p class="eyebrow">The fix — four meta-tools</p>
+      <h2>Discover, then call</h2>
+      <pre class="term"><span class="a">mcp_servers</span>   what's connected?
+<span class="a">mcp_tools</span>     what can this server do?
+<span class="a">mcp_describe</span>  details of one tool
+<span class="a">mcp_call</span>      run it</pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="SWITCH TO APP: ask for a capability; watch the model call mcp_servers, then mcp_tools, then mcp_call — narrate the cards."
+      data-narration="Watch it live. Ask for something a connected server can do. The model calls mcp_servers to see what's available, then mcp_tools to find the right one, then mcp_call to run it — narrowing down step by step. Only the tools it actually needs ever enter the conversation.">
+      <p class="eyebrow">Live</p>
+      <h2>The model narrows down itself</h2>
+      <p class="lead">Ask for a capability → it walks <code>mcp_servers</code> → <code>mcp_tools</code> →
+        <code>mcp_call</code>. Only what it needs enters the prompt.</p>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="The tradeoff, said out loud: this costs an extra round-trip or two before the first real action, while the model looks around. For one server it's not worth it; past about two connected servers it clearly is. The app makes the right call automatically, but it's good to know why there's a small pause.">
+      <p class="eyebrow">The tradeoff</p>
+      <h2>A couple of extra hops up front</h2>
+      <ul>
+        <li>One server → not worth it</li>
+        <li class="ok">Past ~two servers → clearly worth it</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Now you understand how it scales. Last in the MCP module: fast triage for the three things that actually go wrong when connecting servers.">
+      <p class="eyebrow">Up next</p>
+      <h1>E21 · MCP<br/>troubleshooting</h1>
+      <p class="lead">The three failures, and their fixes.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

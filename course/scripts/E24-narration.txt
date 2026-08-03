@@ -1,0 +1,14 @@
+# Slide 1
+Same idea as last time, but in Python — so you can lean on Python's libraries. It's almost identical, with one extra requirement you need to know about.
+
+# Slide 2
+New tool, same as before, but choose Python for the body. Write a normal Python function — here, one that calls a real HTTP API with urllib and returns the result. Save it, enable it, and the model can call it just like the JavaScript one.
+
+# Slide 3
+The one extra requirement: Python tools need Python available on your system PATH on the desktop app. If a Python tool silently does nothing, that's the first thing to check — the app couldn't find Python to run it. JavaScript tools have no such dependency; they run in the app itself.
+
+# Slide 4
+One convenience, with a caveat. The app tries to auto-detect the parameter schema from your function's signature and docstring, which saves you writing JSON by hand. But check it — auto-detection isn't perfect, and a wrong schema means the model calls your tool with the wrong shape of arguments. A quick look saves a confusing failure.
+
+# Slide 5
+You can now extend the agent in two languages. Last in the tools module: letting the model enable tools itself, and the habit of reading exactly what a tool did. See you there.

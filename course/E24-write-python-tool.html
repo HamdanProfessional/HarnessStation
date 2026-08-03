@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E24 · Writing your own Python tool</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="Same idea as last time, but in Python — so you can lean on Python's libraries. It's almost identical, with one extra requirement you need to know about.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 24</p>
+      <h1>Write your own tool (Python)</h1>
+      <p class="lead">Same flow, plus one requirement.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="SWITCH TO APP: New tool, choose Python; write a small function that hits an HTTP API with urllib. Save and test."
+      data-narration="New tool, same as before, but choose Python for the body. Write a normal Python function — here, one that calls a real HTTP API with urllib and returns the result. Save it, enable it, and the model can call it just like the JavaScript one.">
+      <p class="eyebrow">Same flow, Python body</p>
+      <h2>A function that hits an API</h2>
+      <pre class="term"><span class="a">import</span> urllib.request, json
+<span class="a">def</span> fx_rate(base, quote):
+    <span class="c">"""Get an FX rate. Use for currency conversion."""</span>
+    ...</pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="The one extra requirement: Python tools need Python available on your system PATH on the desktop app. If a Python tool silently does nothing, that's the first thing to check — the app couldn't find Python to run it. JavaScript tools have no such dependency; they run in the app itself.">
+      <p class="eyebrow">Gotcha — the requirement</p>
+      <h2>Python must be on PATH</h2>
+      <ul>
+        <li class="warn">Desktop: Python tools need <code>python</code> on your PATH</li>
+        <li>JS tools have no dependency — they run inside the app</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="One convenience, with a caveat. The app tries to auto-detect the parameter schema from your function's signature and docstring, which saves you writing JSON by hand. But check it — auto-detection isn't perfect, and a wrong schema means the model calls your tool with the wrong shape of arguments. A quick look saves a confusing failure.">
+      <p class="eyebrow">Schema auto-detection</p>
+      <h2>Detected from your code — but verify</h2>
+      <p class="lead">The schema is inferred from the signature + docstring. Convenient, not infallible —
+        <b>check it</b>, or the model calls with the wrong arguments.</p>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="You can now extend the agent in two languages. Last in the tools module: letting the model enable tools itself, and the habit of reading exactly what a tool did. See you there.">
+      <p class="eyebrow">Up next</p>
+      <h1>E25 · Auto-enable<br/>&amp; reading cards</h1>
+      <p class="lead">Semi-automatic tools, and inspecting results.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

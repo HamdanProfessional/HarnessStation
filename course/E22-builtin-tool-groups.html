@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E22 · The built-in tool groups</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="You've met the Files tool. But there's a whole toolbox built in. Let's walk every group so you know what the agent can actually do out of the box.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 22 · Module 7</p>
+      <h1>The built-in tool groups</h1>
+      <p class="lead">The full toolbox, not just Files.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="SWITCH TO APP: open the tools panel, scroll the groups so each name is visible."
+      data-narration="Here's the whole set, grouped. Files and Terminal for your machine. Web and Browser for the internet. Media for generating images, speech, video. MCP for everything you connected last module. Skills, Agents, and Workflows for reusable behavior. UI for the side panel. And Swarm for multi-agent work. That's the built-in toolbox.">
+      <p class="eyebrow">The groups</p>
+      <h2>Eleven built-in groups</h2>
+      <pre class="term"><span class="a">Files  Terminal</span>      your machine
+<span class="a">Web    Browser</span>       the internet
+<span class="a">Media  MCP</span>           generation · connected servers
+<span class="a">Skills Agents Workflows</span> reusable behavior
+<span class="a">UI     Swarm</span>          side panel · multi-agent</pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="APP: enable Terminal, run a real command in the working directory; show output in the tool card."
+      data-narration="Let's try Terminal. Switch it on and run a real command in the working directory. But say this plainly on camera: the working directory limits files, not the network. A command runs with your user's permissions and can reach out over the internet. Terminal is powerful — treat it that way.">
+      <p class="eyebrow">Terminal, and a caution</p>
+      <h2>The working dir limits <u>files</u>, not the net</h2>
+      <ul>
+        <li>Run a real command in the working directory</li>
+        <li class="warn">A command runs as you and can reach the network — the folder boundary doesn't stop that</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="8"
+      data-cue="APP: enable Web; ask a question that triggers a web search / fetch; show the result card."
+      data-narration="A quick one: the Web group. Switch it on and the agent can search the web and fetch pages — useful whenever a question needs something current that isn't in your files or the model's training.">
+      <p class="eyebrow">Web</p>
+      <h2>Search and fetch</h2>
+      <p class="lead">For anything current — outside your files and the model's training data.</p>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="A word on enabling. Tools are chosen per conversation — you decide which are on in each chat. A new chat starts with the built-ins enabled so it can act immediately, but the habit that matters is trimming: turn off what a task doesn't need. Because — and this is a theme for the rest of the course — forty enabled tools choose worse than five. When you want a fixed, reusable set, that's an agent, in Module 10.">
+      <p class="eyebrow">Enabling — the real skill</p>
+      <h2>Trim per chat; package with agents</h2>
+      <ul>
+        <li>Tools are per-conversation; a new chat starts with the built-ins on</li>
+        <li class="warn">40 enabled tools choose worse than 5 — turn off what a task doesn't need</li>
+        <li>Want a fixed reusable set? That's an <b>agent</b> (Module 10)</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="The built-ins cover a lot — but the real power is that you can add your own. Next, we write a custom tool in JavaScript, end to end.">
+      <p class="eyebrow">Up next</p>
+      <h1>E23 · Write your<br/>own tool (JS)</h1>
+      <p class="lead">A custom tool, end to end.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

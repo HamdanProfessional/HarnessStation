@@ -28,8 +28,17 @@ Record-ready assets for the opening lectures of the course in
 **Track A — Beginner is complete (E01–E14):** install → first model → first
 tool → mental model → a full codebase use case.
 
-**Track B — Intermediate is in progress.** Module 5 (Voice, E15–E18) done;
-Module 6 (MCP, from E19) continues from the curriculum.
+| E19 | Connecting your first MCP server | `E19-first-mcp-server.html` | 1m 05s |
+| E20 | Progressive disclosure | `E20-progressive-disclosure.html` | 0m 58s |
+| E21 | MCP troubleshooting | `E21-mcp-troubleshooting.html` | 0m 43s |
+| E22 | The built-in tool groups | `E22-builtin-tool-groups.html` | 0m 59s |
+| E23 | Writing your own tool (JS) | `E23-write-js-tool.html` | 0m 48s |
+| E24 | Writing your own tool (Python) | `E24-write-python-tool.html` | 0m 46s |
+| E25 | Auto-enabling &amp; reading tool cards | `E25-auto-enable-read-cards.html` | 0m 58s |
+
+**Track B — Intermediate is in progress.** Done: Module 5 (Voice, E15–E18),
+Module 6 (MCP, E19–E21), Module 7 (Tools, E22–E25). Module 8 (Projects, from
+E26) continues from the curriculum.
 
 Each lecture is an **HTML slideshow** you show in Chrome and screen-record,
 intercut with live screen capture of the app / installer at the marked cue

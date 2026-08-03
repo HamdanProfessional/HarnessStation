@@ -1,0 +1,17 @@
+# Slide 1
+Here's a genuinely unusual thing the app does, worth understanding: how it lets you connect ten MCP servers without drowning the model in tool definitions. It's called progressive disclosure.
+
+# Slide 2
+The naive problem first. Every tool the model can use has to be described in the prompt. Connect several servers with dozens of tools each, and that's a huge, ever-growing block of definitions sent on every single request — expensive, and it makes the model choose worse.
+
+# Slide 3
+The app's fix: instead of exposing every server's tools, it exposes just four small meta-tools. mcp_servers lists what's connected. mcp_tools lists the tools on one server. mcp_describe gets the details of a specific tool. And mcp_call actually runs it. The model discovers what it needs, when it needs it.
+
+# Slide 4
+Watch it live. Ask for something a connected server can do. The model calls mcp_servers to see what's available, then mcp_tools to find the right one, then mcp_call to run it — narrowing down step by step. Only the tools it actually needs ever enter the conversation.
+
+# Slide 5
+The tradeoff, said out loud: this costs an extra round-trip or two before the first real action, while the model looks around. For one server it's not worth it; past about two connected servers it clearly is. The app makes the right call automatically, but it's good to know why there's a small pause.
+
+# Slide 6
+Now you understand how it scales. Last in the MCP module: fast triage for the three things that actually go wrong when connecting servers.

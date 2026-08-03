@@ -1,0 +1,60 @@
+1
+00:00:00,000 --> 00:00:03,099
+Same idea as last time, but in Python — so you can lean on Python's libraries.
+
+2
+00:00:03,099 --> 00:00:06,000
+It's almost identical, with one extra requirement you need to know about.
+
+3
+00:00:06,000 --> 00:00:08,646
+New tool, same as before, but choose Python for the body.
+
+4
+00:00:08,646 --> 00:00:13,519
+Write a normal Python function — here, one that calls a real HTTP API with urllib and returns the result.
+
+5
+00:00:13,519 --> 00:00:17,000
+Save it, enable it, and the model can call it just like the JavaScript one.
+
+6
+00:00:17,000 --> 00:00:21,283
+The one extra requirement: Python tools need Python available on your system PATH on the desktop app.
+
+7
+00:00:21,283 --> 00:00:26,074
+If a Python tool silently does nothing, that's the first thing to check — the app couldn't find Python to run it.
+
+8
+00:00:26,074 --> 00:00:29,000
+JavaScript tools have no such dependency; they run in the app itself.
+
+9
+00:00:29,000 --> 00:00:30,024
+One convenience, with a caveat.
+
+10
+00:00:30,024 --> 00:00:34,417
+The app tries to auto-detect the parameter schema from your function's signature and docstring, which saves you writing JSON by hand.
+
+11
+00:00:34,417 --> 00:00:38,712
+But check it — auto-detection isn't perfect, and a wrong schema means the model calls your tool with the wrong shape of arguments.
+
+12
+00:00:38,712 --> 00:00:40,000
+A quick look saves a confusing failure.
+
+13
+00:00:40,000 --> 00:00:41,586
+You can now extend the agent in two languages.
+
+14
+00:00:41,586 --> 00:00:45,517
+Last in the tools module: letting the model enable tools itself, and the habit of reading exactly what a tool did.
+
+15
+00:00:45,517 --> 00:00:46,000
+See you there.
+

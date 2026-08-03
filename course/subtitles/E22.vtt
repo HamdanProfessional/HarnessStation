@@ -1,0 +1,106 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:01.083
+You've met the Files tool.
+
+2
+00:00:01.083 --> 00:00:02.625
+But there's a whole toolbox built in.
+
+3
+00:00:02.625 --> 00:00:06.000
+Let's walk every group so you know what the agent can actually do out of the box.
+
+4
+00:00:06.000 --> 00:00:07.219
+Here's the whole set, grouped.
+
+5
+00:00:07.219 --> 00:00:08.681
+Files and Terminal for your machine.
+
+6
+00:00:08.681 --> 00:00:10.022
+Web and Browser for the internet.
+
+7
+00:00:10.022 --> 00:00:11.769
+Media for generating images, speech, video.
+
+8
+00:00:11.769 --> 00:00:13.597
+MCP for everything you connected last module.
+
+9
+00:00:13.597 --> 00:00:15.709
+Skills, Agents, and Workflows for reusable behavior.
+
+10
+00:00:15.709 --> 00:00:16.603
+UI for the side panel.
+
+11
+00:00:16.603 --> 00:00:17.862
+And Swarm for multi-agent work.
+
+12
+00:00:17.862 --> 00:00:19.000
+That's the built-in toolbox.
+
+13
+00:00:19.000 --> 00:00:19.867
+Let's try Terminal.
+
+14
+00:00:19.867 --> 00:00:22.649
+Switch it on and run a real command in the working directory.
+
+15
+00:00:22.649 --> 00:00:26.481
+But say this plainly on camera: the working directory limits files, not the network.
+
+16
+00:00:26.481 --> 00:00:30.130
+A command runs with your user's permissions and can reach out over the internet.
+
+17
+00:00:30.130 --> 00:00:32.000
+Terminal is powerful — treat it that way.
+
+18
+00:00:32.000 --> 00:00:33.131
+A quick one: the Web group.
+
+19
+00:00:33.131 --> 00:00:40.000
+Switch it on and the agent can search the web and fetch pages — useful whenever a question needs something current that isn't in your files or the model's training.
+
+20
+00:00:40.000 --> 00:00:40.607
+A word on enabling.
+
+21
+00:00:40.607 --> 00:00:42.939
+Tools are chosen per conversation — you decide which are on in each chat.
+
+22
+00:00:42.939 --> 00:00:47.602
+A new chat starts with the built-ins enabled so it can act immediately, but the habit that matters is trimming: turn off what a task doesn't need.
+
+23
+00:00:47.602 --> 00:00:50.860
+Because — and this is a theme for the rest of the course — forty enabled tools choose worse than five.
+
+24
+00:00:50.860 --> 00:00:53.000
+When you want a fixed, reusable set, that's an agent, in Module 10.
+
+25
+00:00:53.000 --> 00:00:56.481
+The built-ins cover a lot — but the real power is that you can add your own.
+
+26
+00:00:56.481 --> 00:00:59.000
+Next, we write a custom tool in JavaScript, end to end.
+

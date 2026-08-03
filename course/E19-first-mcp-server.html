@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E19 · Connecting your first MCP server</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Module 6 is about MCP servers — the standard way to plug whole toolboxes from the outside world into your agent. In this one we connect a real one, and cover the two ways they talk.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 19 · Module 6</p>
+      <h1>Your first MCP server</h1>
+      <p class="lead">Plug an external toolbox into the agent.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="9"
+      data-narration="MCP — the Model Context Protocol — is an open standard for exposing tools to an AI. Instead of the app building every integration, anyone can ship an MCP server, and the app just connects to it. There are hundreds already: GitHub, databases, file systems, search, you name it.">
+      <p class="eyebrow">What MCP is</p>
+      <h2>A standard plug for tools</h2>
+      <p class="lead">Model Context Protocol: an open standard so any tool provider ships a
+        <b>server</b>, and the app connects. Hundreds exist already.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="SWITCH TO APP: Automation › MCP Servers › Add server. Show the two transport options."
+      data-narration="Go to Automation, MCP Servers, Add server. There are two transports — two ways a server can run. Stdio, a local command the app launches; and http, a remote server you connect to over the network. Let's do one of each.">
+      <p class="eyebrow">Add one</p>
+      <h2>Automation › MCP Servers › Add</h2>
+      <ul>
+        <li><b>stdio</b> — a local command the app launches</li>
+        <li><b>http</b> — a remote server over the network</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: add a stdio server — npx command + an env var token (e.g. a GitHub token). Save and connect."
+      data-narration="A stdio example: many servers run through npx, launched with an environment variable for a token — the GitHub server is a classic. You give the command, add the token as an env var, save, and the app spawns it locally and lists its tools.">
+      <p class="eyebrow">stdio example</p>
+      <h2>A local npx server</h2>
+      <pre class="term"><span class="a">command</span>  npx -y @modelcontextprotocol/server-github
+<span class="a">env</span>      GITHUB_TOKEN = ghp_…</pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: add an http server — remote URL, run the OAuth sign-in; note the token lands in the credential store."
+      data-narration="An http example: a remote server you reach by URL. Many use OAuth — you click sign in, authorize in your browser, and the token comes back and is stored in your OS credential store, not in a settings file. Same as your provider keys.">
+      <p class="eyebrow">http example</p>
+      <h2>A remote server + OAuth</h2>
+      <ul>
+        <li>Add the URL → sign in → authorize in the browser</li>
+        <li class="ok">The token lands in the <b>OS credential store</b></li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="The gotcha that saves a support ticket: for npx servers, run the exact command once in a real terminal first. The very first run downloads the package, which can take long enough to time out inside the app and look like a failure. Once it's cached, connecting from the app is instant.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Run npx servers once in a terminal first</h2>
+      <p class="lead">The first run downloads the package and can <b>time out</b> inside the app.
+        Pre-run it in a terminal, then connect.</p>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="One server is easy. But what happens when you connect ten? Next episode explains the app's clever answer to not drowning the model in tool definitions.">
+      <p class="eyebrow">Up next</p>
+      <h1>E20 · Progressive<br/>disclosure</h1>
+      <p class="lead">Why ten servers don't flood the model.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

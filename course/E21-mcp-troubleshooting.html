@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E21 · MCP troubleshooting</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="A short, practical one to close the MCP module: the three things that actually go wrong when you connect a server, and how to fix each one fast.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 21</p>
+      <h1>MCP troubleshooting</h1>
+      <p class="lead">Three failures, three fixes.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="SWITCH TO TERMINAL: run the server's command directly to reproduce the start failure and see the real error."
+      data-narration="One: the server won't start at all. Almost always the command is wrong, or the package didn't download. Run the exact command in a real terminal — you'll see the real error there, where it isn't swallowed by the app.">
+      <p class="eyebrow">1 — Won't start</p>
+      <h2>Test the command in a terminal</h2>
+      <p class="lead">Run it directly to see the actual error — a bad command or a missing package,
+        surfaced plainly.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="APP: show a connected server with no tools; click Disconnect then Connect; tools appear."
+      data-narration="Two: it connects, but lists no tools. Some servers only expose their tools after they've finished initializing. The fix is almost silly but it works: disconnect and reconnect. The second connection catches the tools the first one missed.">
+      <p class="eyebrow">2 — Connected, no tools</p>
+      <h2>Disconnect, reconnect</h2>
+      <p class="lead">Some servers publish tools only after init — a reconnect picks them up.</p>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Three: authentication failures. For a stdio server, check the env token you set — a typo or an expired token is the usual culprit. For an http server, just redo the OAuth sign-in; tokens expire, and re-authorizing gets a fresh one. Two different fixes for the two transports.">
+      <p class="eyebrow">3 — Auth failures</p>
+      <h2>Fix by transport</h2>
+      <ul>
+        <li><b>stdio</b> — check the <code>env</code> token (typo / expired)</li>
+        <li><b>http</b> — redo the OAuth sign-in for a fresh token</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="That's MCP end to end. Module 7 goes deep on tools themselves — every built-in group, and how to write your own. See you there.">
+      <p class="eyebrow">Up next · Module 7</p>
+      <h1>E22 · The built-in<br/>tool groups</h1>
+      <p class="lead">The full toolbox, not just Files.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

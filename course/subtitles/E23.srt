@@ -1,0 +1,72 @@
+1
+00:00:00,000 --> 00:00:02,370
+The built-in tools cover common ground, but the real power is writing your own.
+
+2
+00:00:02,370 --> 00:00:06,000
+Let's build a custom JavaScript tool end to end — and see why the description field, not the code, is the real interface.
+
+3
+00:00:06,000 --> 00:00:07,643
+Go to Automation, Tools, New tool.
+
+4
+00:00:07,643 --> 00:00:13,440
+A tool is four things: a name, a description, its parameters as a JSON schema, and a JavaScript body that does the work.
+
+5
+00:00:13,440 --> 00:00:16,000
+The app runs that body when the model calls the tool.
+
+6
+00:00:16,000 --> 00:00:18,143
+Let's write one live — a simple order lookup.
+
+7
+00:00:18,143 --> 00:00:21,714
+One parameter, an order ID; a few lines of JavaScript that return a status.
+
+8
+00:00:21,714 --> 00:00:26,667
+Save it, switch it on in a chat, and ask about an order — the model calls your tool and uses the result.
+
+9
+00:00:26,667 --> 00:00:28,000
+You just extended the agent.
+
+10
+00:00:28,000 --> 00:00:28,714
+Now the key insight.
+
+11
+00:00:28,714 --> 00:00:29,857
+The model never reads your code.
+
+12
+00:00:29,857 --> 00:00:33,929
+It chooses whether and how to call the tool purely from the name, the description, and the parameter descriptions.
+
+13
+00:00:33,929 --> 00:00:36,321
+So a vague description like “looks up an order” is a bad interface.
+
+14
+00:00:36,321 --> 00:00:39,071
+A good one says what it does and when to use it: “Look up an order by its ID.
+
+15
+00:00:39,071 --> 00:00:40,607
+Use when the user mentions an order number.
+
+16
+00:00:40,607 --> 00:00:42,000
+” That sentence is doing the real work.
+
+17
+00:00:42,000 --> 00:00:42,755
+That's JavaScript.
+
+18
+00:00:42,755 --> 00:00:48,000
+If you'd rather use Python — and its libraries — the next episode is the same idea with the one extra requirement Python has.
+

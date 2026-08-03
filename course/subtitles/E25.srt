@@ -1,0 +1,72 @@
+1
+00:00:00,000 --> 00:00:06,000
+Two habits to close the tools module: letting the model switch on tools it needs by itself, and reading tool-call cards to understand exactly what happened.
+
+2
+00:00:06,000 --> 00:00:11,142
+In Settings, General, there's an option to let the model switch on tools it finds itself.
+
+3
+00:00:11,142 --> 00:00:17,267
+When on, if a task needs a capability, it can enable it mid-conversation instead of you doing it manually.
+
+4
+00:00:17,267 --> 00:00:19,000
+Handy — but note the boundary.
+
+5
+00:00:19,000 --> 00:00:24,878
+The important boundary: it can turn on tools that need no credentials — file search, web fetch, and the like — but it cannot connect anything that needs your API key or a sign-in.
+
+6
+00:00:24,878 --> 00:00:29,212
+So it can help itself to safe capabilities, but it can never quietly wire up something that spends your money or touches an account.
+
+7
+00:00:29,212 --> 00:00:30,000
+That line is deliberate.
+
+8
+00:00:30,000 --> 00:00:31,074
+Second habit: read the cards.
+
+9
+00:00:31,074 --> 00:00:34,852
+When a result surprises you, expand the tool-call card and look at the exact arguments the model used.
+
+10
+00:00:34,852 --> 00:00:38,704
+Nine times out of ten the surprise is in there — it searched for the wrong term, or read the wrong file.
+
+11
+00:00:38,704 --> 00:00:41,000
+The answer to “why did it do that” is usually one expand away.
+
+12
+00:00:41,000 --> 00:00:45,247
+And the theme that runs through everything from here on, worth stating flatly: forty enabled tools choose worse than five.
+
+13
+00:00:45,247 --> 00:00:47,092
+More options make the model's job harder, not easier.
+
+14
+00:00:47,092 --> 00:00:48,171
+Keep each chat's toolset tight.
+
+15
+00:00:48,171 --> 00:00:52,000
+We'll come back to this with agents, workflows, and cost — it's the single most repeated lesson in the course.
+
+16
+00:00:52,000 --> 00:00:53,272
+That completes the tools module.
+
+17
+00:00:53,272 --> 00:00:57,205
+Next we organize work itself — Projects, which stop context from bleeding between unrelated things.
+
+18
+00:00:57,205 --> 00:00:58,000
+See you in Module 8.
+
