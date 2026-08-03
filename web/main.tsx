@@ -9,6 +9,8 @@ import "./shims/speak";
 import "./shims/vfs";
 import "./shims/pyodide";
 import "./shims/shell";
+// Real Linux VM (v86) — booted on demand; see web/shims/vm.ts.
+import "./shims/vm";
 
 /**
  * Web entry point.
