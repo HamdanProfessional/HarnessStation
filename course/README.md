@@ -36,9 +36,64 @@ tool → mental model → a full codebase use case.
 | E24 | Writing your own tool (Python) | `E24-write-python-tool.html` | 0m 46s |
 | E25 | Auto-enabling &amp; reading tool cards | `E25-auto-enable-read-cards.html` | 0m 58s |
 
-**Track B — Intermediate is in progress.** Done: Module 5 (Voice, E15–E18),
-Module 6 (MCP, E19–E21), Module 7 (Tools, E22–E25). Module 8 (Projects, from
-E26) continues from the curriculum.
+| E26 | Creating a project | `E26-creating-a-project.html` | 1m 10s |
+| E27 | Instruction layering | `E27-instruction-layering.html` | 1m 11s |
+| E28 | Building your first knowledge base | `E28-building-your-first-knowledge-base.html` | 1m 12s |
+| E29 | How retrieval works | `E29-how-retrieval-works.html` | 1m 06s |
+| E30 | Creating your first agent | `E30-creating-your-first-agent.html` | 1m 00s |
+| E31 | Running an agent from a chat | `E31-running-an-agent-from-a-chat.html` | 1m 08s |
+| E32 | Swarms | `E32-swarms.html` | 1m 00s |
+| E33 | Skills | `E33-skills.html` | 1m 14s |
+| E34 | Building a multi-step workflow | `E34-multi-step-workflow.html` | 1m 11s |
+| E35 | Agents vs workflows vs chats | `E35-decision-table.html` | 1m 07s |
+| E36 | Scheduling an agent or workflow | `E36-scheduling.html` | 1m 11s |
+| E37 | Cron expressions for irregular schedules | `E37-cron-expressions.html` | 0m 58s |
+| E38 | Browser control — the in-app browser | `E38-in-app-browser.html` | 1m 10s |
+| E39 | Driving your own Chrome via the extension | `E39-chrome-extension.html` | 1m 10s |
+| E40 | Images, audio, video and 3D generation | `E40-media-generation.html` | 1m 11s |
+| E41 | Comparing models side by side | `E41-compare-models.html` | 1m 06s |
+| E42 | Public benchmarks, and their limits | `E42-public-benchmarks-and-their-limits.html` | 1m 04s |
+| E43 | Building your own eval set | `E43-building-your-own-eval-set.html` | 1m 07s |
+| E44 | Settings, panel by panel | `E44-settings-panel-by-panel.html` | 1m 17s |
+| E45 | Memory — three scopes and the budget | `E45-memory-three-scopes-and-the-budget.html` | 1m 09s |
+| E46 | Chats — folders, snapshots, branching, compaction | `E46-chats-folders-snapshots-branching-compaction.html` | 1m 08s |
+| E47 | Controlling cost | `E47-controlling-cost.html` | 1m 21s |
+| E48 | Choosing a local model for your hardware | `E48-choosing-a-local-model-for-your-hardware.html` | 1m 10s |
+| E49 | Discover and My Models — downloading a GGUF | `E49-discover-and-my-models.html` | 1m 07s |
+| E50 | Loading and running a local model | `E50-loading-and-running-a-local-model.html` | 1m 06s |
+| E51 | Advanced llama-server launch flags | `E51-advanced-llama-server-launch-flags.html` | 1m 24s |
+| E52 | Turning on and pairing the mesh | `E52-turning-on-and-pairing-the-mesh.html` | 1m 11s |
+| E53 | What gets shared, and what never does | `E53-what-gets-shared-and-what-never-does.html` | 1m 13s |
+| E54 | Running HarnessStation in a browser tab | `E54-running-harnessstation-in-a-browser-tab.html` | 1m 14s |
+| E55 | Voice in the browser | `E55-voice-in-the-browser.html` | 1m 08s |
+| E56 | Python in the browser via Pyodide | `E56-python-in-the-browser-via-pyodide.html` | 1m 13s |
+| E57 | The OPFS workspace and the coreutils shell | `E57-opfs-workspace-and-coreutils-shell.html` | 1m 14s |
+| E58 | A real Linux VM in the tab, via v86 | `E58-real-linux-vm-via-v86.html` | 1m 22s |
+| E59 | Rewinding a conversation | `E59-rewinding-a-conversation.html` | 0m 57s |
+| E60 | Deleting individual items from context | `E60-deleting-items-from-context.html` | 1m 11s |
+| E61 | Updating and staying current | `E61-updating-and-staying-current.html` | 0m 56s |
+| E62 | Uninstalling without losing your data | `E62-uninstalling-without-losing-data.html` | 0m 57s |
+| E63 | Backing up and moving to a new machine | `E63-backing-up-and-moving-to-new-machine.html` | 1m 01s |
+| E64 | Privacy and security checklist before showing anyone | `E64-privacy-and-security-checklist.html` | 1m 17s |
+| E65 | Repository tour | `E65-repository-tour.html` | 1m 05s |
+| E66 | State management with store.ts | `E66-state-management-with-store-ts.html` | 1m 08s |
+| E67 | The Rust backend surface | `E67-the-rust-backend-surface.html` | 1m 24s |
+| E68 | Why one React tree runs on both desktop and web | `E68-why-one-react-tree-runs-on-both-desktop-and-web.html` | 1m 25s |
+| E69 | Case study: how the v86 Linux VM was added behind the seam | `E69-case-study-how-the-v86-linux-vm-was-added-behind-the-seam.html` | 1m 30s |
+| E70 | Writing a new browser shim from scratch | `E70-writing-a-new-browser-shim-from-scratch.html` | 1m 26s |
+| E71 | Running and reading the test suite | `E71-running-and-reading-the-test-suite.html` | 1m 23s |
+| E72 | Adding a new built-in tool the right way | `E72-adding-a-new-built-in-tool-the-right-way.html` | 1m 26s |
+| E73 | Extending a view — adding a small feature to a panel | `E73-extending-a-view-adding-a-small-feature-to-a-panel.html` | 1m 24s |
+| E74 | Release process and where the project is headed | `E74-release-process-and-where-the-project-is-headed.html` | 1m 33s |
+
+**The full course is complete — all 74 lectures (E01–E74) across four tracks.**
+
+- **Track A — Beginner** (E01–E14): install → first model → first tool → mental model → a real codebase.
+- **Track B — Intermediate** (E15–E47): voice, MCP, tools, projects, knowledge, agents/skills/workflows, schedules, browser, media, compare/benchmarks/evals, the settings deep-dive, memory, chats, and cost.
+- **Track C — Advanced** (E48–E64): local models + llama.cpp flag tuning, the device mesh, the web build (Pyodide, browser voice, the v86 Linux VM), rewind & per-item context deletion, deployment/backup/privacy.
+- **Track D — For developers** (E65–E74): architecture, store.ts, the Rust command surface, the Tauri↔web shim seam (with the v86 VM as a case study), contribution exercises, testing, and the release process.
+
+Every deck carries per-slide narration, timing and director cues; the `subtitles/`, `scripts/` and `storyboards/` folders are generated for all 74 by `node course/assets/build-subtitles.mjs`.
 
 Each lecture is an **HTML slideshow** you show in Chrome and screen-record,
 intercut with live screen capture of the app / installer at the marked cue

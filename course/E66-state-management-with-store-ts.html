@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E66 · State management with store.ts</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Module 17 starts the developer track. We open the codebase for real, starting with the file almost everything else touches: the app's central state store.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track D · For developers · Episode 66 · Module 17</p>
+      <h1>State management with store.ts</h1>
+      <p class="lead">The file behind almost every feature in this series.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="SWITCH TO EDITOR: open src/lib/store.ts. Scroll past the type definitions to the create() call."
+      data-narration="src/lib/store.ts is a single Zustand store: one flat object of state — chats, settings, agents, the current view — plus every action that mutates it. Components never mutate state directly; they call an action, and the store decides what changes and what re-renders.">
+      <p class="eyebrow">The shape</p>
+      <h2>One Zustand store, state plus actions</h2>
+      <p class="lead">Chats, settings, agents, the active view — all in one object,
+        alongside every action that's allowed to change it.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="EDITOR: search the file for regenerate:, stop:, branchAt:, editUserMessage:, rewindTo:, deleteItem:, compactChat:."
+      data-narration="Take the chat actions as a case study, because you've already seen every one of them in this series: sendMessage and regenerate from Module 2, stop from the same place, branchAt and editUserMessage and rewindTo and deleteItem from Module 11's editing episode, compactChat from Module 15. Same actions, now with the code behind them.">
+      <p class="eyebrow">Case study</p>
+      <h2>The chat action surface</h2>
+      <pre class="term">sendMessage()   regenerate()   stop()
+branchAt()      editUserMessage()
+rewindTo()      deleteItem()
+compactChat()</pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="EDITOR: open rewindTo and deleteItem — point out the snapshot call before rewindTo mutates anything."
+      data-narration="Two are worth a close look. rewindTo deletes a message and everything after it, but snapshots the chat first, so it's reversible. deleteItem removes one item — a message, its reasoning, or a single tool call — to trim context, and repairs tool-call pairing at send time so a dangling tool result never gets sent to the model.">
+      <p class="eyebrow">Two worth reading closely</p>
+      <h2>Reversible, and pairing-safe</h2>
+      <ul>
+        <li class="ok"><b>rewindTo</b> — snapshots the chat before it deletes anything</li>
+        <li><b>deleteItem</b> — trims one piece, repairs tool-call pairing at send time</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="SWITCH TO EDITOR: open src/components/ChatWindow.tsx around line 171 — the useStore() destructure."
+      data-narration="Now the consumer side. ChatWindow.tsx doesn't own any chat logic — it destructures the actions it needs straight off useStore, and every button just calls one. The component's job is rendering and wiring clicks; the store's job is deciding what happens.">
+      <p class="eyebrow">Who calls these</p>
+      <h2>ChatWindow.tsx owns no logic</h2>
+      <pre class="term">const { sendMessage, regenerate, stop,
+  branchAt, editUserMessage, rewindTo,
+  deleteItem, compactChat } = <span class="a">useStore()</span>;
+      <span class="c">// the regenerate button:</span>
+onClick={() =&gt; <span class="g">void regenerate()</span>}</pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="The gotcha: two ways to patch a chat, and they're not interchangeable. updateChat patches whatever chat is currently on screen. Streaming must use updateChatById with an explicit id instead, because the user can switch chats mid-reply — patching “the current chat” would land the next token in the wrong conversation.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>updateChat vs updateChatById</h2>
+      <ul>
+        <li>updateChat patches whatever chat is on screen right now</li>
+        <li class="warn">Streaming always uses <b>updateChatById</b> — the user can switch chats mid-reply</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="With the frontend's state model down, we cross the process boundary. Next, a command-by-command tour of the Rust backend the frontend calls into.">
+      <p class="eyebrow">Up next</p>
+      <h1>E67 · The Rust<br/>backend surface</h1>
+      <p class="lead">Touring src-tauri/src/ command by command.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

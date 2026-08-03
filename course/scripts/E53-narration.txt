@@ -1,0 +1,20 @@
+# Slide 1
+Pairing two machines is easy. Knowing exactly what that pairing lets one do on the other is the part worth getting right — three switches, and a boundary that no switch can move.
+
+# Slide 2
+Three switches, all off by default. Models: let this device run inference using the remote's keys or GPU. Tools: let it call tools on the remote. Knowledge: let it search knowledge bases stored on the remote. Nothing is shared until you turn one on.
+
+# Slide 3
+Here's the boundary that doesn't move. Even with Tools switched on, shell, Python, and file-writing tools are never shared across the mesh — full stop. That's not a setting you can find and enable; it's a hard line in the design, because those three are exactly the tools that can do lasting damage to a machine that isn't yours to risk.
+
+# Slide 4
+For any paired device, What can it do? spells out exactly which switches are on and what that grants — no guessing from the toggle state alone.
+
+# Slide 5
+Turn Models on and the remote's models simply appear in your model picker alongside your local and cloud ones — same picker, no separate workflow.
+
+# Slide 6
+If something's not connecting: check mesh is on at both ends, not just one. Discovery is a network broadcast that guest or corporate Wi-Fi often blocks — add by address instead. The ports are 8793 for mesh traffic and 8794 for announcements, useful if you're touching a firewall. And a sleeping machine will correctly show offline — that's not a bug.
+
+# Slide 7
+The mesh is covered. Now a different kind of portability — running this whole app with zero install, straight in a browser tab.

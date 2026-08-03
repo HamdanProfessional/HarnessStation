@@ -1,0 +1,23 @@
+# Slide 1
+Module 18 is the shim seam — the architectural decision that let the browser build in E54 exist without forking a single UI file. Today we open the source and see exactly how.
+
+# Slide 2
+Remember from E54: the desktop app never talks to Rust directly. Every touch point goes through five imports from @tauri-apps — core, plugin-fs, plugin-http, api/event, plugin-opener, plugin-updater. Everything the app does to the outside world funnels through those five names.
+
+# Slide 3
+web/shims holds a browser file for each one, with the same exported function names and signatures. The Vite config for the web build aliases the real package name to the shim path — so every import in the app source is completely unaware which one it's getting. core.ts is the dispatcher standing in for invoke; fs.ts is the Origin Private File System standing in for plugin-fs; http.ts is just native fetch, because a Rust client isn't bound by CORS but a browser tab is; event.ts is a local, same-window bus since nothing in a tab emits from a Rust side; opener.ts opens a real tab instead of asking the OS; updater.ts just reports no update, because a page reload is the update mechanism; secret.ts trades the OS keychain for a namespaced slice of localStorage, plainly labeled as weaker.
+
+# Slide 4
+core.ts is the interesting one, because it isn't a one-to-one swap — it's a small router. A handlers object maps a command name to a function. invoke looks the name up: found, it runs it; not found, it throws a clear, specific reason instead of a generic failure, so a caller with a fallback — like detectOs falling back to the user agent — can degrade gracefully instead of crashing.
+
+# Slide 5
+And that map is built up, not hardcoded — registerCommand adds an entry to it. Every other shim file that needs to answer a Tauri command, not just replace an import, calls registerCommand once at module load. secret.ts is the clean example: it registers secret_set, secret_get and secret_delete, each just reading or writing localStorage under a prefix.
+
+# Slide 6
+That's the whole trick, stated plainly: a new capability for the web build is a new file in web/shims that imports registerCommand and calls it a few times. Nothing in src/lib or src/components changes, because they were already calling invoke with that command name for the desktop build.
+
+# Slide 7
+Gotcha: not every command needs a shim. core.ts also keeps an UNAVAILABLE map of commands that are honestly impossible in a tab — start_server, mcp_connect, mesh_start, inapp_open. Those fail with a specific, useful reason on purpose, rather than pretending to work.
+
+# Slide 8
+Time to see this pattern used for real, on the biggest thing added behind the seam so far: an actual Linux kernel, booted inside the browser tab. Next episode walks the source and the commit history behind it.

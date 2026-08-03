@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E68 · Why one React tree runs on both desktop and web</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Module 18 is the shim seam — the architectural decision that let the browser build in E54 exist without forking a single UI file. Today we open the source and see exactly how.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track D · For developers · Episode 68 · Module 18</p>
+      <h1>Why one React tree runs on both desktop and web</h1>
+      <p class="lead">The same src/ tree, two different bottoms.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="Remember from E54: the desktop app never talks to Rust directly. Every touch point goes through five imports from @tauri-apps — core, plugin-fs, plugin-http, api/event, plugin-opener, plugin-updater. Everything the app does to the outside world funnels through those five names.">
+      <p class="eyebrow">Recap from E54</p>
+      <h2>Five imports are the whole seam</h2>
+      <pre class="term">@tauri-apps/api/core        <span class="c">invoke()</span>
+@tauri-apps/plugin-fs       <span class="c">files</span>
+@tauri-apps/plugin-http     <span class="c">fetch()</span>
+@tauri-apps/api/event       <span class="c">listen/emit</span>
+@tauri-apps/plugin-opener   <span class="c">openUrl/openPath</span>
+@tauri-apps/plugin-updater  <span class="c">check/relaunch</span></pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="SWITCH TO EDITOR: open web/shims/ and show core.ts, fs.ts, http.ts, event.ts, opener.ts, updater.ts, secret.ts side by side."
+      data-narration="web/shims holds a browser file for each one, with the same exported function names and signatures. The Vite config for the web build aliases the real package name to the shim path — so every import in the app source is completely unaware which one it's getting. core.ts is the dispatcher standing in for invoke; fs.ts is the Origin Private File System standing in for plugin-fs; http.ts is just native fetch, because a Rust client isn't bound by CORS but a browser tab is; event.ts is a local, same-window bus since nothing in a tab emits from a Rust side; opener.ts opens a real tab instead of asking the OS; updater.ts just reports no update, because a page reload is the update mechanism; secret.ts trades the OS keychain for a namespaced slice of localStorage, plainly labeled as weaker.">
+      <p class="eyebrow">web/shims/ — one file per import</p>
+      <h2>Same names, browser bodies</h2>
+      <pre class="term">core.ts      <span class="a">invoke() dispatcher</span>
+fs.ts        <span class="a">OPFS</span>
+http.ts      <span class="a">native fetch (CORS applies)</span>
+event.ts     <span class="a">local bus, never fires cross-process</span>
+opener.ts    <span class="a">window.open()</span>
+updater.ts   <span class="a">reports no update; reload is the update</span>
+secret.ts    <span class="a">localStorage, labeled weaker</span></pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="EDITOR: open core.ts — show the handlers map, invoke(), and registerCommand() at the bottom."
+      data-narration="core.ts is the interesting one, because it isn't a one-to-one swap — it's a small router. A handlers object maps a command name to a function. invoke looks the name up: found, it runs it; not found, it throws a clear, specific reason instead of a generic failure, so a caller with a fallback — like detectOs falling back to the user agent — can degrade gracefully instead of crashing.">
+      <p class="eyebrow">core.ts is a router</p>
+      <h2>invoke() looks a name up in a map</h2>
+      <pre class="term">const handlers: Record&lt;string, Handler&gt; = { … };
+
+export async function invoke(cmd, args) {
+  const handler = handlers[cmd];
+  if (handler) return handler(args);
+  throw new Error(UNAVAILABLE[cmd] ?? <span class="g">`"${cmd}" isn't available in the web version.`</span>);
+}</pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="EDITOR: scroll to export function registerCommand(cmd, handler) at the bottom of core.ts; then open secret.ts and show its three registerCommand() calls."
+      data-narration="And that map is built up, not hardcoded — registerCommand adds an entry to it. Every other shim file that needs to answer a Tauri command, not just replace an import, calls registerCommand once at module load. secret.ts is the clean example: it registers secret_set, secret_get and secret_delete, each just reading or writing localStorage under a prefix.">
+      <p class="eyebrow">How a command gets a browser body</p>
+      <h2>registerCommand() — no app code touched</h2>
+      <pre class="term"><span class="c">// secret.ts</span>
+registerCommand("secret_set", (args) =&gt; {
+  const { id, value } = args;
+  localStorage.setItem(PREFIX + id, value);
+});</pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="That's the whole trick, stated plainly: a new capability for the web build is a new file in web/shims that imports registerCommand and calls it a few times. Nothing in src/lib or src/components changes, because they were already calling invoke with that command name for the desktop build.">
+      <p class="eyebrow">The trick, stated plainly</p>
+      <h2>A capability is one new shim file</h2>
+      <ul class="ok">
+        <li>Import registerCommand, call it for each command name</li>
+        <li>Zero changes anywhere in src/ — it was already calling invoke("that_name")</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="Gotcha: not every command needs a shim. core.ts also keeps an UNAVAILABLE map of commands that are honestly impossible in a tab — start_server, mcp_connect, mesh_start, inapp_open. Those fail with a specific, useful reason on purpose, rather than pretending to work.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Some commands fail on purpose</h2>
+      <ul>
+        <li class="warn">UNAVAILABLE lists commands that are genuinely impossible in a tab — start_server, mcp_connect, mesh_start, inapp_open — each with a specific reason, not a generic error</li>
+      </ul>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide title"
+      data-seconds="7"
+      data-narration="Time to see this pattern used for real, on the biggest thing added behind the seam so far: an actual Linux kernel, booted inside the browser tab. Next episode walks the source and the commit history behind it.">
+      <p class="eyebrow">Up next</p>
+      <h1>E69 · Case study:<br/>the v86 Linux VM</h1>
+      <p class="lead">How a genuinely big feature landed behind the seam.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

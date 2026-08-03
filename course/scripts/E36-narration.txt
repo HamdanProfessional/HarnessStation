@@ -1,0 +1,20 @@
+# Slide 1
+Module 11 starts with schedules — running an agent or workflow unattended. The guardrails come first, before the first run, not after.
+
+# Slide 2
+Go to Automation, Schedules, New schedule. You pick what to run — an agent or a workflow — how often, either an interval preset or a cron expression, and where the results land: a new chat, appended to an existing one, or a notification.
+
+# Slide 3
+Before the first scheduled run: set a spend cap in Settings, Usage. This is a hard prerequisite, not a nice-to-have — an unattended job with no cap can run far longer, and cost far more, than anyone would approve in the moment.
+
+# Slide 4
+Also turn on “keep running in the tray” in Settings, General, so schedules fire even when the window's closed. One catch: a missed run — say the machine was asleep — does not fire retroactively. It's simply skipped.
+
+# Slide 5
+The worked example: a morning briefing. An agent runs daily, checks a few sources, and posts a short digest as a notification. The instruction that keeps it worth opening after two weeks: “if nothing needs my attention, say so plainly” — so a quiet day produces one honest line instead of padding.
+
+# Slide 6
+The gotcha: good schedule candidates report — they draft, summarize, and tell you. Poor candidates act unreviewed — sending mail, posting publicly, committing code — with nobody watching in the moment. Draft-and-tell beats do-it-automatically for anything that isn't trivially reversible.
+
+# Slide 7
+Presets don't cover every cadence. Next, a quick reference for cron expressions when the schedule you need is irregular.

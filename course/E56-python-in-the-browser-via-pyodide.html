@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E56 · Python in the browser via Pyodide</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="8"
+      data-narration="A bigger claim than the last episode: real Python, the actual language, running inside the browser tab, executing a genuine Python tool with no server anywhere in the loop.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track C · Advanced · Episode 56 · Module 14</p>
+      <h1>Python in the browser via Pyodide</h1>
+      <p class="lead">Real CPython, compiled to WebAssembly, in the tab.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="The desktop app runs Python tools by shelling out to the system Python on your PATH. A browser tab can't shell out to anything — so pyodide dot ts swaps in Pyodide: an actual build of CPython, compiled to WebAssembly, that runs entirely inside the page.">
+      <p class="eyebrow">The problem</p>
+      <h2>No system Python, no shell-out</h2>
+      <p class="lead">Desktop shells out to <code>python</code> on PATH. The browser has no
+        process to shell out to — so <code>pyodide.ts</code> brings CPython itself, as WASM.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="It isn't bundled with the app. The first time any Python tool actually runs, pyodide dot ts pulls the runtime from the official CDN — a few megabytes, once, cached after that. Every other user of the web build who never touches a Python tool pays nothing extra.">
+      <p class="eyebrow">Loaded on first use</p>
+      <h2>Fetched from the CDN, not bundled</h2>
+      <pre class="term">first python tool call <span class="c">→</span> fetch <span class="g">pyodide.mjs</span> from CDN
+      <span class="c">→</span> cached <span class="c">→</span> every call after this is local</pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="The contract matches the desktop's python underscore run exactly: run the tool's code, call the named function with the JSON arguments, hand back json dot dumps of the result. Same shape in, same shape out — so nothing above this layer, the tool editor or the model, has to know which one it's talking to.">
+      <p class="eyebrow">Same contract as desktop</p>
+      <h2>python_run, unchanged from above</h2>
+      <ul>
+        <li>Run the tool's code, call the named function with the JSON args</li>
+        <li class="ok">Returns <code>json.dumps</code> of the result — identical shape to desktop</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="SWITCH TO APP: web build, open the E24 currency-rate Python tool, run it, watch it execute with the network tab showing no round-trip to a local server."
+      data-narration="Let's reuse the tool from episode 24 — the one that calls a currency API with urllib. Same code, same save-and-test flow, but this time it's Pyodide underneath. Watch it run: real network fetch for the API, but no round-trip to any Python process on this machine, because there isn't one.">
+      <p class="eyebrow">The demo</p>
+      <h2>The E24 currency tool, unmodified</h2>
+      <pre class="term"><span class="a">import</span> urllib.request, json
+<span class="a">def</span> fx_rate(base, quote):
+    <span class="c">"""Get an FX rate. Use for currency conversion."""</span>
+    ...</pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Same gotcha as desktop's schema auto-detection, ported over: pyodide dot ts also reimplements python underscore schema, inferring parameters from the function's signature and docstring inside Pyodide itself. Convenient, still worth checking — a wrong inferred type still means the model calls with the wrong shape of argument.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Schema inference runs in Pyodide too</h2>
+      <ul>
+        <li class="warn">The signature-and-docstring schema trick is reimplemented here — same caveat: verify it</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="7"
+      data-narration="Python now runs with no server. Files still need somewhere to live, and a terminal to work in — next up, the sandboxed workspace and the shell built on top of it.">
+      <p class="eyebrow">Up next</p>
+      <h1>E57 · The OPFS<br/>workspace &amp; shell</h1>
+      <p class="lead">A sandboxed filesystem, and coreutils over it.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

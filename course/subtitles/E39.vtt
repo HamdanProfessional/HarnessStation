@@ -1,0 +1,54 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:01.816
+The in-app browser gives a clean session.
+
+2
+00:00:01.816 --> 00:00:07.000
+This episode is for the opposite case — using a Chrome session you're already signed into, via the browser extension.
+
+3
+00:00:07.000 --> 00:00:14.777
+Open chrome colon slash slash extensions, turn on Developer mode in the top right, click Load unpacked, and select the extension folder from this repo.
+
+4
+00:00:14.777 --> 00:00:19.000
+It appears in your toolbar, and the agent can now drive that actual Chrome window.
+
+5
+00:00:19.000 --> 00:00:28.000
+When to reach for this instead of the in-app browser: a login already established elsewhere — your email, a dashboard you're signed into — versus a clean, disposable session where you'd rather the agent start from nothing.
+
+6
+00:00:28.000 --> 00:00:31.000
+Established login, use the extension; clean slate, use the in-app browser.
+
+7
+00:00:31.000 --> 00:00:40.409
+This is also where tab tools live — they only exist here, not in the in-app browser: open_new_tab, list_tabs, change_tab, and close_tab.
+
+8
+00:00:40.409 --> 00:00:42.000
+Real Chrome, real tabs.
+
+9
+00:00:42.000 --> 00:00:52.000
+And unlike the in-app browser, this one really can take screenshots — take_screenshot and read_screenshot both work here, since it's a genuine Chrome window the extension can capture.
+
+10
+00:00:52.000 --> 00:00:54.542
+The gotcha, and it matters: a signed-in session is delegated access.
+
+11
+00:00:54.542 --> 00:01:00.187
+If you're signed into your bank, your email, your work systems in that browser, the model can act on any of them — not just the page you pointed it at.
+
+12
+00:01:00.187 --> 00:01:04.000
+Treat the decision to hand it your session with the same care as handing someone your unlocked laptop.
+
+13
+00:01:04.000 --> 00:01:10.000
+From driving a browser to generating with one — next is images, audio, video, and 3D.
+

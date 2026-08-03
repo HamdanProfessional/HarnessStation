@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E69 · Case study: how the v86 Linux VM was added behind the seam</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="E58 showed the v86 Linux VM as a viewer feature. This episode reopens it as a developer — the source, the design decisions, and the actual commit history behind landing it.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track D · For developers · Episode 69 · Module 18</p>
+      <h1>Case study: the v86 Linux VM</h1>
+      <p class="lead">How a genuinely big feature landed behind the shim seam.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="SWITCH TO EDITOR: open web/shims/vm.ts, top of file — the Emulator interface."
+      data-narration="vm.ts talks to v86 through one narrow interface: add_listener for serial bytes coming out of the guest, serial0_send for typing into it, and create_file/read_file for the 9p bridge. Everything else in the file is built on just those four calls — deliberately narrow, so v86 itself stays a black box.">
+      <p class="eyebrow">The interface</p>
+      <h2>Four calls, everything else built on them</h2>
+      <pre class="term">interface Emulator {
+  add_listener(event, fn: (byte: number) =&gt; void): void;
+  serial0_send(text: string): void;
+  create_file(path, data: Uint8Array): Promise&lt;void&gt;;
+  read_file(path): Promise&lt;Uint8Array&gt;;
+}</pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="EDITOR: scroll to onSerialByte() and the watchers array; then waitFor()."
+      data-narration="The guest only talks back one byte at a time over serial, so vm.ts turns that into something awaitable: onSerialByte appends every byte to a running buffer and checks it against a list of watchers. waitFor registers one — a test function and a timeout — and resolves the moment the buffer satisfies it, or rejects on timeout. That's how bootVM waits for the shell prompt, and how every command run waits for its own completion marker.">
+      <p class="eyebrow">The serial-byte watcher pattern</p>
+      <h2>Turning a byte stream into a promise</h2>
+      <pre class="term">function onSerialByte(byte) {
+  serialBuffer += String.fromCharCode(byte);
+  for (const w of watchers) if (w.test(serialBuffer)) w.resolve();
+}
+waitFor(buf =&gt; buf.includes(PROMPT), 40_000, "the shell prompt")</pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="EDITOR: scroll to the GUEST_MOUNT / SHARE_PREFIX / GUEST_WORKDIR constants, then pushWorkspace() and pullWorkspace()."
+      data-narration="The 9p bridge is what makes this more than a toy: the guest mounts a share at slash mnt, and the host's create_file with a workspace-prefixed path appears there. So GUEST_WORKDIR is slash mnt slash workspace, and before every command pushWorkspace walks the OPFS tree and copies each file in over that bridge; after the command, pullWorkspace runs find in the guest and copies anything new or changed back out. The file tools and a real Linux command end up looking at the same files.">
+      <p class="eyebrow">The 9p bridge</p>
+      <h2>OPFS and the guest share one filesystem</h2>
+      <pre class="term">GUEST_MOUNT   = "/mnt"
+SHARE_PREFIX  = "workspace"
+GUEST_WORKDIR = "/mnt/workspace"
+      <span class="c">pushWorkspace() before → pullWorkspace() after</span></pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="SWITCH TO EDITOR: open web/shims/vm.ts near the bottom — registerCommand(\"run_command\", …) and the vmEnabled() check."
+      data-narration="Only one command name is registered for all of this: run_command, the same name the coreutils shell shim in shell.ts also answers. The router is a Settings toggle read from localStorage — vmEnabled. On, it tries the VM and falls back to the shell if boot fails; off, it goes straight to the instant shell. One invoke call site in the app, two completely different implementations underneath.">
+      <p class="eyebrow">Routing</p>
+      <h2>One command name, two implementations</h2>
+      <pre class="term">registerCommand("run_command", async (args) =&gt; {
+  if (vmEnabled()) {
+    try { return await vmRunCommand(...); }
+    catch (e) { <span class="c">/* fall back to the shell */</span> }
+  }
+  return shellRun(...);
+});</pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="14"
+      data-cue="TERMINAL: git log --oneline showing the three vm/shell commits in order."
+      data-narration="And here's how it actually landed, in order, in the real history: first a shell scaffold — a coreutils subset over the same OPFS workspace, shipping something useful immediately. Then a VM milestone that only boots and runs a raw command, no filesystem bridge yet. Then a second VM milestone that wires the 9p bridge in and switches run_command's routing. Three separate, independently useful commits, not one giant one.">
+      <p class="eyebrow">The actual commit sequence</p>
+      <h2>Three commits, not one big one</h2>
+      <pre class="term">1  <span class="a">VM: a shell for the terminal tool, over the OPFS workspace</span>
+2  <span class="a">Real Linux in the browser via v86 (milestone 1: boot + run)</span>
+3  <span class="a">VM milestone 2: wire real Linux into run_command
+   with a shared filesystem</span></pre>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="The lesson worth taking from this into your own contribution: each of those three commits worked and shipped value on its own. The shell alone was a complete terminal. The VM that only boots was a demo. Only the third commit needed the other two — and by then the risky, novel part (does v86 even boot reliably) had already been proven in isolation.">
+      <p class="eyebrow">The lesson</p>
+      <h2>Land the risky part in isolation first</h2>
+      <ul class="ok">
+        <li>Each commit was independently useful, not a fragment of one big change</li>
+        <li>The riskiest unknown — does v86 boot reliably — got proven before anything depended on it</li>
+      </ul>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide title"
+      data-seconds="7"
+      data-narration="You've now read a real feature end to end. Time to build one yourself — a small command, implemented on both sides of the seam, run from both the desktop build and the browser build.">
+      <p class="eyebrow">Up next</p>
+      <h1>E70 · Writing a new<br/>browser shim from scratch</h1>
+      <p class="lead">One command, two implementations, hands-on.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

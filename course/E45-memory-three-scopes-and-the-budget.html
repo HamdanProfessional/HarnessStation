@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E45 · Memory — three scopes and the budget</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Memory came up briefly back in Module 9. Now the full picture — three scopes, how facts get in, and the budget that stops memory from crowding out the conversation itself.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 45 · Module 11</p>
+      <h1>Memory — three scopes and the budget</h1>
+      <p class="lead">What it remembers, where, and how much it can hold.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Three scopes. Chat memory belongs to one conversation. Project memory is shared by every chat inside that project. Global memory follows you everywhere, in every chat and project. Same mechanism, three different reach.">
+      <p class="eyebrow">Three scopes</p>
+      <h2>Chat · Project · Global</h2>
+      <ul>
+        <li><b>Chat</b> — visible only in that one conversation</li>
+        <li><b>Project</b> — shared across every chat in that project</li>
+        <li><b>Global</b> — follows you everywhere</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="Facts get in two ways. Passively, the app quietly extracts them from what you say — that is the toggle in Settings, Memory. Or deliberately, when you say “remember that” and mean it literally. Both land in the same store.">
+      <p class="eyebrow">How facts get in</p>
+      <h2>Passive extraction, or told directly</h2>
+      <ul>
+        <li>Passive — the app extracts facts as you talk (Settings › Memory)</li>
+        <li>Deliberate — you say “remember that…” and it saves it</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: Settings › Memory — list facts by scope, delete one, run Tidy."
+      data-narration="Settings, Memory lists every fact by scope. Delete a wrong one directly. And Tidy merges near-duplicates — the same fact saved three slightly different ways collapses back into one, which matters once the budget comes in.">
+      <p class="eyebrow">Settings › Memory</p>
+      <h2>List, delete, and Tidy</h2>
+      <ul>
+        <li>Facts listed by scope — delete any one directly</li>
+        <li class="ok"><b>Tidy</b> merges near-duplicate facts into one</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="The budget: memory is allowed twenty percent of the context window by default, twenty-five percent at the most, and that ceiling is hard-capped by design — it cannot be raised past it. The consequence: a smaller model recalls less, not because it forgets more, but because the budget is a share of a smaller window.">
+      <p class="eyebrow">The budget</p>
+      <h2>20% default, 25% hard cap</h2>
+      <pre class="term"><span class="c">default</span>   20% of context window
+<span class="c">max</span>       25% — hard-capped, cannot be raised
+<span class="a">→</span>         smaller model = smaller <span class="g">share</span> = less recall</pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Gotcha: memory is not knowledge. A style preference — “always answer in bullet points” — is memory. A two-hundred-page spec is knowledge, and belongs in a knowledge base, not memory. Drop a whole document into memory and it can blow the entire budget on one file.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Memory ≠ knowledge</h2>
+      <ul>
+        <li class="ok">A style preference — that is memory</li>
+        <li class="warn">A 200-page spec — that is knowledge, not memory</li>
+        <li class="no">A document in memory can blow the whole budget on one file</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Memory keeps facts across chats. Next we look at chats themselves — folders, snapshots, branching, and how compaction keeps a long history usable.">
+      <p class="eyebrow">Up next</p>
+      <h1>E46 · Chats — folders,<br/>snapshots, branching</h1>
+      <p class="lead">Managing history once you actually have some.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

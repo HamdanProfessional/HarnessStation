@@ -1,0 +1,62 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:07.000
+Time to talk about Benchmarks — the leaderboard scores you have probably seen elsewhere, and why the app hands them to you for free but does not want you stopping there.
+
+2
+00:00:07.000 --> 00:00:08.082
+Open Library, Benchmarks.
+
+3
+00:00:08.082 --> 00:00:16.000
+It is a table of public leaderboard scores — coding, reasoning, general knowledge — pulled in for every model the app knows about, so you can sort and compare without leaving the app.
+
+4
+00:00:16.000 --> 00:00:19.682
+This is the one thing the app fetches for you instead of routing through your own provider key.
+
+5
+00:00:19.682 --> 00:00:26.000
+A small gateway serves the scores; it needs no key of yours, and it carries no data about you or your machine — just public numbers matched against the model list.
+
+6
+00:00:26.000 --> 00:00:26.776
+Here is the catch.
+
+7
+00:00:26.776 --> 00:00:29.839
+These test questions are, at this point, plastered across the internet.
+
+8
+00:00:29.839 --> 00:00:37.000
+Training data for newer models likely includes material that looks a lot like the benchmark itself — so a high score partly reflects memorization, not raw capability.
+
+9
+00:00:37.000 --> 00:00:39.426
+Which makes a benchmark a weak proxy for your actual task.
+
+10
+00:00:39.426 --> 00:00:44.110
+A model that tops a coding leaderboard can still fumble the exact tool-calling pattern your workflow depends on.
+
+11
+00:00:44.110 --> 00:00:48.000
+Use benchmarks to narrow the field — three or four candidates — never to make the final call.
+
+12
+00:00:48.000 --> 00:00:53.288
+So the rule: shortlist with Benchmarks, then test with Evals — your own test cases, on your own task.
+
+13
+00:00:53.288 --> 00:00:58.000
+That is next episode, and it is the step that actually tells you which model wins for you.
+
+14
+00:00:58.000 --> 00:01:00.045
+So how do you build a test that actually reflects your work?
+
+15
+00:01:00.045 --> 00:01:04.000
+Next episode we build a real eval set — a handful of test cases with a right answer, run straight against any model.
+

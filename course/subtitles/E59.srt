@@ -1,0 +1,64 @@
+1
+00:00:00,000 --> 00:00:02,150
+Module 15 is about precise context control.
+
+2
+00:00:02,150 --> 00:00:07,000
+First up: rewindTo — stepping a chat back to an earlier point without leaving the chat you're in.
+
+3
+00:00:07,000 --> 00:00:09,578
+Pick a point earlier in the conversation and rewind to it.
+
+4
+00:00:09,578 --> 00:00:17,000
+Everything after that point is gone from the chat — not archived off to the side, actually removed — and you're back at that moment, ready to go a different direction.
+
+5
+00:00:17,000 --> 00:00:20,747
+Here's the safety net: rewindTo snapshots the chat before it deletes anything.
+
+6
+00:00:20,747 --> 00:00:26,079
+So a rewind is itself reversible — if you rewind too far, or change your mind, you can get back what was there.
+
+7
+00:00:26,079 --> 00:00:28,000
+It behaves like an undo, not a shredder.
+
+8
+00:00:28,000 --> 00:00:30,454
+Compare this to Branch from here, from episode forty-six.
+
+9
+00:00:30,454 --> 00:00:35,490
+Branching preserves the original conversation and forks a brand new chat from that point — you end up with two chats.
+
+10
+00:00:35,490 --> 00:00:39,321
+Rewind does the opposite: it mutates the current chat back to an earlier state, in place.
+
+11
+00:00:39,321 --> 00:00:41,000
+Same starting idea, opposite trade-off.
+
+12
+00:00:41,000 --> 00:00:44,699
+Use rewind when you want a clean redo without a second chat cluttering your list.
+
+13
+00:00:44,699 --> 00:00:48,078
+Use branch when you want to keep both paths side by side and compare them.
+
+14
+00:00:48,078 --> 00:00:51,000
+They solve the same itch — a wrong turn — in two different ways.
+
+15
+00:00:51,000 --> 00:00:52,134
+Rewind operates on whole turns.
+
+16
+00:00:52,134 --> 00:00:57,000
+Next episode goes finer-grained still: deleting a single reasoning block, tool call, or tool response without touching anything else.
+

@@ -1,0 +1,88 @@
+1
+00:00:00,000 --> 00:00:01,990
+Second contribution exercise, this time on the UI layer.
+
+2
+00:00:01,990 --> 00:00:07,000
+We take a small component you already know from the sidebar — the notification bell — and extend it with one small, real, end-to-end feature.
+
+3
+00:00:07,000 --> 00:00:07,734
+NotificationBell.
+
+4
+00:00:07,734 --> 00:00:15,460
+tsx is deliberately small — a button with an unread badge, and a dropdown listing history from useToast, its own little Zustand store, same one-object-plus-actions shape as store.
+
+5
+00:00:15,460 --> 00:00:19,000
+ts from E66 but scoped to just toasts: history, unread, clearUnread, clearHistory.
+
+6
+00:00:19,000 --> 00:00:25,340
+The feature: let a viewer mute one kind of notification — say, info toasts, which fire the most and matter least — without touching success or error.
+
+7
+00:00:25,340 --> 00:00:29,000
+Small, real, and it needs a setting that survives a restart, not just component state.
+
+8
+00:00:29,000 --> 00:00:30,542
+That's why this hooks into the real store.
+
+9
+00:00:30,542 --> 00:00:31,056
+ts, not toast.
+
+10
+00:00:31,056 --> 00:00:34,729
+ts's local one — a mute preference belongs alongside every other durable setting, saved to settings.
+
+11
+00:00:34,729 --> 00:00:35,757
+json like everything in E44.
+
+12
+00:00:35,757 --> 00:00:42,000
+Add a field to the settings shape, mutedToastKinds, and use the store's existing update action to change it — the same pattern any settings panel in the app already uses.
+
+13
+00:00:42,000 --> 00:00:42,281
+toast.
+
+14
+00:00:42,281 --> 00:00:53,270
+ts's push function is where every notification is born, so that's where muting has to be enforced: read the current mutedToastKinds from the main store, and if this kind is in it, skip appending to history and skip incrementing unread.
+
+15
+00:00:53,270 --> 00:00:55,000
+One conditional, right at the source.
+
+16
+00:00:55,000 --> 00:01:02,102
+Last piece: a control inside the bell's own dropdown, next to Clear — a small toggle per kind, calling updateSettings straight from the component, exactly the way ChatWindow.
+
+17
+00:01:02,102 --> 00:01:03,408
+tsx called store actions in E66.
+
+18
+00:01:03,408 --> 00:01:07,000
+No new panel, no new route — the feature lives entirely inside the component it extends.
+
+19
+00:01:07,000 --> 00:01:14,797
+Verify end to end: mute info, trigger something that would normally toast info, confirm silence — then restart the app entirely and confirm the mute survived, because it's in settings.
+
+20
+00:01:14,797 --> 00:01:17,000
+json now, not component state that resets on reload.
+
+21
+00:01:17,000 --> 00:01:18,612
+One episode left in the entire series.
+
+22
+00:01:18,612 --> 00:01:24,000
+We close the developer track, and the course, by looking at where this project has actually been and where it's actually going.
+

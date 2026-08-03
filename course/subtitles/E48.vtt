@@ -1,0 +1,74 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:00.818
+Track C, Advanced.
+
+2
+00:00:00.818 --> 00:00:07.000
+We start with the question that decides everything else about running local: which model size actually fits the machine you already own.
+
+3
+00:00:07.000 --> 00:00:12.013
+A realistic sizing table, four-bit quantized: eight gigabytes of RAM gets you a three-to-four billion parameter model.
+
+4
+00:00:12.013 --> 00:00:13.797
+Sixteen gigabytes, seven-to-eight billion.
+
+5
+00:00:13.797 --> 00:00:15.454
+Thirty-two gigabytes, fourteen billion.
+
+6
+00:00:15.454 --> 00:00:17.961
+Sixty-four gigabytes and up, thirty-two to seventy billion.
+
+7
+00:00:17.961 --> 00:00:20.000
+Bigger RAM buys bigger models, roughly linearly.
+
+8
+00:00:20.000 --> 00:00:24.081
+But the size that matters more than raw parameter count is tool-calling reliability.
+
+9
+00:00:24.081 --> 00:00:29.522
+A small model can write fine prose and still fail to call a tool correctly — and this app is built around tools.
+
+10
+00:00:29.522 --> 00:00:32.000
+Prose quality is the wrong thing to optimize first.
+
+11
+00:00:32.000 --> 00:00:38.857
+Test this early, with the same prompt from Episode 9 — read the README in this folder and tell me what the project does, with the Files tool on.
+
+12
+00:00:38.857 --> 00:00:43.000
+If a candidate model can't complete that reliably, its parameter count does not matter.
+
+13
+00:00:43.000 --> 00:00:45.249
+You are not choosing one model for everything.
+
+14
+00:00:45.249 --> 00:00:54.000
+Mix local and cloud per chat: local for everyday, private work where a smaller model is plenty; cloud for the hard reasoning tasks where quality matters more than privacy or cost.
+
+15
+00:00:54.000 --> 00:00:58.026
+Gotcha: there is a real quality gap between a quantized local model and a frontier cloud one.
+
+16
+00:00:58.026 --> 00:01:04.000
+Set that expectation before recording anything else in this module — local is genuinely capable, not a drop-in replacement for everything.
+
+17
+00:01:04.000 --> 00:01:05.619
+Sizing tells you what to look for.
+
+18
+00:01:05.619 --> 00:01:10.000
+Next we actually go get one — searching and downloading a GGUF straight from inside the app.
+

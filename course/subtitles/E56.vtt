@@ -1,0 +1,62 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:08.000
+A bigger claim than the last episode: real Python, the actual language, running inside the browser tab, executing a genuine Python tool with no server anywhere in the loop.
+
+2
+00:00:08.000 --> 00:00:12.000
+The desktop app runs Python tools by shelling out to the system Python on your PATH.
+
+3
+00:00:12.000 --> 00:00:20.000
+A browser tab can't shell out to anything — so pyodide dot ts swaps in Pyodide: an actual build of CPython, compiled to WebAssembly, that runs entirely inside the page.
+
+4
+00:00:20.000 --> 00:00:21.390
+It isn't bundled with the app.
+
+5
+00:00:21.390 --> 00:00:28.062
+The first time any Python tool actually runs, pyodide dot ts pulls the runtime from the official CDN — a few megabytes, once, cached after that.
+
+6
+00:00:28.062 --> 00:00:32.000
+Every other user of the web build who never touches a Python tool pays nothing extra.
+
+7
+00:00:32.000 --> 00:00:38.332
+The contract matches the desktop's python underscore run exactly: run the tool's code, call the named function with the JSON arguments, hand back json dot dumps of the result.
+
+8
+00:00:38.332 --> 00:00:43.000
+Same shape in, same shape out — so nothing above this layer, the tool editor or the model, has to know which one it's talking to.
+
+9
+00:00:43.000 --> 00:00:46.566
+Let's reuse the tool from episode 24 — the one that calls a currency API with urllib.
+
+10
+00:00:46.566 --> 00:00:49.671
+Same code, same save-and-test flow, but this time it's Pyodide underneath.
+
+11
+00:00:49.671 --> 00:00:55.000
+Watch it run: real network fetch for the API, but no round-trip to any Python process on this machine, because there isn't one.
+
+12
+00:00:55.000 --> 00:01:02.006
+Same gotcha as desktop's schema auto-detection, ported over: pyodide dot ts also reimplements python underscore schema, inferring parameters from the function's signature and docstring inside Pyodide itself.
+
+13
+00:01:02.006 --> 00:01:06.000
+Convenient, still worth checking — a wrong inferred type still means the model calls with the wrong shape of argument.
+
+14
+00:01:06.000 --> 00:01:07.348
+Python now runs with no server.
+
+15
+00:01:07.348 --> 00:01:13.000
+Files still need somewhere to live, and a terminal to work in — next up, the sandboxed workspace and the shell built on top of it.
+

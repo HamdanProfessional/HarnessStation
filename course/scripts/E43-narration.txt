@@ -1,0 +1,20 @@
+# Slide 1
+Benchmarks got you a shortlist. Now we build the thing that actually answers “which model wins for me” — a small eval set made of your own real cases.
+
+# Slide 2
+Library, Evals. A test case is two things: a prompt, and a description of what a good answer looks like. Run the set against a model, and each case comes back scored against that description.
+
+# Slide 3
+Build three or four real cases — pulled from work you actually did this week, not invented ones. And include one where the right answer is “I don’t know.” A model that confidently invents an answer instead of admitting it lacks the information is a real failure mode, and it is the one benchmarks never test for.
+
+# Slide 4
+When to re-run this set: a new model shows up, a prompt or agent instruction changes, a provider quietly updates a model behind the same name, or you are just weighing a cheaper option. The set is cheap to keep — re-running it is the whole point.
+
+# Slide 5
+Reading the results honestly matters as much as building the set. A small score gap is noise — do not switch models over one point. Instead look at how a case fails, not just how often. And always weigh cost and speed alongside the score; the top scorer is not automatically the right pick.
+
+# Slide 6
+Gotcha: a test case only proves what it tests. Four cases will not catch everything — but four real ones beat forty generic benchmark questions for telling you whether a model fits your actual job.
+
+# Slide 7
+With Benchmarks and Evals covered, we turn to the app itself — a full walk through every settings panel, so nothing later needs re-explaining.

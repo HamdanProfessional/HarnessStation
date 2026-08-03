@@ -1,0 +1,74 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:06.140
+There's a real cost difference between putting something in your global instructions, which you pay for on every single message, and putting it in a skill, which you only pay for when it's actually relevant.
+
+2
+00:00:06.140 --> 00:00:07.000
+This episode is about skills.
+
+3
+00:00:07.000 --> 00:00:08.352
+Automation, Skills, New skill.
+
+4
+00:00:08.352 --> 00:00:12.500
+Three fields: a name, a one-line description, and a Markdown body with the actual procedure.
+
+5
+00:00:12.500 --> 00:00:18.000
+The description is the part the model always sees; the body only loads in when the description matches what's being asked.
+
+6
+00:00:18.000 --> 00:00:20.167
+The worked example: a sql-conventions skill.
+
+7
+00:00:20.167 --> 00:00:25.091
+Its body holds your team's actual rules — table naming, migration format, how to write a safe query.
+
+8
+00:00:25.091 --> 00:00:31.000
+It sits there unused in every unrelated chat, and loads in fully the moment someone asks for a query or a schema change.
+
+9
+00:00:31.000 --> 00:00:36.000
+The one rule that makes or breaks a skill: the description must say when to use it, not what's inside it.
+
+10
+00:00:36.000 --> 00:00:40.190
+Contains our SQL style guide tells the model nothing about which moment to reach for it.
+
+11
+00:00:40.190 --> 00:00:45.000
+Use this when writing or reviewing any SQL query or migration is specific enough to trigger reliably.
+
+12
+00:00:45.000 --> 00:00:48.007
+Three ways to hold information, and they're not interchangeable.
+
+13
+00:00:48.007 --> 00:00:50.544
+A skill is a procedure, loaded in whole when relevant.
+
+14
+00:00:50.544 --> 00:00:53.832
+Knowledge is large material, searched piece by piece at question time.
+
+15
+00:00:53.832 --> 00:00:59.000
+Memory is small facts about you or the project, injected into every single message whether it's needed or not.
+
+16
+00:00:59.000 --> 00:01:08.000
+And memory, the third kind: small facts, always injected, on every single message — the most expensive place to put anything long.
+
+17
+00:01:08.000 --> 00:01:10.185
+You've now met agents, swarms, and skills individually.
+
+18
+00:01:10.185 --> 00:01:14.000
+Next we chain steps together into a workflow, so one step's output feeds directly into the next.
+

@@ -1,0 +1,76 @@
+1
+00:00:00,000 --> 00:00:01,693
+Module 17 starts the developer track.
+
+2
+00:00:01,693 --> 00:00:07,000
+We open the codebase for real, starting with the file almost everything else touches: the app's central state store.
+
+3
+00:00:07,000 --> 00:00:07,528
+src/lib/store.
+
+4
+00:00:07,528 --> 00:00:12,623
+ts is a single Zustand store: one flat object of state — chats, settings, agents, the current view — plus every action that mutates it.
+
+5
+00:00:12,623 --> 00:00:17,000
+Components never mutate state directly; they call an action, and the store decides what changes and what re-renders.
+
+6
+00:00:17,000 --> 00:00:27,405
+Take the chat actions as a case study, because you've already seen every one of them in this series: sendMessage and regenerate from Module 2, stop from the same place, branchAt and editUserMessage and rewindTo and deleteItem from Module 11's editing episode, compactChat from Module 15.
+
+7
+00:00:27,405 --> 00:00:29,000
+Same actions, now with the code behind them.
+
+8
+00:00:29,000 --> 00:00:29,920
+Two are worth a close look.
+
+9
+00:00:29,920 --> 00:00:33,359
+rewindTo deletes a message and everything after it, but snapshots the chat first, so it's reversible.
+
+10
+00:00:33,359 --> 00:00:40,000
+deleteItem removes one item — a message, its reasoning, or a single tool call — to trim context, and repairs tool-call pairing at send time so a dangling tool result never gets sent to the model.
+
+11
+00:00:40,000 --> 00:00:40,964
+Now the consumer side.
+
+12
+00:00:40,964 --> 00:00:41,446
+ChatWindow.
+
+13
+00:00:41,446 --> 00:00:46,924
+tsx doesn't own any chat logic — it destructures the actions it needs straight off useStore, and every button just calls one.
+
+14
+00:00:46,924 --> 00:00:51,000
+The component's job is rendering and wiring clicks; the store's job is deciding what happens.
+
+15
+00:00:51,000 --> 00:00:53,444
+The gotcha: two ways to patch a chat, and they're not interchangeable.
+
+16
+00:00:53,444 --> 00:00:55,400
+updateChat patches whatever chat is currently on screen.
+
+17
+00:00:55,400 --> 00:01:02,000
+Streaming must use updateChatById with an explicit id instead, because the user can switch chats mid-reply — patching “the current chat” would land the next token in the wrong conversation.
+
+18
+00:01:02,000 --> 00:01:04,833
+With the frontend's state model down, we cross the process boundary.
+
+19
+00:01:04,833 --> 00:01:08,000
+Next, a command-by-command tour of the Rust backend the frontend calls into.
+

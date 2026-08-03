@@ -1,0 +1,116 @@
+1
+00:00:00,000 --> 00:00:03,157
+Module 17 continues with the other half of the app: the Rust backend.
+
+2
+00:00:03,157 --> 00:00:07,000
+This episode is a tour of src-tauri/src — one file at a time, one command at a time.
+
+3
+00:00:07,000 --> 00:00:09,536
+Every one of these files exposes functions marked #[tauri::command].
+
+4
+00:00:09,536 --> 00:00:14,756
+That attribute is the whole boundary: the frontend never talks to Rust directly, it calls invoke with a command name and arguments, and lib.
+
+5
+00:00:14,756 --> 00:00:18,000
+rs's generate_handler list is the switchboard that routes it to one of these functions.
+
+6
+00:00:18,000 --> 00:00:18,184
+local.
+
+7
+00:00:18,184 --> 00:00:20,766
+rs, at just under 800 lines, is the file behind Modules 1, 4, 12 and 22 all at once.
+
+8
+00:00:20,766 --> 00:00:22,856
+hw_info detects RAM, AVX2 and an NVIDIA GPU for E49's fit indicator.
+
+9
+00:00:22,856 --> 00:00:24,362
+download and extract_zip pull and unpack a model.
+
+10
+00:00:24,362 --> 00:00:26,974
+fs_read, fs_write, fs_list and friends are the working-directory file tools from E09.
+
+11
+00:00:26,974 --> 00:00:27,988
+run_command is the terminal tool.
+
+12
+00:00:27,988 --> 00:00:31,000
+And start_server, stop_server, server_status supervise the llama-server subprocess from Module 12.
+
+13
+00:00:31,000 --> 00:00:31,185
+mesh.
+
+14
+00:00:31,185 --> 00:00:43,000
+rs is the largest file in the backend, close to 960 lines, because it's doing the most: mesh_start opens the network listener, mesh_arm_pairing and mesh_pair run the proof-of-knowledge handshake from Module 13, mesh_call sends a request to a paired peer, and mesh_export_peers lets you inspect what's currently trusted.
+
+15
+00:00:43,000 --> 00:00:44,814
+The rest of the surface, one command group per feature: mcp.
+
+16
+00:00:44,814 --> 00:00:46,295
+rs connects and calls stdio MCP servers; browser.
+
+17
+00:00:46,295 --> 00:00:47,837
+rs drives the Chrome extension while inapp_browser.
+
+18
+00:00:47,837 --> 00:00:49,530
+rs drives the native in-app window from Module 7; audio.
+
+19
+00:00:49,530 --> 00:00:50,316
+rs is mic capture, speech.
+
+20
+00:00:50,316 --> 00:00:51,767
+rs is text-to-speech across four engines; oauth.
+
+21
+00:00:51,767 --> 00:00:52,765
+rs is the MCP OAuth flow; secret.
+
+22
+00:00:52,765 --> 00:00:54,458
+rs is three tiny functions wrapping the OS keychain; py.
+
+23
+00:00:54,458 --> 00:00:56,000
+rs runs a Python tool's body and infers its schema.
+
+24
+00:00:56,000 --> 00:00:59,358
+Notice the pattern across all of it: a command's Rust signature is the actual contract.
+
+25
+00:00:59,358 --> 00:01:07,000
+fs_read takes a base and a path and returns a String or an error; there's no separate API spec to go stale, because the compiler enforces that the frontend's invoke call matches what's really there.
+
+26
+00:01:07,000 --> 00:01:13,623
+Gotcha worth knowing before you add your own command: everything argument and return type here has to be JSON-serializable — Serialize and Deserialize.
+
+27
+00:01:13,623 --> 00:01:17,000
+A raw file handle or a thread can't cross this boundary; only plain data can.
+
+28
+00:01:17,000 --> 00:01:17,739
+That's the Rust side.
+
+29
+00:01:17,739 --> 00:01:24,000
+Now the more unusual half of this app's architecture: how the exact same React tree, calling these exact same invoke names, also runs with zero Rust behind it — in a browser tab.
+

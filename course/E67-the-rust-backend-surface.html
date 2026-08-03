@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E67 · The Rust backend surface</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Module 17 continues with the other half of the app: the Rust backend. This episode is a tour of src-tauri/src — one file at a time, one command at a time.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track D · For developers · Episode 67 · Module 17</p>
+      <h1>The Rust backend surface</h1>
+      <p class="lead">Touring src-tauri/src, command by command.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="SWITCH TO EDITOR: open src-tauri/src/lib.rs, scroll to the invoke_handler![...] list."
+      data-narration="Every one of these files exposes functions marked #[tauri::command]. That attribute is the whole boundary: the frontend never talks to Rust directly, it calls invoke with a command name and arguments, and lib.rs's generate_handler list is the switchboard that routes it to one of these functions.">
+      <p class="eyebrow">The boundary</p>
+      <h2>#[tauri::command] is the seam</h2>
+      <pre class="term">frontend: <span class="a">invoke("fs_read", { base, path })</span>
+      <span class="c">↓</span>
+lib.rs: <span class="g">generate_handler![local::fs_read, …]</span>
+      <span class="c">↓</span>
+local.rs: <span class="a">#[tauri::command] pub fn fs_read(...)</span></pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="EDITOR: open src-tauri/src/local.rs — scroll past hw_info, download, extract_zip to fs_read/fs_write."
+      data-narration="local.rs, at just under 800 lines, is the file behind Modules 1, 4, 12 and 22 all at once. hw_info detects RAM, AVX2 and an NVIDIA GPU for E49's fit indicator. download and extract_zip pull and unpack a model. fs_read, fs_write, fs_list and friends are the working-directory file tools from E09. run_command is the terminal tool. And start_server, stop_server, server_status supervise the llama-server subprocess from Module 12.">
+      <p class="eyebrow">local.rs — the workhorse</p>
+      <h2>Hardware, downloads, files, terminal, the model server</h2>
+      <pre class="term">hw_info · download · extract_zip
+fs_read · fs_write · fs_list · fs_mkdir · fs_remove
+run_command
+start_server · stop_server · server_status</pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="EDITOR: open src-tauri/src/mesh.rs — show the file length in the status bar (~960 lines)."
+      data-narration="mesh.rs is the largest file in the backend, close to 960 lines, because it's doing the most: mesh_start opens the network listener, mesh_arm_pairing and mesh_pair run the proof-of-knowledge handshake from Module 13, mesh_call sends a request to a paired peer, and mesh_export_peers lets you inspect what's currently trusted.">
+      <p class="eyebrow">mesh.rs — the largest file</p>
+      <h2>~960 lines, the device mesh from Module 13</h2>
+      <pre class="term">mesh_start · mesh_stop · mesh_status
+mesh_arm_pairing · mesh_pair · mesh_call
+mesh_add_peer · mesh_forget · mesh_export_peers</pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="EDITOR: quickly flip through mcp.rs, browser.rs, inapp_browser.rs, audio.rs, speech.rs, oauth.rs, secret.rs, py.rs."
+      data-narration="The rest of the surface, one command group per feature: mcp.rs connects and calls stdio MCP servers; browser.rs drives the Chrome extension while inapp_browser.rs drives the native in-app window from Module 7; audio.rs is mic capture, speech.rs is text-to-speech across four engines; oauth.rs is the MCP OAuth flow; secret.rs is three tiny functions wrapping the OS keychain; py.rs runs a Python tool's body and infers its schema.">
+      <p class="eyebrow">The rest of the surface</p>
+      <h2>One file per feature area</h2>
+      <pre class="term">mcp.rs           mcp_connect · mcp_request
+browser.rs       browser_call (extension)
+inapp_browser.rs inapp_open · inapp_eval
+audio.rs         mic_start · mic_level
+speech.rs        speak · piper_speak · winrt_speak
+oauth.rs         mcp_oauth
+secret.rs        secret_set/get/delete
+py.rs            python_run · python_schema</pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Notice the pattern across all of it: a command's Rust signature is the actual contract. fs_read takes a base and a path and returns a String or an error; there's no separate API spec to go stale, because the compiler enforces that the frontend's invoke call matches what's really there.">
+      <p class="eyebrow">The pattern</p>
+      <h2>The signature is the contract</h2>
+      <ul>
+        <li>No separate API spec — the Rust function signature is the source of truth</li>
+        <li class="ok">A mismatched invoke call fails at build time on the Rust side, or at runtime with a clear Tauri error</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="Gotcha worth knowing before you add your own command: everything argument and return type here has to be JSON-serializable — Serialize and Deserialize. A raw file handle or a thread can't cross this boundary; only plain data can.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Only JSON-serializable data crosses</h2>
+      <ul class="warn">
+        <li>Arguments and return types need Serialize / Deserialize</li>
+        <li>File handles, threads, raw pointers stay on the Rust side behind a State</li>
+      </ul>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide title"
+      data-seconds="7"
+      data-narration="That's the Rust side. Now the more unusual half of this app's architecture: how the exact same React tree, calling these exact same invoke names, also runs with zero Rust behind it — in a browser tab.">
+      <p class="eyebrow">Up next</p>
+      <h1>E68 · Why one React<br/>tree runs on both</h1>
+      <p class="lead">Desktop and web, from the same source tree.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

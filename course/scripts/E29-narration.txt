@@ -1,0 +1,17 @@
+# Slide 1
+Last episode we saw retrieval work. This time we open the hood — so you can predict when it will find the right passage, and when it quietly won't.
+
+# Slide 2
+Three steps. Every document gets split into chunks. Each chunk gets turned into a vector — an embedding. When you ask a question, the question is embedded too, and the app finds the nearest chunks by meaning, not by matching words. That's why asking about undoing a deploy finds a document about rolling back a release.
+
+# Slide 3
+Three structural limits, not bugs. It's not exhaustive — it returns the nearest few chunks, not every relevant one, so a fact three chunks away can get missed. Chunk boundaries can split a sentence in half, separating a fact from its qualifier. And it matches meaning, not keywords, which is usually a strength but occasionally misses an exact term you needed literally.
+
+# Slide 4
+A checklist for better answers. Use the documents' own vocabulary in your question. Ask narrow questions rather than broad ones. Explicitly ask it to say when something is absent, so it doesn't guess past a gap. Split unrelated material into separate bases. And name each base descriptively, so it's obvious later which one to attach.
+
+# Slide 5
+The gotcha that catches people every time: a scanned PDF is just an image of text, not text. The app does no OCR, so indexing it silently succeeds and returns nothing useful — no error, just empty retrieval. If a document is a scan, run OCR on it yourself before adding it.
+
+# Slide 6
+Knowledge grounds a chat in documents. Module 10 goes further — packaging a whole role, tools included, as a reusable agent.

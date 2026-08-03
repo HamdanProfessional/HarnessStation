@@ -1,0 +1,23 @@
+# Slide 1
+E58 showed the v86 Linux VM as a viewer feature. This episode reopens it as a developer — the source, the design decisions, and the actual commit history behind landing it.
+
+# Slide 2
+vm.ts talks to v86 through one narrow interface: add_listener for serial bytes coming out of the guest, serial0_send for typing into it, and create_file/read_file for the 9p bridge. Everything else in the file is built on just those four calls — deliberately narrow, so v86 itself stays a black box.
+
+# Slide 3
+The guest only talks back one byte at a time over serial, so vm.ts turns that into something awaitable: onSerialByte appends every byte to a running buffer and checks it against a list of watchers. waitFor registers one — a test function and a timeout — and resolves the moment the buffer satisfies it, or rejects on timeout. That's how bootVM waits for the shell prompt, and how every command run waits for its own completion marker.
+
+# Slide 4
+The 9p bridge is what makes this more than a toy: the guest mounts a share at slash mnt, and the host's create_file with a workspace-prefixed path appears there. So GUEST_WORKDIR is slash mnt slash workspace, and before every command pushWorkspace walks the OPFS tree and copies each file in over that bridge; after the command, pullWorkspace runs find in the guest and copies anything new or changed back out. The file tools and a real Linux command end up looking at the same files.
+
+# Slide 5
+Only one command name is registered for all of this: run_command, the same name the coreutils shell shim in shell.ts also answers. The router is a Settings toggle read from localStorage — vmEnabled. On, it tries the VM and falls back to the shell if boot fails; off, it goes straight to the instant shell. One invoke call site in the app, two completely different implementations underneath.
+
+# Slide 6
+And here's how it actually landed, in order, in the real history: first a shell scaffold — a coreutils subset over the same OPFS workspace, shipping something useful immediately. Then a VM milestone that only boots and runs a raw command, no filesystem bridge yet. Then a second VM milestone that wires the 9p bridge in and switches run_command's routing. Three separate, independently useful commits, not one giant one.
+
+# Slide 7
+The lesson worth taking from this into your own contribution: each of those three commits worked and shipped value on its own. The shell alone was a complete terminal. The VM that only boots was a demo. Only the third commit needed the other two — and by then the risky, novel part (does v86 even boot reliably) had already been proven in isolation.
+
+# Slide 8
+You've now read a real feature end to end. Time to build one yourself — a small command, implemented on both sides of the seam, run from both the desktop build and the browser build.

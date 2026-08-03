@@ -1,0 +1,48 @@
+1
+00:00:00,000 --> 00:00:07,000
+Connecting a media-generation engine — images, audio, video, even 3D — and generating something live, including a free local route.
+
+2
+00:00:07,000 --> 00:00:08,519
+Settings, Media models, Add model.
+
+3
+00:00:08,519 --> 00:00:20,000
+Four kinds: an OpenAI-compatible image endpoint, Stable Diffusion webui — free and local, but it needs the dash-dash-api flag — an OpenAI-compatible speech endpoint, and Replicate, which is the widest: image, audio, video, and 3D all through one connection.
+
+4
+00:00:20,000 --> 00:00:22,892
+Turn on the Media tool group and ask for an image on camera.
+
+5
+00:00:22,892 --> 00:00:32,000
+Two prompting habits worth showing: say what you don't want, not just what you want, and name the aspect ratio explicitly — or let the model write its own detailed prompt from a rough idea.
+
+6
+00:00:32,000 --> 00:00:39,541
+For free local images with a GPU: run A1111 or Forge with the dash-dash-api flag, then point the Stable Diffusion webui model type at it.
+
+7
+00:00:39,541 --> 00:00:44,000
+About six gigabytes of VRAM covers SDXL — no per-image cost, no external account.
+
+8
+00:00:44,000 --> 00:00:53,000
+Speech works the same shape — an OpenAI-compatible speech endpoint, added the same way, generating audio from text on request.
+
+9
+00:00:53,000 --> 00:00:59,611
+The gotcha: video and 3D through Replicate are considerably slower and dearer than images — sometimes minutes, sometimes real cost per generation.
+
+10
+00:00:59,611 --> 00:01:05,000
+Say so out loud before anyone leaves an agent generating video unattended, so nobody discovers the bill after the fact.
+
+11
+00:01:05,000 --> 00:01:09,397
+With models everywhere in this app, the natural next question is which one to actually use for a given job.
+
+12
+00:01:09,397 --> 00:01:11,000
+Compare answers that in under a minute.
+

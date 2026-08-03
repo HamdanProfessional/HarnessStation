@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E70 · Writing a new browser shim from scratch</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Hands-on episode. We add one small new command — get clipboard text — twice: once as a real Tauri command in Rust, once as a browser shim. Same invoke call site, unmodified, on both builds.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track D · For developers · Episode 70 · Module 18</p>
+      <h1>Writing a new browser shim from scratch</h1>
+      <p class="lead">One command, implemented on both sides, hands-on.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="9"
+      data-narration="The target: get_clipboard_text. A tiny, self-contained command — no dependencies on anything else in the app — so the whole shim pattern from E68 is visible without noise.">
+      <p class="eyebrow">The target</p>
+      <h2>get_clipboard_text</h2>
+      <p class="lead">Small on purpose — the goal is to see the whole seam, not the feature.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="14"
+      data-cue="SWITCH TO EDITOR: open src-tauri/src/lib.rs. Add a small #[tauri::command] near the other simple commands, and add it to the generate_handler![] list."
+      data-narration="Rust side first. A #[tauri::command] function, using the arboard crate or Tauri's own clipboard plugin to read the system clipboard and return a String or an error. Then the one easy step to forget: add it to generate_handler's list in the invoke_handler chain — a command that exists but isn't listed there is invisible to the frontend and fails with a not-found error that looks nothing like a permissions problem.">
+      <p class="eyebrow">Step 1 — the Rust command</p>
+      <h2>#[tauri::command] in lib.rs</h2>
+      <pre class="term">#[tauri::command]
+fn get_clipboard_text(app: AppHandle) -&gt; Result&lt;String, String&gt; {
+    app.clipboard().read_text().map_err(|e| e.to_string())
+}
+      <span class="c">// don't forget:</span>
+.invoke_handler(tauri::generate_handler![
+    <span class="g">get_clipboard_text</span>, local::hw_info, …
+])</pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="EDITOR: create/open web/shims/clipboard.ts — import registerCommand from ./core, call navigator.clipboard.readText()."
+      data-narration="Browser side: a new tiny file, web/shims/clipboard.ts, importing registerCommand from core.ts and registering exactly the same command name — get_clipboard_text — backed by the standard navigator.clipboard.readText API. That's the entire shim.">
+      <p class="eyebrow">Step 2 — the browser shim</p>
+      <h2>registerCommand() in a new file</h2>
+      <pre class="term"><span class="c">// web/shims/clipboard.ts</span>
+import { registerCommand } from "./core";
+
+registerCommand("get_clipboard_text", async () =&gt; {
+  return navigator.clipboard.readText();
+});</pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="EDITOR: open the shim's entry point (where fs.ts, http.ts etc. are imported for their side effects) and add an import for ./clipboard."
+      data-narration="One wiring step the new file needs: something has to import it so its registerCommand call actually runs. The other shims are pulled in from a central entry point purely for that side effect — add clipboard.ts alongside secret.ts, opener.ts and the rest there, or it silently never registers.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>A shim file must be imported to register</h2>
+      <ul class="warn">
+        <li>registerCommand only runs if the module is loaded — import it for its side effect, next to the other web/shims imports</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="And the call site, wherever it lives in src/ — a tool, a component, doesn't matter — needs exactly one line, and it's the same line either build reads it in.">
+      <p class="eyebrow">The call site</p>
+      <h2>Identical on both builds</h2>
+      <pre class="term">const text = await invoke&lt;string&gt;("get_clipboard_text");</pre>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide"
+      data-seconds="14"
+      data-cue="TERMINAL: run npm run tauri dev — trigger the call, confirm real clipboard text comes back. Then npm run web:dev — same call, confirm it also works with no Rust process running."
+      data-narration="Prove it both ways. npm run tauri dev, trigger the call, confirm it returns whatever's really on your clipboard. Then, separately, npm run web:dev — no Tauri process behind it at all — trigger the exact same call, and confirm the browser's own clipboard API answers it. That side-by-side proof is the whole point of the architecture from E68: the call site never knew which one it was talking to.">
+      <p class="eyebrow">Prove it both ways</p>
+      <h2>tauri dev, then web:dev</h2>
+      <pre class="term">npm run tauri dev   <span class="g">→ real OS clipboard</span>
+npm run web:dev     <span class="g">→ browser clipboard API</span>
+      <span class="c">same call site, both times</span></pre>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide title"
+      data-seconds="7"
+      data-narration="You've now touched both sides of the seam. Module 19 turns to process: how the app is actually tested, and how a real change gets contributed and verified before it ships.">
+      <p class="eyebrow">Up next</p>
+      <h1>E71 · Running and<br/>reading the test suite</h1>
+      <p class="lead">How the app proves itself before it ships.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

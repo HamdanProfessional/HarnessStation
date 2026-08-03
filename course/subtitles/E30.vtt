@@ -1,0 +1,62 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:05.735
+Module 10 is agents, skills, and workflows — the tools for packaging your own setup so you don't rebuild it by hand every time.
+
+2
+00:00:05.735 --> 00:00:07.000
+First up: creating an agent.
+
+3
+00:00:07.000 --> 00:00:08.230
+Automation, Agents, New agent.
+
+4
+00:00:08.230 --> 00:00:14.828
+Six fields make up an agent: a name, its instructions, which model runs it, which tools it can use, which knowledge bases it can search, and a working directory.
+
+5
+00:00:14.828 --> 00:00:17.000
+Set them once, and every run reuses the same package.
+
+6
+00:00:17.000 --> 00:00:20.109
+Here's the difference that decides whether an agent is actually useful.
+
+7
+00:00:20.109 --> 00:00:23.569
+Instructions that say You review code produce vague, generic output every time.
+
+8
+00:00:23.569 --> 00:00:29.000
+A real spec — what to check, what severity levels mean, what format to reply in — produces a review you can actually act on.
+
+9
+00:00:29.000 --> 00:00:31.007
+The worked example: a code-reviewer agent.
+
+10
+00:00:31.007 --> 00:00:38.893
+Its instructions name exactly what to check — bugs, security issues, style — rate each finding Blocking, Minor, or Nit, and reply as a bulleted list grouped by file.
+
+11
+00:00:38.893 --> 00:00:42.000
+Give it read access to the repo and nothing else it doesn't need.
+
+12
+00:00:42.000 --> 00:00:46.073
+Once it's saved, run it straight from the Agents panel — no chat required.
+
+13
+00:00:46.073 --> 00:00:54.000
+Point it at a file or folder, and it works through your spec exactly the same way every time, because the instructions never drift between runs.
+
+14
+00:00:54.000 --> 00:00:55.667
+Running an agent standalone is one path.
+
+15
+00:00:55.667 --> 00:01:00.000
+Next we call one from inside an ordinary conversation, and look at the separate memory each agent keeps.
+

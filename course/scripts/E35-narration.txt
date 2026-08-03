@@ -1,0 +1,20 @@
+# Slide 1
+A short reference episode you can jump straight to later: agent, workflow, or chat — how to pick, in one screen.
+
+# Slide 2
+One job, one role, done repeatedly — that's an agent. You define its scope once, and it handles every instance of that job the same way, whether it's triggered by you, a schedule, or an event.
+
+# Slide 3
+A fixed sequence where each step's output feeds the next — that's a workflow. You know the shape in advance: gather, then group, then write, always in that order.
+
+# Slide 4
+Open-ended, needs judgment about what to do next based on what it finds — that's a chat with tools. Nothing about the path is fixed in advance; the model decides its next move as it goes.
+
+# Slide 5
+Side by side: agent for a repeated role, workflow for a known fixed sequence, chat for open-ended judgment. When you're not sure which one fits, ask whether you could write the steps down in advance — if yes, workflow; if the steps depend on what's discovered, chat; if it's the same job over and over, agent.
+
+# Slide 6
+If none of that fits — if you genuinely don't know what step two will be until step one finishes — that's the sign you want a chat with tools, not a workflow forced into a shape it doesn't have.
+
+# Slide 7
+With the decision made, the next question is running things unattended — safely. That's schedules, starting with the guardrails you set up first.

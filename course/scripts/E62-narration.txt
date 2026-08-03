@@ -1,0 +1,17 @@
+# Slide 1
+Uninstalling shouldn't mean losing every conversation and setting you've built up. Here's the clean uninstall path, and exactly where the “actually delete everything” line is.
+
+# Slide 2
+Uninstall the normal way for your platform: through Windows Settings, or dpkg minus r on Linux. Standard uninstall, nothing special to remember on this step.
+
+# Slide 3
+Here's the deliberate part: the ~/.harnessx folder is left behind. That's on purpose — it's your conversations, your keys, your configuration. An uninstall removes the program, not your history. If you reinstall later, it's all still there waiting.
+
+# Slide 4
+Want everything gone? Delete ~/.harnessx by hand. That's the actual line — the installer never touches it, so removing it is entirely your call.
+
+# Slide 5
+If you're backing that folder up instead, know what's in it: models and engines are the large folders, and they're entirely re-downloadable. Excluding them from a backup saves gigabytes without losing anything that can't be fetched again.
+
+# Slide 6
+Speaking of backups — next episode is the real walkthrough: compressing that folder, moving it to a new machine, and what to watch for when you get there.

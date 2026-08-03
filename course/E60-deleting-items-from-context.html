@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E60 · Deleting individual items from context</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="8"
+      data-narration="Rewind steps back through whole turns. This episode is finer-grained: deleting a single reasoning block, a single tool call, or a single tool response, without touching the rest of the chat.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track C · Advanced · Episode 60 · Module 15</p>
+      <h1>Deleting individual items from context</h1>
+      <p class="lead">Surgical cleanup, one item at a time.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="APP: in a chat with tool use, hover a reasoning block, a tool call, and its response — show all three delete controls."
+      data-narration="Three controls, all triggered by hovering. Hover a reasoning block and you get “Delete this thinking from context.” Hover a tool call and you get “Delete this tool call from context.” Hover its response and you get “Delete this tool response from context.” Each targets exactly one item.">
+      <p class="eyebrow">Three controls</p>
+      <h2>Hover, then delete just that item</h2>
+      <ul>
+        <li>Reasoning block → <b>Delete this thinking from context</b></li>
+        <li>Tool call → <b>Delete this tool call from context</b></li>
+        <li>Tool response → <b>Delete this tool response from context</b></li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="Why this exists: a long tool-using session accumulates noisy or flat-out wrong intermediate steps. That's poisoning the model's context — it keeps referring back to a bad grep or a stale file read — but the thread as a whole is still worth keeping. Full compaction is too blunt, and starting over throws away everything good.">
+      <p class="eyebrow">The use case</p>
+      <h2>Noisy steps, but a thread worth keeping</h2>
+      <p class="lead">A long session accumulates wrong or noisy intermediate steps that
+        <b>poison context</b> — but the conversation is otherwise worth keeping.</p>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="So surgical deletion beats the two blunt alternatives. Instead of starting over and losing the whole thread, or running a full compaction that summarizes everything, you remove exactly the items that are wrong or irrelevant, and leave the rest of the context untouched.">
+      <p class="eyebrow">Why surgical wins</p>
+      <h2>Better than starting over or compacting</h2>
+      <ul>
+        <li class="no">Starting over — loses the whole thread</li>
+        <li>Full compaction — summarizes everything, even what was fine</li>
+        <li class="ok">Item deletion — removes just the bad steps</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="And the direct payoff: fewer tokens. Every deleted reasoning block, tool call, or tool response is context the model no longer has to read on the next turn — a smaller, cleaner prompt, and a cheaper one.">
+      <p class="eyebrow">The payoff</p>
+      <h2>Less noise, fewer tokens</h2>
+      <p class="lead">Every deleted item is context the model no longer re-reads —
+        a smaller, cheaper prompt on the next turn.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="Gotcha: these controls are disabled while a reply is streaming. Deletion only applies to settled history — you can't reach in and edit context mid-generation.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Disabled while a reply streams</h2>
+      <p class="lead">Deletion applies only to <b>settled history</b> — not while
+        a response is actively streaming.</p>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Module 16 turns to keeping the app itself current — how updates work, and why a failed signature check gets refused rather than quietly applied.">
+      <p class="eyebrow">Up next</p>
+      <h1>E61 · Updating and<br/>staying current</h1>
+      <p class="lead">How updates ship, and how they're verified.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

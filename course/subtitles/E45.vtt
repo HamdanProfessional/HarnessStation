@@ -1,0 +1,90 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:01.647
+Memory came up briefly back in Module 9.
+
+2
+00:00:01.647 --> 00:00:07.000
+Now the full picture — three scopes, how facts get in, and the budget that stops memory from crowding out the conversation itself.
+
+3
+00:00:07.000 --> 00:00:07.668
+Three scopes.
+
+4
+00:00:07.668 --> 00:00:09.724
+Chat memory belongs to one conversation.
+
+5
+00:00:09.724 --> 00:00:12.757
+Project memory is shared by every chat inside that project.
+
+6
+00:00:12.757 --> 00:00:16.047
+Global memory follows you everywhere, in every chat and project.
+
+7
+00:00:16.047 --> 00:00:18.000
+Same mechanism, three different reach.
+
+8
+00:00:18.000 --> 00:00:19.009
+Facts get in two ways.
+
+9
+00:00:19.009 --> 00:00:23.596
+Passively, the app quietly extracts them from what you say — that is the toggle in Settings, Memory.
+
+10
+00:00:23.596 --> 00:00:26.716
+Or deliberately, when you say “remember that” and mean it literally.
+
+11
+00:00:26.716 --> 00:00:28.000
+Both land in the same store.
+
+12
+00:00:28.000 --> 00:00:30.160
+Settings, Memory lists every fact by scope.
+
+13
+00:00:30.160 --> 00:00:31.566
+Delete a wrong one directly.
+
+14
+00:00:31.566 --> 00:00:39.000
+And Tidy merges near-duplicates — the same fact saved three slightly different ways collapses back into one, which matters once the budget comes in.
+
+15
+00:00:39.000 --> 00:00:46.618
+The budget: memory is allowed twenty percent of the context window by default, twenty-five percent at the most, and that ceiling is hard-capped by design — it cannot be raised past it.
+
+16
+00:00:46.618 --> 00:00:52.000
+The consequence: a smaller model recalls less, not because it forgets more, but because the budget is a share of a smaller window.
+
+17
+00:00:52.000 --> 00:00:53.354
+Gotcha: memory is not knowledge.
+
+18
+00:00:53.354 --> 00:00:56.146
+A style preference — “always answer in bullet points” — is memory.
+
+19
+00:00:56.146 --> 00:00:59.615
+A two-hundred-page spec is knowledge, and belongs in a knowledge base, not memory.
+
+20
+00:00:59.615 --> 00:01:03.000
+Drop a whole document into memory and it can blow the entire budget on one file.
+
+21
+00:01:03.000 --> 00:01:04.324
+Memory keeps facts across chats.
+
+22
+00:01:04.324 --> 00:01:09.000
+Next we look at chats themselves — folders, snapshots, branching, and how compaction keeps a long history usable.
+

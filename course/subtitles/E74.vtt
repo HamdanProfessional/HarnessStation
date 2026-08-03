@@ -1,0 +1,110 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:00.610
+The last episode.
+
+2
+00:00:00.610 --> 00:00:07.000
+We close the developer track, and the whole series, by looking at the project's own planning documents — where it started, what actually shipped, and what's genuinely still open.
+
+3
+00:00:07.000 --> 00:00:07.367
+docs/PLAN.
+
+4
+00:00:07.367 --> 00:00:13.541
+md is the original master plan — phase 1, a very simple chat app over any endpoint, deliberately excluding local hosting, MCP, attachments, RAG, projects, multi-window.
+
+5
+00:00:13.541 --> 00:00:15.304
+Phase 2 was LM Studio-style local model hosting.
+
+6
+00:00:15.304 --> 00:00:17.362
+Phase 3 was server mode and Claude Desktop-style extras.
+
+7
+00:00:17.362 --> 00:00:21.000
+Reading it now, next to the app you've spent seventy-three episodes in, is the point of this slide.
+
+8
+00:00:21.000 --> 00:00:21.660
+Now, versus then.
+
+9
+00:00:21.660 --> 00:00:32.254
+Everything explicitly deferred in phase 1 — projects, knowledge RAG, MCP — shipped anyway, along with a great deal the original plan never mentioned at all: voice and 3D avatars, the device mesh, swarms, the entire browser build with its in-tab Linux VM, evals, benchmarks.
+
+10
+00:00:32.254 --> 00:00:34.000
+The plan was a starting point, not a ceiling.
+
+11
+00:00:34.000 --> 00:00:34.558
+docs/roadmap.
+
+12
+00:00:34.558 --> 00:00:35.630
+md tracks what's current.
+
+13
+00:00:35.630 --> 00:00:38.634
+Its Shipped table is long — nearly everything in this series is on it.
+
+14
+00:00:38.634 --> 00:00:47.000
+What's left sits in two tiers: Tier 1 is release readiness, needing secrets rather than code; Tier 2 is real feature work, like better avatar lip-sync and semantic search across all chat history.
+
+15
+00:00:47.000 --> 00:00:49.690
+And the single most-referenced open item across the whole doc set, in both roadmap.
+
+16
+00:00:49.690 --> 00:00:50.176
+md and release.
+
+17
+00:00:50.176 --> 00:00:50.824
+md, is code-signing.
+
+18
+00:00:50.824 --> 00:00:54.778
+The installer isn't signed with a real certificate yet — that's exactly why E02 had you click through Windows SmartScreen.
+
+19
+00:00:54.778 --> 00:01:01.000
+It's not a technical gap; the pipeline is wired and waiting, it's purely a procurement step: buy a certificate, set two repository secrets, and every future install stops tripping SmartScreen.
+
+20
+00:01:01.000 --> 00:01:05.821
+Two companion documents are worth reading on your own time if you want to understand why the app's shape is what it is: lm-studio-plan.
+
+21
+00:01:05.821 --> 00:01:08.893
+md, on how local model hosting actually works under the hood, and claude-desktop-plan.
+
+22
+00:01:08.893 --> 00:01:12.000
+md, on the instruction-layering design from E11 and E27 and where it was borrowed from.
+
+23
+00:01:12.000 --> 00:01:21.603
+If you're going to contribute, the pattern across every developer episode in this module holds: read the existing tests before writing code, keep side effects thin and pure logic tested — E71 — and land big features as a sequence of small, independently useful commits — E69.
+
+24
+00:01:21.603 --> 00:01:23.000
+That's genuinely how this codebase grew.
+
+25
+00:01:23.000 --> 00:01:23.385
+The end.
+
+26
+00:01:23.385 --> 00:01:31.702
+Nineteen modules, seventy-four episodes, from installing on Windows through booting Linux in a browser tab to reading the code itself — thank you for watching the whole way.
+
+27
+00:01:31.702 --> 00:01:33.000
+Go build something with it.
+

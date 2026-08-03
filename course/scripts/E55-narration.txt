@@ -1,0 +1,20 @@
+# Slide 1
+A full spoken exchange with no server behind it. This episode covers how the browser build hears you and how it talks back, entirely client-side.
+
+# Slide 2
+Click the mic and mic dot ts captures your voice with getUserMedia, no plugin, no native permission dialog — just the browser's own microphone prompt. By default the browser build hands that audio straight to the browser's own built-in speech recognition — fast, and nothing to download.
+
+# Slide 3
+If that's not available — an older browser, a locked-down one — it falls back to the same record-then-transcribe path as desktop: a 16 kilohertz WAV written into OPFS, transcribed client-side with transformers dot js Whisper. Same behavior, one extra step.
+
+# Slide 4
+For the reply, speak dot ts gives you three options: Kokoro, which is already WASM so it just runs; any cloud voice engine you've configured; or the browser's own SpeechSynthesis as the built-in, always-available fallback.
+
+# Slide 5
+Put it together and it's a full spoken exchange — ask a question out loud, hear the answer back — in a plain tab, with no Tauri process, no native app, nothing installed.
+
+# Slide 6
+Worth remembering: browser SpeechRecognition quality and language coverage varies by browser and OS. If it feels off, Whisper is still there as the consistent, model-based fallback.
+
+# Slide 7
+Voice works with no server. Next, a much bigger claim: real Python, running inside the browser tab too.

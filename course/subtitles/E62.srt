@@ -1,0 +1,64 @@
+1
+00:00:00,000 --> 00:00:03,299
+Uninstalling shouldn't mean losing every conversation and setting you've built up.
+
+2
+00:00:03,299 --> 00:00:07,000
+Here's the clean uninstall path, and exactly where the “actually delete everything” line is.
+
+3
+00:00:07,000 --> 00:00:13,090
+Uninstall the normal way for your platform: through Windows Settings, or dpkg minus r on Linux.
+
+4
+00:00:13,090 --> 00:00:17,000
+Standard uninstall, nothing special to remember on this step.
+
+5
+00:00:17,000 --> 00:00:18,714
+Here's the deliberate part: the ~/.
+
+6
+00:00:18,714 --> 00:00:20,233
+harnessx folder is left behind.
+
+7
+00:00:20,233 --> 00:00:23,906
+That's on purpose — it's your conversations, your keys, your configuration.
+
+8
+00:00:23,906 --> 00:00:26,404
+An uninstall removes the program, not your history.
+
+9
+00:00:26,404 --> 00:00:29,000
+If you reinstall later, it's all still there waiting.
+
+10
+00:00:29,000 --> 00:00:30,479
+Want everything gone?
+
+11
+00:00:30,479 --> 00:00:31,183
+Delete ~/.
+
+12
+00:00:31,183 --> 00:00:32,380
+harnessx by hand.
+
+13
+00:00:32,380 --> 00:00:39,000
+That's the actual line — the installer never touches it, so removing it is entirely your call.
+
+14
+00:00:39,000 --> 00:00:46,089
+If you're backing that folder up instead, know what's in it: models and engines are the large folders, and they're entirely re-downloadable.
+
+15
+00:00:46,089 --> 00:00:51,000
+Excluding them from a backup saves gigabytes without losing anything that can't be fetched again.
+
+16
+00:00:51,000 --> 00:00:57,000
+Speaking of backups — next episode is the real walkthrough: compressing that folder, moving it to a new machine, and what to watch for when you get there.
+

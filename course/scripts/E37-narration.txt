@@ -1,0 +1,20 @@
+# Slide 1
+A quick reference for when the presets don't cover the cadence you need: cron expressions, in four worked examples.
+
+# Slide 2
+A cron expression is five fields — minute, hour, day of month, month, day of week — each either a number or a star meaning any. Presets cover the common cases; cron covers everything else.
+
+# Slide 3
+Weekday mornings at eight: zero, eight, star, star, one through five. The weekday field takes a range, so Monday through Friday is one dash five.
+
+# Slide 4
+Every four hours: zero minutes past, and a slash-four on the hour field means every fourth hour starting from zero — midnight, four, eight, and on.
+
+# Slide 5
+Monthly, on the first at nine: zero, nine, one in the day-of-month field, star for month, star for weekday.
+
+# Slide 6
+Friday evening at five: zero, seventeen for the 24-hour clock, star, star, and five for Friday in the weekday field.
+
+# Slide 7
+Schedules covered. Now the browser — a real, model-visible window your agent can drive from inside a conversation.

@@ -1,0 +1,23 @@
+# Slide 1
+Module 11 closes with the question everyone eventually asks: why did this get expensive, and what actually brings the number down.
+
+# Slide 2
+Back to the loop from Episode 11: eight tool calls means nine requests, not one. And the ninth resends everything from the first eight — the whole growing history goes out again on every single lap. That resend is why agentic tasks cost so much more than a single question.
+
+# Slide 3
+Where the money actually goes: input tokens. Global, project, and chat instructions; recalled memory; retrieved knowledge passages; every enabled tool's definition; and the entire conversation history, resent each lap. The reply you get back is usually the cheap part.
+
+# Slide 4
+Ranked, what actually saves money: pick a smaller model for most work, compact long chats, start a fresh chat for a new topic instead of dragging the old one along, enable fewer tools, be specific so the loop stays short, and split large tasks into smaller ones.
+
+# Slide 5
+What does not help much: shortening your own message, turning memory off, or avoiding tools altogether. None of those touch the real sinks — instructions, history, and tool definitions dwarf a shorter question every time.
+
+# Slide 6
+Set caps in Settings, Usage. Once a cap is reached, the app stops rather than continuing silently — you get a clear halt, not a surprise bill.
+
+# Slide 7
+Gotcha: the underrated sinks. Scheduled runs firing unattended, swarms running several conversations at once, a long browser session where every page read gets resent on every following request, and image or video generation. Watch those before you watch your prompt length.
+
+# Slide 8
+That closes Track B. Track C goes local — starting with the question everyone with real hardware eventually asks: which model actually fits my machine.

@@ -1,0 +1,20 @@
+# Slide 1
+Module 17 starts the developer track. We open the codebase for real, starting with the file almost everything else touches: the app's central state store.
+
+# Slide 2
+src/lib/store.ts is a single Zustand store: one flat object of state — chats, settings, agents, the current view — plus every action that mutates it. Components never mutate state directly; they call an action, and the store decides what changes and what re-renders.
+
+# Slide 3
+Take the chat actions as a case study, because you've already seen every one of them in this series: sendMessage and regenerate from Module 2, stop from the same place, branchAt and editUserMessage and rewindTo and deleteItem from Module 11's editing episode, compactChat from Module 15. Same actions, now with the code behind them.
+
+# Slide 4
+Two are worth a close look. rewindTo deletes a message and everything after it, but snapshots the chat first, so it's reversible. deleteItem removes one item — a message, its reasoning, or a single tool call — to trim context, and repairs tool-call pairing at send time so a dangling tool result never gets sent to the model.
+
+# Slide 5
+Now the consumer side. ChatWindow.tsx doesn't own any chat logic — it destructures the actions it needs straight off useStore, and every button just calls one. The component's job is rendering and wiring clicks; the store's job is deciding what happens.
+
+# Slide 6
+The gotcha: two ways to patch a chat, and they're not interchangeable. updateChat patches whatever chat is currently on screen. Streaming must use updateChatById with an explicit id instead, because the user can switch chats mid-reply — patching “the current chat” would land the next token in the wrong conversation.
+
+# Slide 7
+With the frontend's state model down, we cross the process boundary. Next, a command-by-command tour of the Rust backend the frontend calls into.

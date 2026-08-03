@@ -1,0 +1,70 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:01.456
+Benchmarks got you a shortlist.
+
+2
+00:00:01.456 --> 00:00:07.000
+Now we build the thing that actually answers “which model wins for me” — a small eval set made of your own real cases.
+
+3
+00:00:07.000 --> 00:00:07.794
+Library, Evals.
+
+4
+00:00:07.794 --> 00:00:12.450
+A test case is two things: a prompt, and a description of what a good answer looks like.
+
+5
+00:00:12.450 --> 00:00:17.000
+Run the set against a model, and each case comes back scored against that description.
+
+6
+00:00:17.000 --> 00:00:20.704
+Build three or four real cases — pulled from work you actually did this week, not invented ones.
+
+7
+00:00:20.704 --> 00:00:22.865
+And include one where the right answer is “I don’t know.
+
+8
+00:00:22.865 --> 00:00:29.000
+” A model that confidently invents an answer instead of admitting it lacks the information is a real failure mode, and it is the one benchmarks never test for.
+
+9
+00:00:29.000 --> 00:00:37.306
+When to re-run this set: a new model shows up, a prompt or agent instruction changes, a provider quietly updates a model behind the same name, or you are just weighing a cheaper option.
+
+10
+00:00:37.306 --> 00:00:40.000
+The set is cheap to keep — re-running it is the whole point.
+
+11
+00:00:40.000 --> 00:00:42.718
+Reading the results honestly matters as much as building the set.
+
+12
+00:00:42.718 --> 00:00:45.436
+A small score gap is noise — do not switch models over one point.
+
+13
+00:00:45.436 --> 00:00:47.652
+Instead look at how a case fails, not just how often.
+
+14
+00:00:47.652 --> 00:00:52.000
+And always weigh cost and speed alongside the score; the top scorer is not automatically the right pick.
+
+15
+00:00:52.000 --> 00:00:54.112
+Gotcha: a test case only proves what it tests.
+
+16
+00:00:54.112 --> 00:01:01.000
+Four cases will not catch everything — but four real ones beat forty generic benchmark questions for telling you whether a model fits your actual job.
+
+17
+00:01:01.000 --> 00:01:07.000
+With Benchmarks and Evals covered, we turn to the app itself — a full walk through every settings panel, so nothing later needs re-explaining.
+

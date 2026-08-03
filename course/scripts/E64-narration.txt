@@ -1,0 +1,20 @@
+# Slide 1
+This closes out the advanced track — a single reference episode that pulls every privacy and security point made across the whole series into one checklist, before you show this to anyone else.
+
+# Slide 2
+Start with what leaves the machine at all — restated from episode twelve as one table. Local models and local embeddings never leave. A cloud model call sends your prompt and context to that provider. Nothing else phones home on its own.
+
+# Slide 3
+Five things worth being careful with: terminal tool reach — how much of the filesystem it can touch. Browser session delegation — it can act inside your logged-in browser. Unattended schedules — running with nobody watching. The mesh's plaintext transport. And passive memory accumulation, quietly building up over time.
+
+# Slide 4
+Let's build private-by-default, live: a local model instead of cloud, local embeddings, Kokoro or Piper for speech instead of a cloud voice, Whisper for transcription, and the mesh either off entirely or restricted to LAN-only. Five switches, and nothing needs to leave the machine.
+
+# Slide 5
+After the fact, you can review exactly what an agent did: read the tool-call cards right in the chat, or grep the conversations folder under home dot harnessx for a tool name or a keyword. Nothing about an agent's actions is hidden from you.
+
+# Slide 6
+Last point: sharing a conversation export is safe in one specific sense and risky in another. It contains everything the model read — never your keys, those stay in the credential store. So the risk isn't credential leakage, it's your codebase's contents. Read before you share.
+
+# Slide 7
+That's the advanced track, complete. Track D starts now, for anyone who wants to open the codebase itself — beginning with a tour of the repository.

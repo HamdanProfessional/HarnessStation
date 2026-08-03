@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E58 · A real Linux VM in the tab, via v86</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="8"
+      data-narration="Module 14 saves its flagship demo for last: an actual Linux kernel, booted from inside a browser tab, with a filesystem the model genuinely shares. Let's turn it on and see what it really is.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track C · Advanced · Episode 58 · Module 14</p>
+      <h1>A real Linux VM in the tab, via v86</h1>
+      <p class="lead">Not a simulation — a booted kernel, running in WebAssembly.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="SWITCH TO APP: Settings › enable the real-Linux terminal toggle (off by default)."
+      data-narration="It's off by default. In Settings, there's a toggle for the real-Linux terminal. Flip it on, and from then on run_command routes there instead of the coreutils shell shim we saw back in episode fifty-seven — the model is now talking to an actual guest OS.">
+      <p class="eyebrow">Turning it on</p>
+      <h2>Settings → the real-Linux toggle</h2>
+      <ul>
+        <li>Off by default — an explicit opt-in</li>
+        <li>Once on, <code>run_command</code> routes to the VM, not the coreutils shim</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="What's actually booting: Buildroot and BusyBox, running under v86 — an open-source x86-to-WebAssembly emulator — driven over its serial console. That means real uname, real busybox grep, real arbitrary guest programs. Not a JavaScript re-implementation of Unix — genuine Linux, emulated down to the instruction.">
+      <p class="eyebrow">What's booting</p>
+      <h2>Buildroot + BusyBox, under v86</h2>
+      <pre class="term"><span class="a">emulator</span>  v86 — x86 → WebAssembly, open source
+<span class="a">guest</span>     Buildroot / BusyBox
+<span class="a">link</span>      serial console (no GUI)</pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Why v86 and not the faster alternative, CheerpX? Licensing. v86 is BSD-licensed and free for commercial use. CheerpX is proprietary and would mean billing every user of this feature. Slower but free beats fast but metered, for a tool meant to ship to everyone.">
+      <p class="eyebrow">Why v86, not CheerpX</p>
+      <h2>BSD-licensed beats billed</h2>
+      <ul>
+        <li class="ok">v86 — BSD-licensed, free for commercial use</li>
+        <li class="no">CheerpX — faster, but proprietary and would bill</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="APP: show a file created by a file tool, then cat it from inside the VM at /mnt/workspace."
+      data-narration="The part worth lingering on: the 9p filesystem bridge. The guest mounts the shared tree at /mnt, and the model's OPFS workspace lives under /mnt/workspace. So a file the file tools wrote and a file a Linux command creates aren't synced copies — they're literally the same file, seen from two sides at once.">
+      <p class="eyebrow">The 9p bridge</p>
+      <h2>One workspace, two vantage points</h2>
+      <pre class="term"><span class="c">guest mount</span>   /mnt
+<span class="c">model workspace</span>  /mnt/workspace   <span class="g">← same files, both sides</span></pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="State the costs plainly: about a ten megabyte one-time kernel download, a few seconds to boot, and emulated execution that's slower than native. It's headless and serial-only — there's no GUI here, no windows, just a terminal talking to a kernel.">
+      <p class="eyebrow">The costs</p>
+      <h2>What it actually costs you</h2>
+      <ul>
+        <li>~10MB one-time kernel download</li>
+        <li>A few seconds to boot</li>
+        <li>Emulated = slower than native</li>
+        <li class="warn">Headless, serial-only — no GUI</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="Gotcha: this is a genuinely experimental, look-what's-possible demo, not a daily driver. Expect roughly a forty second boot, and a thirty second timeout on each command — plan your demos, and your expectations, around that.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>A demo, not a daily driver</h2>
+      <p class="lead">Experimental — treat it as “look what's possible.”
+        <b>~40s boot</b>, <b>30s per-command timeout</b>.</p>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Module fifteen turns to something much more precise: reaching back into a conversation and rewinding it to an earlier point.">
+      <p class="eyebrow">Up next</p>
+      <h1>E59 · Rewinding<br/>a conversation</h1>
+      <p class="lead">Stepping a chat back to an earlier point.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

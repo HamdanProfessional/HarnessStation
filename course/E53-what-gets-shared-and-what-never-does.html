@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E53 · What gets shared, and what never does</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Pairing two machines is easy. Knowing exactly what that pairing lets one do on the other is the part worth getting right — three switches, and a boundary that no switch can move.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track C · Advanced · Episode 53 · Module 13</p>
+      <h1>What gets shared, and what never does</h1>
+      <p class="lead">Three switches — and a boundary no switch controls.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="SWITCH TO APP: paired device's sharing panel — three toggles, all off by default."
+      data-narration="Three switches, all off by default. Models: let this device run inference using the remote's keys or GPU. Tools: let it call tools on the remote. Knowledge: let it search knowledge bases stored on the remote. Nothing is shared until you turn one on.">
+      <p class="eyebrow">Three switches, off by default</p>
+      <h2>Models, Tools, Knowledge</h2>
+      <ul>
+        <li><b>Models</b> — inference on the remote's keys/GPU</li>
+        <li><b>Tools</b> — call tools on the remote</li>
+        <li><b>Knowledge</b> — search knowledge bases on the remote</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="15"
+      data-narration="Here's the boundary that doesn't move. Even with Tools switched on, shell, Python, and file-writing tools are never shared across the mesh — full stop. That's not a setting you can find and enable; it's a hard line in the design, because those three are exactly the tools that can do lasting damage to a machine that isn't yours to risk.">
+      <p class="eyebrow">Gotcha — a hard boundary</p>
+      <h2>Shell, Python, file-writing: never</h2>
+      <ul>
+        <li class="no">Never shared over the mesh — regardless of the Tools switch</li>
+        <li class="warn">Not a setting to find. A hard boundary in the design.</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="APP: open “What can it do?” on a paired device."
+      data-narration="For any paired device, What can it do? spells out exactly which switches are on and what that grants — no guessing from the toggle state alone.">
+      <p class="eyebrow">Checking your work</p>
+      <h2>“What can it do?” on a paired device</h2>
+      <p class="lead">A plain-English readout of exactly what this pairing currently grants.</p>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="8"
+      data-cue="APP: open the model picker, point at the remote device's models listed alongside local ones."
+      data-narration="Turn Models on and the remote's models simply appear in your model picker alongside your local and cloud ones — same picker, no separate workflow.">
+      <p class="eyebrow">In practice</p>
+      <h2>Remote models, same picker</h2>
+      <p class="lead">Once Models is on, the remote's models list alongside local ones — nothing separate to learn.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="14"
+      data-narration="If something's not connecting: check mesh is on at both ends, not just one. Discovery is a network broadcast that guest or corporate Wi-Fi often blocks — add by address instead. The ports are 8793 for mesh traffic and 8794 for announcements, useful if you're touching a firewall. And a sleeping machine will correctly show offline — that's not a bug.">
+      <p class="eyebrow">Troubleshooting</p>
+      <h2>Both ends on, ports 8793 / 8794</h2>
+      <ul>
+        <li>Both ends need mesh on — not just one</li>
+        <li>Discovery is a broadcast; blocked networks → add by address</li>
+        <li>Firewall: 8793 mesh, 8794 announce</li>
+        <li>A sleeping machine correctly shows offline</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="The mesh is covered. Now a different kind of portability — running this whole app with zero install, straight in a browser tab.">
+      <p class="eyebrow">Up next</p>
+      <h1>E54 · Running<br/>HarnessStation in a browser tab</h1>
+      <p class="lead">Same app, zero install, one clever seam.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

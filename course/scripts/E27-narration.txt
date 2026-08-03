@@ -1,0 +1,20 @@
+# Slide 1
+Back in the agent-loop episode we said instructions stack instead of replacing each other. Now let's make that concrete with a real project in front of us — global, project, and chat, all three at once.
+
+# Slide 2
+First, a global instruction in Settings — this applies everywhere, in every project and every chat. We'll set it to something simple: always reply in UK English.
+
+# Slide 3
+Second, a project instruction, set on the Acme project itself: always mention the account manager's name in a reply. This only applies inside Acme — Brightside never sees it.
+
+# Slide 4
+Third, a chat instruction, set on one specific conversation inside Acme: keep replies under three sentences. That's the narrowest layer — it only touches this one chat.
+
+# Slide 5
+Send a message and look at the reply: it's in UK English, it names the account manager, and it's three sentences or fewer. All three layers showed up at once, because none of them replaced any other — they stacked, exactly like the agent-loop episode described.
+
+# Slide 6
+Two diagnoses worth memorizing. Facts from one project leaking into another? Check Settings, Memory — the scope may be set wider than project-only. A chat not picking up project instructions at all? It simply isn't inside the project yet — drag it in, or start it from the project's own new-chat button.
+
+# Slide 7
+Instructions are one way to shape a reply. Next, Module 9 covers a bigger one — giving the model your own documents to draw on.

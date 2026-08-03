@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E55 · Voice in the browser</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="A full spoken exchange with no server behind it. This episode covers how the browser build hears you and how it talks back, entirely client-side.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track C · Advanced · Episode 55 · Module 14</p>
+      <h1>Voice in the browser</h1>
+      <p class="lead">Whisper and Kokoro without a server.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="SWITCH TO APP: web build, click the mic, speak a short prompt, watch it transcribe."
+      data-narration="Click the mic and mic dot ts captures your voice with getUserMedia, no plugin, no native permission dialog — just the browser's own microphone prompt. By default the browser build hands that audio straight to the browser's own built-in speech recognition — fast, and nothing to download.">
+      <p class="eyebrow">Voice input, by default</p>
+      <h2>The browser's own SpeechRecognition</h2>
+      <p class="lead"><code>getUserMedia</code> capture, then straight to the browser's
+        built-in speech recognition — fast, no model download.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="If that's not available — an older browser, a locked-down one — it falls back to the same record-then-transcribe path as desktop: a 16 kilohertz WAV written into OPFS, transcribed client-side with transformers dot js Whisper. Same behavior, one extra step.">
+      <p class="eyebrow">The fallback</p>
+      <h2>transformers.js Whisper</h2>
+      <pre class="term">mic capture <span class="c">→</span> 16kHz WAV in <span class="g">OPFS</span> <span class="c">→</span> Whisper transcribe
+      <span class="c">(when SpeechRecognition isn't available)</span></pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="APP: play a spoken reply — show the voice engine picker with Kokoro selected."
+      data-narration="For the reply, speak dot ts gives you three options: Kokoro, which is already WASM so it just runs; any cloud voice engine you've configured; or the browser's own SpeechSynthesis as the built-in, always-available fallback.">
+      <p class="eyebrow">Voice output</p>
+      <h2>Kokoro, cloud, or SpeechSynthesis</h2>
+      <ul>
+        <li><b>Kokoro</b> — already WASM, runs as-is</li>
+        <li><b>Cloud engines</b> — same providers as desktop</li>
+        <li><b>SpeechSynthesis</b> — the browser's own built-in voice</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="Put it together and it's a full spoken exchange — ask a question out loud, hear the answer back — in a plain tab, with no Tauri process, no native app, nothing installed.">
+      <p class="eyebrow">The demo</p>
+      <h2>A full exchange, no Tauri process</h2>
+      <p class="lead">Ask out loud, hear the answer back — in a plain browser tab.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="9"
+      data-narration="Worth remembering: browser SpeechRecognition quality and language coverage varies by browser and OS. If it feels off, Whisper is still there as the consistent, model-based fallback.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Recognition quality varies by browser</h2>
+      <ul>
+        <li class="warn">SpeechRecognition quality varies by browser/OS — Whisper is the consistent fallback.</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Voice works with no server. Next, a much bigger claim: real Python, running inside the browser tab too.">
+      <p class="eyebrow">Up next</p>
+      <h1>E56 · Python<br/>in the browser</h1>
+      <p class="lead">Real CPython, via Pyodide.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

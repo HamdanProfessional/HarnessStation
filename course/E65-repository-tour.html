@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E65 · Repository tour</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="8"
+      data-narration="Track D is for developers. We're switching from using the app to reading its code. First, map the repository so nothing that follows feels like a maze.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track D · For developers · Episode 65 · Module 17</p>
+      <h1>Repository tour</h1>
+      <p class="lead">Map the repo before touching code.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="14"
+      data-cue="EDITOR: open the repo root and expand each top-level folder as it's named."
+      data-narration="Seven top-level folders. src is the React frontend. src-tauri is the Rust backend. extension is the Chrome MV3 build. server is an optional benchmark-data gateway. docs-site is the public docs. docs is internal planning. tests is the Vitest suite. And web is the browser build and its shims — the seam behind Module 14.">
+      <p class="eyebrow">Top level</p>
+      <h2>Seven folders, one app</h2>
+      <pre class="term"><span class="a">src/</span>        React frontend
+<span class="a">src-tauri/</span>  Rust backend
+<span class="a">extension/</span> Chrome MV3
+<span class="a">server/</span>    benchmark-data gateway (optional)
+<span class="a">docs-site/</span> public docs
+<span class="a">docs/</span>       internal planning
+<span class="a">tests/</span>      Vitest suite
+<span class="a">web/</span>        browser build + shims</pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Inside src slash components, the convention is one file per major view — ChatWindow, SettingsView, McpView, and so on. If you're looking for where a screen lives, that folder is always the first place to check.">
+      <p class="eyebrow">src/components/</p>
+      <h2>One file per major view</h2>
+      <pre class="term">ChatWindow.tsx      SettingsView.tsx
+McpView.tsx         WorkflowsView.tsx
+AgentsView.tsx      SchedulesView.tsx
+ToolsView.tsx       KnowledgeView.tsx
+BrowserView.tsx     CommandPalette.tsx
+<span class="c">…and one file per view, throughout</span></pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="14"
+      data-narration="Inside src slash lib is where the actual logic lives. State in store dot ts. Provider clients under providers. MCP handling. Memory. Tools and tool discovery. Agents, workflows, and schedules. The device mesh. Voice — Kokoro, Piper, Whisper, and the system voice. Cost and budget tracking. RAG. And storage.">
+      <p class="eyebrow">src/lib/</p>
+      <h2>Where the logic actually lives</h2>
+      <pre class="term"><span class="a">state</span>     store.ts
+<span class="a">providers</span> providers/
+<span class="a">mcp</span>       mcp.ts, mcpGateway.ts
+<span class="a">memory</span>    memory.ts, memoryScopes.ts
+<span class="a">tools</span>     tools.ts, toolDiscovery.ts
+<span class="a">mesh</span>      mesh.ts, meshHost.ts, meshRuntime.ts
+<span class="a">voice</span>     voice.ts, tts.ts, kokoro.ts, piper.ts, whisper.ts
+<span class="a">cost</span>      cost.ts, budget.ts, contextBudget.ts
+<span class="a">rag</span>       rag.ts
+<span class="a">storage</span>   storage.ts</pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Everything in src is React — the frontend you've been watching for sixty-four episodes. src-tauri is the Rust half: audio, MCP, the browser bridge, mesh, the OS keychain, and speech. The frontend calls into it, but never the other way around.">
+      <p class="eyebrow">Frontend vs. backend</p>
+      <h2>src is React, src-tauri is Rust</h2>
+      <ul>
+        <li><b>src/</b> — the React frontend, everything you've seen so far</li>
+        <li><b>src-tauri/</b> — the Rust backend: audio, MCP, browser bridge, mesh, keychain, speech</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide title"
+      data-seconds="7"
+      data-narration="With the map in hand, next episode zooms into the single most important file in that lib folder — store dot ts — and how the whole app's state actually flows through it.">
+      <p class="eyebrow">Up next</p>
+      <h1>E66 · State management<br/>with store.ts</h1>
+      <p class="lead">The central state shape, and where features live in it.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+1
+00:00:00,000 --> 00:00:01,492
+An agent doesn't only run from its own panel.
+
+2
+00:00:01,492 --> 00:00:04,243
+It can be called mid-conversation, handed a subtask, and hand back just the result.
+
+3
+00:00:04,243 --> 00:00:06,000
+Let's see that, and the memory it keeps between runs.
+
+4
+00:00:06,000 --> 00:00:08,727
+First, turn on the Agents tool group inside a chat.
+
+5
+00:00:08,727 --> 00:00:16,000
+That's what lets the model in this conversation reach out and call one of your saved agents as a tool, instead of doing the work itself.
+
+6
+00:00:16,000 --> 00:00:19,696
+Ask the chat to have the code-reviewer agent look at a specific file.
+
+7
+00:00:19,696 --> 00:00:28,000
+It hands off the subtask, the agent runs its full spec, and only the result comes back — you see a tool-call card, not the agent's internal back-and-forth.
+
+8
+00:00:28,000 --> 00:00:33,139
+Notice what's not in the main conversation: the agent's own tool calls, its reasoning, any files it opened along the way.
+
+9
+00:00:33,139 --> 00:00:34,965
+All of that stays inside the delegated run.
+
+10
+00:00:34,965 --> 00:00:39,000
+Your chat only sees the finished output — which keeps the main conversation short and readable.
+
+11
+00:00:39,000 --> 00:00:42,410
+Each agent also keeps its own memory, separate from chat, project, or global memory.
+
+12
+00:00:42,410 --> 00:00:50,000
+Run the code-reviewer twenty times and it accumulates what it's specifically learned about this codebase's conventions — that memory travels with the agent, not with any one conversation.
+
+13
+00:00:50,000 --> 00:01:02,000
+A checklist for writing an agent worth delegating to: be specific about its scope, say exactly what output format you want back, give it the minimum tools it actually needs, and tell it what to do when it gets stuck instead of leaving it to guess.
+
+14
+00:01:02,000 --> 00:01:03,099
+One agent, delegated to.
+
+15
+00:01:03,099 --> 00:01:08,000
+Next, several agents working the same job at once — swarms — and when that's actually worth the extra cost.
+

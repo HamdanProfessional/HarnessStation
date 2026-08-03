@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E73 · Extending a view — adding a small feature to a panel</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Second contribution exercise, this time on the UI layer. We take a small component you already know from the sidebar — the notification bell — and extend it with one small, real, end-to-end feature.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track D · For developers · Episode 73 · Module 19</p>
+      <h1>Extending a view</h1>
+      <p class="lead">A small, real feature, added to an existing panel.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="SWITCH TO EDITOR: open src/components/NotificationBell.tsx top to bottom."
+      data-narration="NotificationBell.tsx is deliberately small — a button with an unread badge, and a dropdown listing history from useToast, its own little Zustand store, same one-object-plus-actions shape as store.ts from E66 but scoped to just toasts: history, unread, clearUnread, clearHistory.">
+      <p class="eyebrow">The target</p>
+      <h2>NotificationBell.tsx — small on purpose</h2>
+      <pre class="term">const { history, unread, clearUnread, clearHistory } = useToast();
+      <span class="c">// same shape as store.ts, scoped to just toasts</span></pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="The feature: let a viewer mute one kind of notification — say, info toasts, which fire the most and matter least — without touching success or error. Small, real, and it needs a setting that survives a restart, not just component state.">
+      <p class="eyebrow">The feature</p>
+      <h2>Mute one notification kind, persistently</h2>
+      <p class="lead">Needs a setting that survives a restart — not just local component state.</p>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="SWITCH TO EDITOR: open src/lib/store.ts — find the settings shape and its update action, e.g. updateSettings()."
+      data-narration="That's why this hooks into the real store.ts, not toast.ts's local one — a mute preference belongs alongside every other durable setting, saved to settings.json like everything in E44. Add a field to the settings shape, mutedToastKinds, and use the store's existing update action to change it — the same pattern any settings panel in the app already uses.">
+      <p class="eyebrow">Where the setting lives</p>
+      <h2>store.ts settings, not local state</h2>
+      <pre class="term">settings.mutedToastKinds: string[]   <span class="c">// new field</span>
+updateSettings({ mutedToastKinds: [...current, "info"] })</pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="SWITCH TO EDITOR: open src/lib/toast.ts — find push(), add a check against useStore.getState().settings.mutedToastKinds before incrementing history/unread."
+      data-narration="toast.ts's push function is where every notification is born, so that's where muting has to be enforced: read the current mutedToastKinds from the main store, and if this kind is in it, skip appending to history and skip incrementing unread. One conditional, right at the source.">
+      <p class="eyebrow">Enforcing it</p>
+      <h2>One check inside toast.ts's push()</h2>
+      <pre class="term">push(kind, message) {
+  const muted = useStore.getState().settings.mutedToastKinds ?? [];
+  if (muted.includes(kind)) return;
+  set(s =&gt; ({ history: [...], unread: s.unread + 1 }));
+}</pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="SWITCH TO EDITOR: in NotificationBell.tsx, add a small mute toggle per kind inside the bell-panel dropdown, calling updateSettings()."
+      data-narration="Last piece: a control inside the bell's own dropdown, next to Clear — a small toggle per kind, calling updateSettings straight from the component, exactly the way ChatWindow.tsx called store actions in E66. No new panel, no new route — the feature lives entirely inside the component it extends.">
+      <p class="eyebrow">The UI hook</p>
+      <h2>A toggle inside the existing dropdown</h2>
+      <pre class="term">&lt;button onClick={() =&gt; updateSettings({
+  mutedToastKinds: toggle(settings.mutedToastKinds, "info")
+})}&gt;Mute info&lt;/button&gt;</pre>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="SWITCH TO APP: mute info, trigger an info toast (something harmless), confirm it doesn't appear; restart the app, confirm the mute held."
+      data-narration="Verify end to end: mute info, trigger something that would normally toast info, confirm silence — then restart the app entirely and confirm the mute survived, because it's in settings.json now, not component state that resets on reload.">
+      <p class="eyebrow">Verify end to end</p>
+      <h2>Mute it, restart, confirm it held</h2>
+      <p class="lead">The whole point of putting it in store.ts instead of local state.</p>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide title"
+      data-seconds="7"
+      data-narration="One episode left in the entire series. We close the developer track, and the course, by looking at where this project has actually been and where it's actually going.">
+      <p class="eyebrow">Up next</p>
+      <h1>E74 · Release process<br/>and what's ahead</h1>
+      <p class="lead">The final episode of the series.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

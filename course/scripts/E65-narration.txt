@@ -1,0 +1,17 @@
+# Slide 1
+Track D is for developers. We're switching from using the app to reading its code. First, map the repository so nothing that follows feels like a maze.
+
+# Slide 2
+Seven top-level folders. src is the React frontend. src-tauri is the Rust backend. extension is the Chrome MV3 build. server is an optional benchmark-data gateway. docs-site is the public docs. docs is internal planning. tests is the Vitest suite. And web is the browser build and its shims — the seam behind Module 14.
+
+# Slide 3
+Inside src slash components, the convention is one file per major view — ChatWindow, SettingsView, McpView, and so on. If you're looking for where a screen lives, that folder is always the first place to check.
+
+# Slide 4
+Inside src slash lib is where the actual logic lives. State in store dot ts. Provider clients under providers. MCP handling. Memory. Tools and tool discovery. Agents, workflows, and schedules. The device mesh. Voice — Kokoro, Piper, Whisper, and the system voice. Cost and budget tracking. RAG. And storage.
+
+# Slide 5
+Everything in src is React — the frontend you've been watching for sixty-four episodes. src-tauri is the Rust half: audio, MCP, the browser bridge, mesh, the OS keychain, and speech. The frontend calls into it, but never the other way around.
+
+# Slide 6
+With the map in hand, next episode zooms into the single most important file in that lib folder — store dot ts — and how the whole app's state actually flows through it.

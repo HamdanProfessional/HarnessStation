@@ -1,0 +1,42 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:06.000
+A quick reference for when the presets don't cover the cadence you need: cron expressions, in four worked examples.
+
+2
+00:00:06.000 --> 00:00:12.791
+A cron expression is five fields — minute, hour, day of month, month, day of week — each either a number or a star meaning any.
+
+3
+00:00:12.791 --> 00:00:16.000
+Presets cover the common cases; cron covers everything else.
+
+4
+00:00:16.000 --> 00:00:20.313
+Weekday mornings at eight: zero, eight, star, star, one through five.
+
+5
+00:00:20.313 --> 00:00:25.000
+The weekday field takes a range, so Monday through Friday is one dash five.
+
+6
+00:00:25.000 --> 00:00:34.000
+Every four hours: zero minutes past, and a slash-four on the hour field means every fourth hour starting from zero — midnight, four, eight, and on.
+
+7
+00:00:34.000 --> 00:00:43.000
+Monthly, on the first at nine: zero, nine, one in the day-of-month field, star for month, star for weekday.
+
+8
+00:00:43.000 --> 00:00:52.000
+Friday evening at five: zero, seventeen for the 24-hour clock, star, star, and five for Friday in the weekday field.
+
+9
+00:00:52.000 --> 00:00:52.956
+Schedules covered.
+
+10
+00:00:52.956 --> 00:00:58.000
+Now the browser — a real, model-visible window your agent can drive from inside a conversation.
+

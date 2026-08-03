@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E29 · How retrieval works</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Last episode we saw retrieval work. This time we open the hood — so you can predict when it will find the right passage, and when it quietly won't.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 29 · Module 9</p>
+      <h1>How retrieval works</h1>
+      <p class="lead">Chunk, embed, search — and its real limits.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="Three steps. Every document gets split into chunks. Each chunk gets turned into a vector — an embedding. When you ask a question, the question is embedded too, and the app finds the nearest chunks by meaning, not by matching words. That's why asking about undoing a deploy finds a document about rolling back a release.">
+      <p class="eyebrow">The pipeline</p>
+      <h2>Chunk → embed → nearest-neighbor</h2>
+      <pre class="term">split document into chunks
+      <span class="a">↓</span>
+embed each chunk
+      <span class="a">↓</span>
+question arrives → embed it too → find <span class="g">nearest chunks</span></pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="14"
+      data-narration="Three structural limits, not bugs. It's not exhaustive — it returns the nearest few chunks, not every relevant one, so a fact three chunks away can get missed. Chunk boundaries can split a sentence in half, separating a fact from its qualifier. And it matches meaning, not keywords, which is usually a strength but occasionally misses an exact term you needed literally.">
+      <p class="eyebrow">Three limits</p>
+      <h2>Structural, not accidental</h2>
+      <ul>
+        <li>Not exhaustive — nearest chunks, not all relevant ones</li>
+        <li>Chunk-boundary splitting can separate a fact from its context</li>
+        <li>Meaning-based, not keyword-based — usually right, sometimes not</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="14"
+      data-narration="A checklist for better answers. Use the documents' own vocabulary in your question. Ask narrow questions rather than broad ones. Explicitly ask it to say when something is absent, so it doesn't guess past a gap. Split unrelated material into separate bases. And name each base descriptively, so it's obvious later which one to attach.">
+      <p class="eyebrow">Better-results checklist</p>
+      <h2>Five habits that help</h2>
+      <ul>
+        <li>Use the documents' own vocabulary</li>
+        <li>Ask narrow questions, not broad ones</li>
+        <li>Ask it to say when something's absent</li>
+        <li>Split unrelated material into separate bases</li>
+        <li>Name bases descriptively</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="The gotcha that catches people every time: a scanned PDF is just an image of text, not text. The app does no OCR, so indexing it silently succeeds and returns nothing useful — no error, just empty retrieval. If a document is a scan, run OCR on it yourself before adding it.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>A scanned PDF is an image</h2>
+      <p class="lead">No OCR is performed — it indexes <b>silently</b> and returns nothing
+        useful. OCR it before adding.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Knowledge grounds a chat in documents. Module 10 goes further — packaging a whole role, tools included, as a reusable agent.">
+      <p class="eyebrow">Up next · Module 10</p>
+      <h1>E30 · Your first<br/>agent</h1>
+      <p class="lead">Package a role as one reusable thing.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

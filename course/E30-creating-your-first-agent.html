@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E30 · Creating your first agent</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Module 10 is agents, skills, and workflows — the tools for packaging your own setup so you don't rebuild it by hand every time. First up: creating an agent.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 30 · Module 10</p>
+      <h1>Creating your first agent</h1>
+      <p class="lead">Package a role as one reusable thing.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="SWITCH TO APP: Automation › Agents › New agent. Point out each field: name, instructions, model, tools, knowledge, working directory."
+      data-narration="Automation, Agents, New agent. Six fields make up an agent: a name, its instructions, which model runs it, which tools it can use, which knowledge bases it can search, and a working directory. Set them once, and every run reuses the same package.">
+      <p class="eyebrow">Automation › Agents › New</p>
+      <h2>Six fields, set once</h2>
+      <ul>
+        <li>Name, model, working directory</li>
+        <li>Instructions, tools, knowledge</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="APP: type “You review code” into the instructions field, then delete it and replace it with the full code-reviewer spec."
+      data-narration="Here's the difference that decides whether an agent is actually useful. Instructions that say You review code produce vague, generic output every time. A real spec — what to check, what severity levels mean, what format to reply in — produces a review you can actually act on.">
+      <p class="eyebrow">Vague vs real</p>
+      <h2>“You review code” isn't a spec</h2>
+      <div class="two-col">
+        <div class="card">
+          <h3>Vague</h3>
+          <p>“You review code.” Generic output, different every run.</p>
+        </div>
+        <div class="card">
+          <h3>Real spec</h3>
+          <p>What to check, severity levels, exact reply format.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="APP: build a code-reviewer agent — instructions covering: check for bugs, security, style; rate each Blocking/Minor/Nit; reply as a bulleted list per file."
+      data-narration="The worked example: a code-reviewer agent. Its instructions name exactly what to check — bugs, security issues, style — rate each finding Blocking, Minor, or Nit, and reply as a bulleted list grouped by file. Give it read access to the repo and nothing else it doesn't need.">
+      <p class="eyebrow">Worked example</p>
+      <h2>A code-reviewer agent</h2>
+      <pre class="term"><span class="a">check</span>   bugs, security, style
+<span class="a">rate</span>    Blocking / Minor / Nit
+<span class="a">reply</span>   bulleted list, grouped by file</pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="APP: from the Agents panel, click Run on the code-reviewer agent, point it at a file, watch it work."
+      data-narration="Once it's saved, run it straight from the Agents panel — no chat required. Point it at a file or folder, and it works through your spec exactly the same way every time, because the instructions never drift between runs.">
+      <p class="eyebrow">Run it</p>
+      <h2>Straight from the Agents panel</h2>
+      <p class="lead">No chat required — the same spec runs <b>identically</b> every time.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Running an agent standalone is one path. Next we call one from inside an ordinary conversation, and look at the separate memory each agent keeps.">
+      <p class="eyebrow">Up next</p>
+      <h1>E31 · Agents<br/>from a chat</h1>
+      <p class="lead">Delegation, and agent memory.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

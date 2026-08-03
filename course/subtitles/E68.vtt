@@ -1,0 +1,126 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:05.190
+Module 18 is the shim seam — the architectural decision that let the browser build in E54 exist without forking a single UI file.
+
+2
+00:00:05.190 --> 00:00:07.000
+Today we open the source and see exactly how.
+
+3
+00:00:07.000 --> 00:00:09.783
+Remember from E54: the desktop app never talks to Rust directly.
+
+4
+00:00:09.783 --> 00:00:15.609
+Every touch point goes through five imports from @tauri-apps — core, plugin-fs, plugin-http, api/event, plugin-opener, plugin-updater.
+
+5
+00:00:15.609 --> 00:00:19.000
+Everything the app does to the outside world funnels through those five names.
+
+6
+00:00:19.000 --> 00:00:20.615
+web/shims holds a browser file for each one, with the same exported function names and signatures.
+
+7
+00:00:20.615 --> 00:00:23.284
+The Vite config for the web build aliases the real package name to the shim path — so every import in the app source is completely unaware which one it's getting.
+
+8
+00:00:23.284 --> 00:00:23.366
+core.
+
+9
+00:00:23.366 --> 00:00:24.157
+ts is the dispatcher standing in for invoke; fs.
+
+10
+00:00:24.157 --> 00:00:25.294
+ts is the Origin Private File System standing in for plugin-fs; http.
+
+11
+00:00:25.294 --> 00:00:26.859
+ts is just native fetch, because a Rust client isn't bound by CORS but a browser tab is; event.
+
+12
+00:00:26.859 --> 00:00:28.260
+ts is a local, same-window bus since nothing in a tab emits from a Rust side; opener.
+
+13
+00:00:28.260 --> 00:00:29.150
+ts opens a real tab instead of asking the OS; updater.
+
+14
+00:00:29.150 --> 00:00:30.484
+ts just reports no update, because a page reload is the update mechanism; secret.
+
+15
+00:00:30.484 --> 00:00:32.000
+ts trades the OS keychain for a namespaced slice of localStorage, plainly labeled as weaker.
+
+16
+00:00:32.000 --> 00:00:32.170
+core.
+
+17
+00:00:32.170 --> 00:00:35.029
+ts is the interesting one, because it isn't a one-to-one swap — it's a small router.
+
+18
+00:00:35.029 --> 00:00:36.798
+A handlers object maps a command name to a function.
+
+19
+00:00:36.798 --> 00:00:45.000
+invoke looks the name up: found, it runs it; not found, it throws a clear, specific reason instead of a generic failure, so a caller with a fallback — like detectOs falling back to the user agent — can degrade gracefully instead of crashing.
+
+20
+00:00:45.000 --> 00:00:47.659
+And that map is built up, not hardcoded — registerCommand adds an entry to it.
+
+21
+00:00:47.659 --> 00:00:52.091
+Every other shim file that needs to answer a Tauri command, not just replace an import, calls registerCommand once at module load.
+
+22
+00:00:52.091 --> 00:00:52.330
+secret.
+
+23
+00:00:52.330 --> 00:00:57.000
+ts is the clean example: it registers secret_set, secret_get and secret_delete, each just reading or writing localStorage under a prefix.
+
+24
+00:00:57.000 --> 00:01:02.958
+That's the whole trick, stated plainly: a new capability for the web build is a new file in web/shims that imports registerCommand and calls it a few times.
+
+25
+00:01:02.958 --> 00:01:08.000
+Nothing in src/lib or src/components changes, because they were already calling invoke with that command name for the desktop build.
+
+26
+00:01:08.000 --> 00:01:09.477
+Gotcha: not every command needs a shim.
+
+27
+00:01:09.477 --> 00:01:09.667
+core.
+
+28
+00:01:09.667 --> 00:01:14.780
+ts also keeps an UNAVAILABLE map of commands that are honestly impossible in a tab — start_server, mcp_connect, mesh_start, inapp_open.
+
+29
+00:01:14.780 --> 00:01:18.000
+Those fail with a specific, useful reason on purpose, rather than pretending to work.
+
+30
+00:01:18.000 --> 00:01:22.880
+Time to see this pattern used for real, on the biggest thing added behind the seam so far: an actual Linux kernel, booted inside the browser tab.
+
+31
+00:01:22.880 --> 00:01:25.000
+Next episode walks the source and the commit history behind it.
+

@@ -1,0 +1,20 @@
+# Slide 1
+Rewind steps back through whole turns. This episode is finer-grained: deleting a single reasoning block, a single tool call, or a single tool response, without touching the rest of the chat.
+
+# Slide 2
+Three controls, all triggered by hovering. Hover a reasoning block and you get “Delete this thinking from context.” Hover a tool call and you get “Delete this tool call from context.” Hover its response and you get “Delete this tool response from context.” Each targets exactly one item.
+
+# Slide 3
+Why this exists: a long tool-using session accumulates noisy or flat-out wrong intermediate steps. That's poisoning the model's context — it keeps referring back to a bad grep or a stale file read — but the thread as a whole is still worth keeping. Full compaction is too blunt, and starting over throws away everything good.
+
+# Slide 4
+So surgical deletion beats the two blunt alternatives. Instead of starting over and losing the whole thread, or running a full compaction that summarizes everything, you remove exactly the items that are wrong or irrelevant, and leave the rest of the context untouched.
+
+# Slide 5
+And the direct payoff: fewer tokens. Every deleted reasoning block, tool call, or tool response is context the model no longer has to read on the next turn — a smaller, cleaner prompt, and a cheaper one.
+
+# Slide 6
+Gotcha: these controls are disabled while a reply is streaming. Deletion only applies to settled history — you can't reach in and edit context mid-generation.
+
+# Slide 7
+Module 16 turns to keeping the app itself current — how updates work, and why a failed signature check gets refused rather than quietly applied.

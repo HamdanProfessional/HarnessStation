@@ -1,0 +1,23 @@
+# Slide 1
+Hands-on episode. We add one small new command — get clipboard text — twice: once as a real Tauri command in Rust, once as a browser shim. Same invoke call site, unmodified, on both builds.
+
+# Slide 2
+The target: get_clipboard_text. A tiny, self-contained command — no dependencies on anything else in the app — so the whole shim pattern from E68 is visible without noise.
+
+# Slide 3
+Rust side first. A #[tauri::command] function, using the arboard crate or Tauri's own clipboard plugin to read the system clipboard and return a String or an error. Then the one easy step to forget: add it to generate_handler's list in the invoke_handler chain — a command that exists but isn't listed there is invisible to the frontend and fails with a not-found error that looks nothing like a permissions problem.
+
+# Slide 4
+Browser side: a new tiny file, web/shims/clipboard.ts, importing registerCommand from core.ts and registering exactly the same command name — get_clipboard_text — backed by the standard navigator.clipboard.readText API. That's the entire shim.
+
+# Slide 5
+One wiring step the new file needs: something has to import it so its registerCommand call actually runs. The other shims are pulled in from a central entry point purely for that side effect — add clipboard.ts alongside secret.ts, opener.ts and the rest there, or it silently never registers.
+
+# Slide 6
+And the call site, wherever it lives in src/ — a tool, a component, doesn't matter — needs exactly one line, and it's the same line either build reads it in.
+
+# Slide 7
+Prove it both ways. npm run tauri dev, trigger the call, confirm it returns whatever's really on your clipboard. Then, separately, npm run web:dev — no Tauri process behind it at all — trigger the exact same call, and confirm the browser's own clipboard API answers it. That side-by-side proof is the whole point of the architecture from E68: the call site never knew which one it was talking to.
+
+# Slide 8
+You've now touched both sides of the seam. Module 19 turns to process: how the app is actually tested, and how a real change gets contributed and verified before it ships.

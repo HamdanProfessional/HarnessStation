@@ -1,0 +1,58 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:01.080
+One agent handles one job well.
+
+2
+00:00:01.080 --> 00:00:04.179
+But some jobs are actually several independent jobs at once — that's what swarms are for.
+
+3
+00:00:04.179 --> 00:00:07.000
+Let's see when that's worth it, and when it's just an expensive way to go slower.
+
+4
+00:00:07.000 --> 00:00:16.000
+Turn on Swarm and, instead of one agent working through a job step by step, several agents run at the same time, each on their own slice of it.
+
+5
+00:00:16.000 --> 00:00:22.277
+The distinction that decides whether it helps: genuinely parallel work, like reviewing twelve independent files at once, is exactly what a swarm speeds up.
+
+6
+00:00:22.277 --> 00:00:29.000
+Sequential work, where step two needs step one's answer, gets no benefit — a swarm there is just slower and more expensive than one agent working through it in order.
+
+7
+00:00:29.000 --> 00:00:35.185
+While a swarm runs, a shared view shows exactly which file each agent is touching right now, so nothing gets edited twice by accident.
+
+8
+00:00:35.185 --> 00:00:41.000
+And if one agent changes a file another depends on, that second agent is explicitly told about the change before it continues.
+
+9
+00:00:41.000 --> 00:00:45.723
+The gotcha, and it's a cost one: several agents means several conversations billed at the same time, not one.
+
+10
+00:00:45.723 --> 00:00:47.890
+A twelve-file swarm can be twelve concurrent runs.
+
+11
+00:00:47.890 --> 00:00:54.000
+That's fine when the job is genuinely parallel and time matters — but it is not a default choice, and it's not free just because it's faster.
+
+12
+00:00:54.000 --> 00:00:55.065
+Agents and swarms handle work.
+
+13
+00:00:55.065 --> 00:00:59.290
+But some things aren't work at all — they're reference material the model should only load when it's actually relevant.
+
+14
+00:00:59.290 --> 00:01:00.000
+That's skills, next.
+

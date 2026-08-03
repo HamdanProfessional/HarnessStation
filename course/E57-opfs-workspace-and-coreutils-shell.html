@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E57 · The OPFS workspace and the coreutils shell</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="8"
+      data-narration="Python now runs without a server. It still needs somewhere to read and write files, and a terminal to drive it from. This episode is the sandboxed workspace underneath both, and the small shell built on top of it.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track C · Advanced · Episode 57 · Module 14</p>
+      <h1>The OPFS workspace and the coreutils shell</h1>
+      <p class="lead">A sandboxed filesystem, and a shell to drive it.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="On desktop the file tools work against a real directory you pick on disk. A browser has no disk to point at — so vfs dot ts gives the model a workspace inside the Origin Private File System instead: real files, persisted by the browser, that survive a reload and that every tool shares.">
+      <p class="eyebrow">vfs.ts</p>
+      <h2>A workspace with no real disk underneath</h2>
+      <p class="lead">Desktop points file tools at a real folder. The browser has none —
+        <code>vfs.ts</code> gives the model a persistent workspace inside <b>OPFS</b> instead.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="Every path the model gives a tool gets resolved against that one workspace root, and any dot-dot that would climb above it is simply dropped rather than followed. There's no way to spell a path that reaches the app's own storage or anywhere else in OPFS — the sandbox is enforced in the path resolver itself, not by convention.">
+      <p class="eyebrow">The sandbox</p>
+      <h2>A path can't escape the workspace</h2>
+      <ul>
+        <li>Every tool path resolves under one workspace root</li>
+        <li class="ok"><code>..</code> segments that would climb out are clamped, not followed</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="On top of that sits shell dot ts — a coreutils subset, not a full shell. ls, cat, echo, grep, head, tail, mkdir, rm and friends, all operating on that same OPFS workspace. Pipes chain them together, redirection writes a result to a file, and semicolon or double-ampersand sequence several commands in one call.">
+      <p class="eyebrow">shell.ts</p>
+      <h2>A coreutils subset over the same workspace</h2>
+      <pre class="term">ls · cat · echo · grep · head · tail · mkdir · rm · cd
+      <span class="a">|</span> pipes    <span class="a">&gt;</span> <span class="a">&gt;&gt;</span> redirection    <span class="a">&amp;&amp;</span> <span class="a">;</span> sequencing</pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="SWITCH TO APP: web build terminal — run something like ls | grep .txt &amp;&amp; cat notes.txt, then a cd into a subfolder and an echo redirected into a new file."
+      data-narration="This is the default terminal in the web build, so let's use it like one. List and filter with a pipe, chain a follow-up with double-ampersand so it only runs on success, change directory, then redirect some output into a new file — all against files that are still sitting there next time you reload the tab.">
+      <p class="eyebrow">The demo</p>
+      <h2>The default browser-build terminal</h2>
+      <pre class="term"><span class="g">$</span> ls | grep .txt &amp;&amp; cat notes.txt
+<span class="g">$</span> cd data &amp;&amp; echo done &gt; status.txt</pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="It's deliberately a subset, not real bash. A command it doesn't recognize returns command not found with exit code 127 and points at the file tools or Python instead of silently pretending to understand — so a script written for a real terminal may need the file or Python tools to finish the job.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>It's a subset, not real bash</h2>
+      <ul>
+        <li class="warn">An unknown command returns <code>127</code> — it won't silently pretend to run it</li>
+        <li>Reach for the file tools or Python for anything outside this list</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="7"
+      data-narration="A sandboxed workspace and a shell over it — but still not a real operating system. Next episode goes all the way: an actual Linux kernel, booted inside the tab.">
+      <p class="eyebrow">Up next</p>
+      <h1>E58 · A real Linux<br/>VM, via v86</h1>
+      <p class="lead">Not a simulation — a booted kernel, in WebAssembly.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

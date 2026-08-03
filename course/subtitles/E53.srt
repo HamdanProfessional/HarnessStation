@@ -1,0 +1,76 @@
+1
+00:00:00,000 --> 00:00:01,147
+Pairing two machines is easy.
+
+2
+00:00:01,147 --> 00:00:07,000
+Knowing exactly what that pairing lets one do on the other is the part worth getting right — three switches, and a boundary that no switch can move.
+
+3
+00:00:07,000 --> 00:00:08,857
+Three switches, all off by default.
+
+4
+00:00:08,857 --> 00:00:12,518
+Models: let this device run inference using the remote's keys or GPU.
+
+5
+00:00:12,518 --> 00:00:14,588
+Tools: let it call tools on the remote.
+
+6
+00:00:14,588 --> 00:00:17,878
+Knowledge: let it search knowledge bases stored on the remote.
+
+7
+00:00:17,878 --> 00:00:20,000
+Nothing is shared until you turn one on.
+
+8
+00:00:20,000 --> 00:00:21,701
+Here's the boundary that doesn't move.
+
+9
+00:00:21,701 --> 00:00:26,716
+Even with Tools switched on, shell, Python, and file-writing tools are never shared across the mesh — full stop.
+
+10
+00:00:26,716 --> 00:00:35,000
+That's not a setting you can find and enable; it's a hard line in the design, because those three are exactly the tools that can do lasting damage to a machine that isn't yours to risk.
+
+11
+00:00:35,000 --> 00:00:37,676
+For any paired device, What can it do?
+
+12
+00:00:37,676 --> 00:00:45,000
+spells out exactly which switches are on and what that grants — no guessing from the toggle state alone.
+
+13
+00:00:45,000 --> 00:00:53,000
+Turn Models on and the remote's models simply appear in your model picker alongside your local and cloud ones — same picker, no separate workflow.
+
+14
+00:00:53,000 --> 00:00:56,026
+If something's not connecting: check mesh is on at both ends, not just one.
+
+15
+00:00:56,026 --> 00:01:00,101
+Discovery is a network broadcast that guest or corporate Wi-Fi often blocks — add by address instead.
+
+16
+00:01:00,101 --> 00:01:04,176
+The ports are 8793 for mesh traffic and 8794 for announcements, useful if you're touching a firewall.
+
+17
+00:01:04,176 --> 00:01:07,000
+And a sleeping machine will correctly show offline — that's not a bug.
+
+18
+00:01:07,000 --> 00:01:07,952
+The mesh is covered.
+
+19
+00:01:07,952 --> 00:01:13,000
+Now a different kind of portability — running this whole app with zero install, straight in a browser tab.
+

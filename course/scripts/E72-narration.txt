@@ -1,0 +1,23 @@
+# Slide 1
+E23 and E24 had you write a tool as a user, saved into your own settings. This episode is the other path — adding a tool that ships with the app itself, the way a real pull request would.
+
+# Slide 2
+Two genuinely different things share the word tool. E23's JavaScript tool lives entirely in your settings.json — the model never sees your source, and it's yours alone. A built-in tool group lives in the repo, ships to every install, and is what E22's Files, Terminal, Web and Browser groups actually are under the hood.
+
+# Slide 3
+tools.ts is where both live. BUILTIN_TOOLSETS at the top groups tool ids into the named sets you saw in the tools panel — Browser, Research, Coding agent, Self-service, Swarm. Further down, each individual tool has a name, a description — the exact text the model reads to decide when to use it, same rule as E23 — and a JSON Schema for its parameters.
+
+# Slide 4
+toolDiscovery.ts is the other half — it's what powers the self-service tooling group from E25, letting the model turn a tool on for itself mid-conversation. A RISKY set flags anything destructive, like run_terminal, so those always prompt for approval instead of silently switching on.
+
+# Slide 5
+Add a minimal one live: word_count, taking a single text string parameter and returning a count. Write the description the way E23 taught — specific about when to use it, not just what it does. Then find where tool names are dispatched to their actual implementation and add the matching case; a definition with no implementation is a tool the model can call that does nothing.
+
+# Slide 6
+Wire it into a group by adding its id to a toolIds array in BUILTIN_TOOLSETS — a tool with a definition but no group membership never appears in the tools panel at all, because the panel lists groups, not individual tool ids.
+
+# Slide 7
+Reload the app, open a chat's tools panel, and there it is — inside its group, same as Files or Web, indistinguishable from a tool that's been there since day one. That's the whole test: does it show up exactly where a built-in belongs.
+
+# Slide 8
+Next, the same contribution exercise on the UI layer — extending an existing small panel with a real feature, wired properly into the store from E66.

@@ -1,0 +1,84 @@
+1
+00:00:00,000 --> 00:00:06,189
+Module 14 saves its flagship demo for last: an actual Linux kernel, booted from inside a browser tab, with a filesystem the model genuinely shares.
+
+2
+00:00:06,189 --> 00:00:08,000
+Let's turn it on and see what it really is.
+
+3
+00:00:08,000 --> 00:00:08,794
+It's off by default.
+
+4
+00:00:08,794 --> 00:00:11,095
+In Settings, there's a toggle for the real-Linux terminal.
+
+5
+00:00:11,095 --> 00:00:18,000
+Flip it on, and from then on run_command routes there instead of the coreutils shell shim we saw back in episode fifty-seven — the model is now talking to an actual guest OS.
+
+6
+00:00:18,000 --> 00:00:23,592
+What's actually booting: Buildroot and BusyBox, running under v86 — an open-source x86-to-WebAssembly emulator — driven over its serial console.
+
+7
+00:00:23,592 --> 00:00:26,388
+That means real uname, real busybox grep, real arbitrary guest programs.
+
+8
+00:00:26,388 --> 00:00:30,000
+Not a JavaScript re-implementation of Unix — genuine Linux, emulated down to the instruction.
+
+9
+00:00:30,000 --> 00:00:32,063
+Why v86 and not the faster alternative, CheerpX?
+
+10
+00:00:32,063 --> 00:00:32,492
+Licensing.
+
+11
+00:00:32,492 --> 00:00:34,555
+v86 is BSD-licensed and free for commercial use.
+
+12
+00:00:34,555 --> 00:00:37,691
+CheerpX is proprietary and would mean billing every user of this feature.
+
+13
+00:00:37,691 --> 00:00:41,000
+Slower but free beats fast but metered, for a tool meant to ship to everyone.
+
+14
+00:00:41,000 --> 00:00:43,309
+The part worth lingering on: the 9p filesystem bridge.
+
+15
+00:00:43,309 --> 00:00:47,586
+The guest mounts the shared tree at /mnt, and the model's OPFS workspace lives under /mnt/workspace.
+
+16
+00:00:47,586 --> 00:00:54,000
+So a file the file tools wrote and a file a Linux command creates aren't synced copies — they're literally the same file, seen from two sides at once.
+
+17
+00:00:54,000 --> 00:01:01,053
+State the costs plainly: about a ten megabyte one-time kernel download, a few seconds to boot, and emulated execution that's slower than native.
+
+18
+00:01:01,053 --> 00:01:06,000
+It's headless and serial-only — there's no GUI here, no windows, just a terminal talking to a kernel.
+
+19
+00:01:06,000 --> 00:01:09,964
+Gotcha: this is a genuinely experimental, look-what's-possible demo, not a daily driver.
+
+20
+00:01:09,964 --> 00:01:16,000
+Expect roughly a forty second boot, and a thirty second timeout on each command — plan your demos, and your expectations, around that.
+
+21
+00:01:16,000 --> 00:01:22,000
+Module fifteen turns to something much more precise: reaching back into a conversation and rewinding it to an earlier point.
+

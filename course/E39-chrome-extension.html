@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E39 · Driving your own Chrome via the extension</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="The in-app browser gives a clean session. This episode is for the opposite case — using a Chrome session you're already signed into, via the browser extension.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 39 · Module 11</p>
+      <h1>Driving your own<br/>Chrome via the extension</h1>
+      <p class="lead">Your session, real tabs, real screenshots.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="SWITCH TO CHROME: open chrome://extensions, enable Developer mode, click Load unpacked, select the repo's extension/ folder."
+      data-narration="Open chrome colon slash slash extensions, turn on Developer mode in the top right, click Load unpacked, and select the extension folder from this repo. It appears in your toolbar, and the agent can now drive that actual Chrome window.">
+      <p class="eyebrow">Install it</p>
+      <h2>chrome://extensions → Load unpacked</h2>
+      <pre class="term"><span class="c">1</span> chrome://extensions
+<span class="c">2</span> enable <span class="a">Developer mode</span>
+<span class="c">3</span> <span class="g">Load unpacked</span> → repo's extension/ folder</pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="When to reach for this instead of the in-app browser: a login already established elsewhere — your email, a dashboard you're signed into — versus a clean, disposable session where you'd rather the agent start from nothing. Established login, use the extension; clean slate, use the in-app browser.">
+      <p class="eyebrow">In-app vs extension</p>
+      <h2>Which one, when</h2>
+      <ul>
+        <li>A login already established elsewhere → <b>the extension</b></li>
+        <li>A clean, disposable session → <b>the in-app browser</b></li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: run list_tabs, open_new_tab, change_tab, close_tab in the extension-driven Chrome."
+      data-narration="This is also where tab tools live — they only exist here, not in the in-app browser: open_new_tab, list_tabs, change_tab, and close_tab. Real Chrome, real tabs.">
+      <p class="eyebrow">Extension-only tools</p>
+      <h2>Tab tools</h2>
+      <pre class="term"><span class="a">open_new_tab</span>   <span class="a">change_tab</span>
+<span class="a">list_tabs</span>      <span class="a">close_tab</span></pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="And unlike the in-app browser, this one really can take screenshots — take_screenshot and read_screenshot both work here, since it's a genuine Chrome window the extension can capture."
+      >
+      <p class="eyebrow">What you get back</p>
+      <h2>Real screenshots, finally</h2>
+      <ul>
+        <li class="ok">take_screenshot / read_screenshot both work in a real Chrome window</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="The gotcha, and it matters: a signed-in session is delegated access. If you're signed into your bank, your email, your work systems in that browser, the model can act on any of them — not just the page you pointed it at. Treat the decision to hand it your session with the same care as handing someone your unlocked laptop.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>A signed-in session is delegated access</h2>
+      <ul>
+        <li class="warn">The model can act on <b>any</b> site you're signed into in that browser</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="From driving a browser to generating with one — next is images, audio, video, and 3D.">
+      <p class="eyebrow">Up next</p>
+      <h1>E40 · Images, audio,<br/>video and 3D generation</h1>
+      <p class="lead">Connect a media engine and generate live.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E33 · Skills</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="There's a real cost difference between putting something in your global instructions, which you pay for on every single message, and putting it in a skill, which you only pay for when it's actually relevant. This episode is about skills.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 33 · Module 10</p>
+      <h1>Skills</h1>
+      <p class="lead">Reference material, loaded only when it's relevant.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="SWITCH TO APP: Automation › Skills › New skill. Point out the name, one-line description, and Markdown body fields."
+      data-narration="Automation, Skills, New skill. Three fields: a name, a one-line description, and a Markdown body with the actual procedure. The description is the part the model always sees; the body only loads in when the description matches what's being asked.">
+      <p class="eyebrow">Automation › Skills › New</p>
+      <h2>Name, description, Markdown body</h2>
+      <pre class="term"><span class="a">name</span>          sql-conventions
+<span class="a">description</span>   <span class="c"># always visible — decides when it loads</span>
+<span class="a">body</span>          <span class="c"># Markdown — loaded only when relevant</span></pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="APP: build the sql-conventions skill live — description plus a Markdown body of naming and query rules."
+      data-narration="The worked example: a sql-conventions skill. Its body holds your team's actual rules — table naming, migration format, how to write a safe query. It sits there unused in every unrelated chat, and loads in fully the moment someone asks for a query or a schema change.">
+      <p class="eyebrow">Worked example</p>
+      <h2>sql-conventions</h2>
+      <p class="lead">Table naming, migration format, safe-query rules — loaded in
+        only when a chat actually touches SQL.</p>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="14"
+      data-cue="APP: show two draft descriptions side by side, one vague and one action-triggered."
+      data-narration="The one rule that makes or breaks a skill: the description must say when to use it, not what's inside it. Contains our SQL style guide tells the model nothing about which moment to reach for it. Use this when writing or reviewing any SQL query or migration is specific enough to trigger reliably.">
+      <p class="eyebrow">The description rule</p>
+      <h2>Describe when, not what's inside</h2>
+      <ul>
+        <li class="no">“Contains our SQL style guide.” — doesn't say when to use it</li>
+        <li class="ok">“Use when writing or reviewing any SQL query or migration.” — triggers reliably</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="14"
+      data-narration="Three ways to hold information, and they're not interchangeable. A skill is a procedure, loaded in whole when relevant. Knowledge is large material, searched piece by piece at question time. Memory is small facts about you or the project, injected into every single message whether it's needed or not.">
+      <p class="eyebrow">Three kinds of stored information</p>
+      <h2>Skills vs knowledge vs memory</h2>
+      <div class="two-col">
+        <div class="card">
+          <h3>Skill</h3>
+          <p>A procedure, loaded whole when its description matches.</p>
+        </div>
+        <div class="card">
+          <h3>Knowledge</h3>
+          <p>Large material, searched at question time.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="9"
+      data-narration="And memory, the third kind: small facts, always injected, on every single message — the most expensive place to put anything long.">
+      <p class="eyebrow">The third kind</p>
+      <h2>Memory — facts, always injected</h2>
+      <span class="pill warn">Paid on every message — keep it small</span>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="You've now met agents, swarms, and skills individually. Next we chain steps together into a workflow, so one step's output feeds directly into the next.">
+      <p class="eyebrow">Up next</p>
+      <h1>E34 · Building a<br/>multi-step workflow</h1>
+      <p class="lead">Chain steps so output feeds forward.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

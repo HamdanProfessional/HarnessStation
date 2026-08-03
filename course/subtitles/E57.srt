@@ -1,0 +1,64 @@
+1
+00:00:00,000 --> 00:00:01,251
+Python now runs without a server.
+
+2
+00:00:01,251 --> 00:00:04,360
+It still needs somewhere to read and write files, and a terminal to drive it from.
+
+3
+00:00:04,360 --> 00:00:08,000
+This episode is the sandboxed workspace underneath both, and the small shell built on top of it.
+
+4
+00:00:08,000 --> 00:00:11,074
+On desktop the file tools work against a real directory you pick on disk.
+
+5
+00:00:11,074 --> 00:00:20,000
+A browser has no disk to point at — so vfs dot ts gives the model a workspace inside the Origin Private File System instead: real files, persisted by the browser, that survive a reload and that every tool shares.
+
+6
+00:00:20,000 --> 00:00:25,963
+Every path the model gives a tool gets resolved against that one workspace root, and any dot-dot that would climb above it is simply dropped rather than followed.
+
+7
+00:00:25,963 --> 00:00:32,000
+There's no way to spell a path that reaches the app's own storage or anywhere else in OPFS — the sandbox is enforced in the path resolver itself, not by convention.
+
+8
+00:00:32,000 --> 00:00:34,805
+On top of that sits shell dot ts — a coreutils subset, not a full shell.
+
+9
+00:00:34,805 --> 00:00:38,623
+ls, cat, echo, grep, head, tail, mkdir, rm and friends, all operating on that same OPFS workspace.
+
+10
+00:00:38,623 --> 00:00:44,000
+Pipes chain them together, redirection writes a result to a file, and semicolon or double-ampersand sequence several commands in one call.
+
+11
+00:00:44,000 --> 00:00:46,814
+This is the default terminal in the web build, so let's use it like one.
+
+12
+00:00:46,814 --> 00:00:56,000
+List and filter with a pipe, chain a follow-up with double-ampersand so it only runs on success, change directory, then redirect some output into a new file — all against files that are still sitting there next time you reload the tab.
+
+13
+00:00:56,000 --> 00:00:57,561
+It's deliberately a subset, not real bash.
+
+14
+00:00:57,561 --> 00:01:07,000
+A command it doesn't recognize returns command not found with exit code 127 and points at the file tools or Python instead of silently pretending to understand — so a script written for a real terminal may need the file or Python tools to finish the job.
+
+15
+00:01:07,000 --> 00:01:10,610
+A sandboxed workspace and a shell over it — but still not a real operating system.
+
+16
+00:01:10,610 --> 00:01:14,000
+Next episode goes all the way: an actual Linux kernel, booted inside the tab.
+

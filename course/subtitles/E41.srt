@@ -1,0 +1,56 @@
+1
+00:00:00,000 --> 00:00:03,101
+Is the expensive model actually better for the thing you're doing?
+
+2
+00:00:03,101 --> 00:00:07,000
+Compare answers that in under a minute, side by side, with the numbers right there.
+
+3
+00:00:07,000 --> 00:00:09,190
+Go to Library, Compare.
+
+4
+00:00:09,190 --> 00:00:17,000
+Pick several models, and get ready to send the same prompt to all of them at once.
+
+5
+00:00:17,000 --> 00:00:29,000
+Type one prompt, send it once, and every chosen model answers it in parallel — replies side by side, each with its token count and its cost, so you're not just comparing quality, you're comparing quality against what it actually cost to get it.
+
+6
+00:00:29,000 --> 00:00:34,085
+Read it as one question: for this specific prompt, does the pricier model's answer justify its cost?
+
+7
+00:00:34,085 --> 00:00:35,254
+Sometimes yes, clearly.
+
+8
+00:00:35,254 --> 00:00:41,000
+Sometimes a cheaper model is indistinguishable for the task at hand — and now you have the evidence, not a guess.
+
+9
+00:00:41,000 --> 00:00:46,255
+This is a spot check on one prompt, not a benchmark — it's fast precisely because it's narrow.
+
+10
+00:00:46,255 --> 00:00:50,000
+Good for a quick gut check before committing to a model for a task.
+
+11
+00:00:50,000 --> 00:00:52,357
+Gotcha: one prompt is one data point.
+
+12
+00:00:52,357 --> 00:01:00,000
+If the task varies a lot between runs, run Compare a few times with different real examples before trusting the verdict.
+
+13
+00:01:00,000 --> 00:01:02,190
+Compare is great for a real prompt you care about.
+
+14
+00:01:02,190 --> 00:01:06,000
+Next, public benchmarks — what they're good for, and where they stop being trustworthy.
+

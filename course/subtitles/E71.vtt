@@ -1,0 +1,90 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:01.612
+Module 19 is testing and contributing.
+
+2
+00:00:01.612 --> 00:00:07.000
+Before touching a single line, know how to prove nothing broke — the same two commands the project's own CI runs on every push.
+
+3
+00:00:07.000 --> 00:00:08.271
+npm test runs Vitest over the tests folder.
+
+4
+00:00:08.271 --> 00:00:14.803
+Hundreds of specs, covering the pure logic across the codebase plus the sharper stuff: the store's streaming path, the tool-call loop, the lazy chat-hydration invariants, the agent loop, the memory store, the voice stack.
+
+5
+00:00:14.803 --> 00:00:19.000
+This is the same command E04 had you run right after building from source, back in Module 1 — now you're seeing what it's actually protecting.
+
+6
+00:00:19.000 --> 00:00:22.322
+npx tsc --noEmit is the second half — no test runs, it just type-checks the whole project.
+
+7
+00:00:22.322 --> 00:00:27.527
+This is what catches a shim whose signature drifted from the real Tauri import, or a component destructuring a store action that got renamed.
+
+8
+00:00:27.527 --> 00:00:30.000
+Clean output, no errors, is success — silence is the passing state.
+
+9
+00:00:30.000 --> 00:00:33.497
+Both of these, plus a Vite build and cargo clippy and cargo test on the Rust side, run automatically in ci.
+
+10
+00:00:33.497 --> 00:00:34.837
+yml on every push and every pull request.
+
+11
+00:00:34.837 --> 00:00:40.000
+Nothing merges without all four passing — so running them locally first is just doing on your machine what would otherwise fail in public a few minutes later.
+
+12
+00:00:40.000 --> 00:00:42.429
+Now the Rust side of testing, as a concrete example, revisiting E51.
+
+13
+00:00:42.429 --> 00:00:47.286
+start_server has a real side effect — it spawns a process — so it can't be unit-tested directly without actually launching llama-server.
+
+14
+00:00:47.286 --> 00:00:52.071
+The fix: launch_flag_args, the part that turns LaunchOpts into a Vec of command-line strings, was pulled out as its own pure function.
+
+15
+00:00:52.071 --> 00:00:54.000
+No side effects, so it's trivial to test in isolation.
+
+16
+00:00:54.000 --> 00:00:58.736
+And the test itself checks the exact compatibility guarantee from E51: a default LaunchOpts, with nothing set, must produce an empty Vec — no flags at all.
+
+17
+00:00:58.736 --> 00:01:02.311
+That's what lets an older llama-server binary that's never heard of --n-cpu-moe or --fit-target still launch cleanly.
+
+18
+00:01:02.311 --> 00:01:05.000
+One assertion, no process, no server, and it runs in milliseconds as part of cargo test.
+
+19
+00:01:05.000 --> 00:01:06.299
+The pattern generalizes past this one file.
+
+20
+00:01:06.299 --> 00:01:10.077
+Anything with a side effect — spawning a process, hitting the network, touching a real filesystem — resists testing directly.
+
+21
+00:01:10.077 --> 00:01:16.000
+The fix is almost always the same: pull the decision-making part out as a pure function of its inputs, test that thoroughly, and keep the side effect itself as a thin, un-tested wrapper around it.
+
+22
+00:01:16.000 --> 00:01:23.000
+With the checks understood, next episode is your first real contribution — adding a genuine built-in tool to the codebase, the way a real pull request would, rather than a user-authored script.
+

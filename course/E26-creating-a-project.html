@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E26 · Creating a project</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Module 8 is about projects — the feature that stops unrelated work from bleeding into each other. In this one we create a project and see exactly what it isolates.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 26 · Module 8</p>
+      <h1>Creating a project</h1>
+      <p class="lead">Isolate context between unrelated work.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="A project is a container with its own instructions, its own knowledge bases, and its own enabled tools. Any chat you start inside it inherits all three automatically. Nothing about it leaks to chats outside the project, and nothing outside leaks in.">
+      <p class="eyebrow">What a project holds</p>
+      <h2>Instructions, knowledge, tools — scoped</h2>
+      <ul>
+        <li>Its own <b>instructions</b></li>
+        <li>Its own <b>knowledge bases</b></li>
+        <li>Its own enabled <b>tools</b></li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="SWITCH TO APP: click the + beside Projects. Name it, open Instructions / Knowledge / Tools tabs."
+      data-narration="To create one, click the plus beside Projects in the sidebar and give it a name. You land on three tabs — Instructions, Knowledge, and Tools — and whatever you set there applies to every chat you start inside this project.">
+      <p class="eyebrow">Create one</p>
+      <h2>+ beside Projects</h2>
+      <pre class="term"><span class="a">tabs</span>  Instructions · Knowledge · Tools
+<span class="c"># set once, every chat in the project inherits it</span></pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="APP: create two projects, Acme and Brightside, each with a client-specific instruction and knowledge file."
+      data-narration="The worked example: two client projects, Acme and Brightside. Each gets its own instruction — house style, contact names, pricing — and its own knowledge base of that client's documents. They never mix, even though you're using the same app, the same day, back to back.">
+      <p class="eyebrow">Two-client example</p>
+      <h2>Acme and Brightside, kept apart</h2>
+      <div class="two-col">
+        <div class="card">
+          <h3>Acme</h3>
+          <p>Its own instructions, contacts, and knowledge base.</p>
+        </div>
+        <div class="card">
+          <h3>Brightside</h3>
+          <p>A separate project — nothing from Acme is visible here.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="APP: open a chat inside the Acme project — instructions auto-apply. Then open a plain chat outside — ask about Acme, it knows nothing."
+      data-narration="Start a chat inside Acme and it automatically has Acme's instructions and knowledge, no setup needed. Start a plain chat outside any project and ask about Acme — it sees neither the instructions nor the knowledge. That boundary is the whole point.">
+      <p class="eyebrow">Inheritance in action</p>
+      <h2>Inside inherits, outside sees nothing</h2>
+      <ul>
+        <li class="ok">A chat inside the project inherits its instructions automatically</li>
+        <li class="no">A chat outside the project sees neither instructions nor knowledge</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="The gotcha: deleting a project does not delete its chats. They don't vanish — they return to your ungrouped chat list, still fully readable. What actually gets deleted is the project's memory: the accumulated facts it had learned. Keep that in mind before you clean one up.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Deleting a project keeps its chats</h2>
+      <p class="lead">Its chats return to the <b>ungrouped list</b>, intact. Only the project's
+        <b>memory</b> is deleted with it.</p>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Projects give you one instruction layer. Next we put all three layers — global, project, and chat — side by side and watch them stack in a single reply.">
+      <p class="eyebrow">Up next</p>
+      <h1>E27 · Instruction<br/>layering</h1>
+      <p class="lead">Global, project, and chat — stacked in one reply.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

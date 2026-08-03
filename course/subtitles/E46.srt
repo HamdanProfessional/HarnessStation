@@ -1,0 +1,68 @@
+1
+00:00:00,000 --> 00:00:01,818
+Once you have real history, you need to manage it.
+
+2
+00:00:01,818 --> 00:00:06,000
+Folders, snapshots, branching, and compaction — the tools for a chat list that has grown past a handful of entries.
+
+3
+00:00:06,000 --> 00:00:14,222
+Right-click any chat: pin it, rename it or leave auto-title running, move it to a folder, duplicate it, export as Markdown or JSON, or delete it.
+
+4
+00:00:14,222 --> 00:00:17,000
+Delete has no undo — that is the one to pause on.
+
+5
+00:00:17,000 --> 00:00:21,618
+Before a risky tool-using task — one that edits files or runs commands — take a snapshot.
+
+6
+00:00:21,618 --> 00:00:23,123
+If it goes wrong, restore it.
+
+7
+00:00:23,123 --> 00:00:28,000
+The chat keeps its identity through a restore; it is the same chat rolled back, not a new one.
+
+8
+00:00:28,000 --> 00:00:30,103
+Branch and edit look similar but do different jobs.
+
+9
+00:00:30,103 --> 00:00:35,835
+Branch from a message forks a new chat and leaves the original untouched — good for exploring an alternative without losing the first path.
+
+10
+00:00:35,835 --> 00:00:40,000
+Edit a message changes history in place, in the same chat — good when you just got the wording wrong.
+
+11
+00:00:40,000 --> 00:00:44,521
+Compact shows a banner and folds older turns down to a summary, keeping recent messages verbatim.
+
+12
+00:00:44,521 --> 00:00:51,000
+Turn on auto-compact with a threshold and it happens on its own once a chat crosses a length you set, instead of waiting for you to notice.
+
+13
+00:00:51,000 --> 00:00:55,181
+Gotcha: compaction loses detail on purpose — that is the whole mechanism, not a bug.
+
+14
+00:00:55,181 --> 00:01:02,000
+Anything you will want verbatim later belongs in an export or in memory before it gets folded, not left to survive compaction on its own.
+
+15
+00:01:02,000 --> 00:01:02,896
+Managing chats is free.
+
+16
+00:01:02,896 --> 00:01:03,675
+Running them is not.
+
+17
+00:01:03,675 --> 00:01:08,000
+Next we make the cost picture concrete — where the money actually goes, and the handful of levers that move it.
+

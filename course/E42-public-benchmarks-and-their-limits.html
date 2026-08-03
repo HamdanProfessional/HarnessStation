@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E42 · Public benchmarks, and their limits</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Time to talk about Benchmarks — the leaderboard scores you have probably seen elsewhere, and why the app hands them to you for free but does not want you stopping there.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 42 · Module 11</p>
+      <h1>Public benchmarks, and their limits</h1>
+      <p class="lead">Free scores worth having — and not worth trusting alone.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="SWITCH TO APP: Library › Benchmarks. Sort the table by a couple of columns."
+      data-narration="Open Library, Benchmarks. It is a table of public leaderboard scores — coding, reasoning, general knowledge — pulled in for every model the app knows about, so you can sort and compare without leaving the app.">
+      <p class="eyebrow">Library › Benchmarks</p>
+      <h2>Leaderboard scores, without leaving the app</h2>
+      <ul>
+        <li>Coding, reasoning, and general-knowledge scores, per model</li>
+        <li>Sortable table — no setup, nothing to configure</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="This is the one thing the app fetches for you instead of routing through your own provider key. A small gateway serves the scores; it needs no key of yours, and it carries no data about you or your machine — just public numbers matched against the model list.">
+      <p class="eyebrow">Why this one is different</p>
+      <h2>The only fetch that is not routed through your key</h2>
+      <div class="two-col">
+        <div class="card">
+          <h3>No key needed</h3>
+          <p>The gateway serves public scores — nothing of yours to send it.</p>
+        </div>
+        <div class="card">
+          <h3>No data about you</h3>
+          <p>It carries no record of who asked or what for.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Here is the catch. These test questions are, at this point, plastered across the internet. Training data for newer models likely includes material that looks a lot like the benchmark itself — so a high score partly reflects memorization, not raw capability.">
+      <p class="eyebrow">The limitation</p>
+      <h2>Contaminated by the training data itself</h2>
+      <ul>
+        <li class="warn">Benchmark questions are widely public — models may have seen them in training</li>
+        <li>A top score can mean memorization as much as skill</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Which makes a benchmark a weak proxy for your actual task. A model that tops a coding leaderboard can still fumble the exact tool-calling pattern your workflow depends on. Use benchmarks to narrow the field — three or four candidates — never to make the final call.">
+      <p class="eyebrow">A weak proxy for your task</p>
+      <h2>Shortlist with it — do not decide with it</h2>
+      <ul>
+        <li class="ok">Good for narrowing a long model list to a shortlist</li>
+        <li class="no">Bad for predicting how it performs on your specific job</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="So the rule: shortlist with Benchmarks, then test with Evals — your own test cases, on your own task. That is next episode, and it is the step that actually tells you which model wins for you.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Shortlist, then test on your own task</h2>
+      <p class="pill warn">Public benchmark ≠ your task</p>
+      <p class="lead" style="margin-top:28px">Shortlist here, then confirm with your own eval set next.</p>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="So how do you build a test that actually reflects your work? Next episode we build a real eval set — a handful of test cases with a right answer, run straight against any model.">
+      <p class="eyebrow">Up next</p>
+      <h1>E43 · Building your<br/>own eval set</h1>
+      <p class="lead">Test cases that reflect your actual task.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

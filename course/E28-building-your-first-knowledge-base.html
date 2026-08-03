@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E28 · Building your first knowledge base</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Module 9 is about knowledge — giving the model real documents to draw on instead of guessing. In this one we build our first knowledge base and attach it to a chat.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 28 · Module 9</p>
+      <h1>Your first knowledge base</h1>
+      <p class="lead">Index real documents for grounded answers.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="SWITCH TO APP: Settings › Providers › Embeddings — pick a model before importing anything."
+      data-narration="Before you add a single document, pick an embedding model in Settings, Providers, Embeddings. This choice matters more than it looks — it decides how every document gets indexed, and you'll see why shortly.">
+      <p class="eyebrow">Set this first</p>
+      <h2>Settings › Providers › Embeddings</h2>
+      <p class="lead">Choose the embedding model <b>before</b> you import documents.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="Two real options. Local, with Ollama's nomic-embed-text — free, and your documents never leave the machine. Cloud, with text-embedding-3-small — cheap per document, but every file you index gets uploaded to the provider to be embedded. Pick based on how sensitive the documents are.">
+      <p class="eyebrow">Local vs cloud</p>
+      <h2>Two real options</h2>
+      <div class="two-col">
+        <div class="card">
+          <h3>Local — nomic-embed-text</h3>
+          <p>Runs through Ollama. Free, and fully private — nothing leaves the machine.</p>
+        </div>
+        <div class="card">
+          <h3>Cloud — text-embedding-3-small</h3>
+          <p>Cheap per document, but every file is uploaded to the provider to be embedded.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: Automation › Knowledge › New knowledge base. Name it, then add a few PDFs and Markdown files."
+      data-narration="Now the base itself. Automation, Knowledge, New knowledge base — give it a name, then add a handful of PDFs and Markdown files. The app chunks and embeds them in the background using the model you just picked.">
+      <p class="eyebrow">Build it</p>
+      <h2>Automation › Knowledge › New</h2>
+      <pre class="term"><span class="a">add</span>  a few PDFs + Markdown files
+<span class="c"># chunked and embedded automatically</span></pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="APP: attach the knowledge base to a chat, then ask a question answered only in one of the documents."
+      data-narration="Attach the base to a chat and ask a question that's only answered inside one of your documents. No explicit search instruction needed — retrieval happens automatically before the model even starts composing a reply, and the answer comes back grounded in your text.">
+      <p class="eyebrow">Use it</p>
+      <h2>Attach to a chat, just ask</h2>
+      <ul>
+        <li class="ok">Retrieval runs automatically — no “search” instruction needed</li>
+        <li>The answer is grounded in your own documents</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="The gotcha: changing the embedding model invalidates every index built with the old one. And re-indexing is not incremental — it redoes the whole base from scratch. Pick your embedding model deliberately before you import a large collection, because switching later is expensive.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Changing embeddings invalidates the index</h2>
+      <p class="lead">Re-indexing is <b>not incremental</b> — it rebuilds the whole base.
+        Choose the model before a big import.</p>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="You've seen retrieval work. Next we open the hood — chunking, embedding, and nearest-neighbor search — and cover exactly when this approach does and doesn't work.">
+      <p class="eyebrow">Up next</p>
+      <h1>E29 · How retrieval<br/>really works</h1>
+      <p class="lead">Chunk, embed, search — and its limits.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

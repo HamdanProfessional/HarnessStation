@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E72 · Adding a new built-in tool the right way</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="E23 and E24 had you write a tool as a user, saved into your own settings. This episode is the other path — adding a tool that ships with the app itself, the way a real pull request would.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track D · For developers · Episode 72 · Module 19</p>
+      <h1>Adding a new built-in tool the right way</h1>
+      <p class="lead">A code tool, not a user tool.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="Two genuinely different things share the word tool. E23's JavaScript tool lives entirely in your settings.json — the model never sees your source, and it's yours alone. A built-in tool group lives in the repo, ships to every install, and is what E22's Files, Terminal, Web and Browser groups actually are under the hood.">
+      <p class="eyebrow">Two different things</p>
+      <h2>User tool vs. built-in tool group</h2>
+      <ul>
+        <li>E23/E24 — saved in your settings.json, yours alone</li>
+        <li class="ok">Built-in — lives in the repo, ships to every install, is a real PR</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="SWITCH TO EDITOR: open src/lib/tools.ts — scroll to BUILTIN_TOOLSETS at the top, then down to a tool definition with description and parameters."
+      data-narration="tools.ts is where both live. BUILTIN_TOOLSETS at the top groups tool ids into the named sets you saw in the tools panel — Browser, Research, Coding agent, Self-service, Swarm. Further down, each individual tool has a name, a description — the exact text the model reads to decide when to use it, same rule as E23 — and a JSON Schema for its parameters.">
+      <p class="eyebrow">tools.ts</p>
+      <h2>Groups at the top, definitions below</h2>
+      <pre class="term">export const BUILTIN_TOOLSETS: ToolSet[] = [
+  { id: "builtin-research", name: "Research",
+    toolIds: ["web_search", "fetch_page", "wikipedia", …] },
+  …
+];
+      <span class="c">// further down: name, description, parameters — same rule as E23</span></pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="SWITCH TO EDITOR: open src/lib/toolDiscovery.ts — show the RISKY set and serverNeedsAuth."
+      data-narration="toolDiscovery.ts is the other half — it's what powers the self-service tooling group from E25, letting the model turn a tool on for itself mid-conversation. A RISKY set flags anything destructive, like run_terminal, so those always prompt for approval instead of silently switching on.">
+      <p class="eyebrow">toolDiscovery.ts</p>
+      <h2>How a tool gets found and self-enabled</h2>
+      <pre class="term">const RISKY = new Set(["run_terminal", "delete_path"]);
+      <span class="c">// destructive tools always ask before switching on</span></pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="14"
+      data-cue="EDITOR: add a new tool definition to tools.ts — e.g. word_count — with a name, a specific description, and a parameters schema; then find its implementation switch/dispatch and add a case for it."
+      data-narration="Add a minimal one live: word_count, taking a single text string parameter and returning a count. Write the description the way E23 taught — specific about when to use it, not just what it does. Then find where tool names are dispatched to their actual implementation and add the matching case; a definition with no implementation is a tool the model can call that does nothing.">
+      <p class="eyebrow">Add one, minimal</p>
+      <h2>word_count — definition + implementation</h2>
+      <pre class="term">{
+  name: "word_count",
+  description: "Counts words in a block of text. Use when
+    asked for a word or paragraph count.",
+  parameters: { type: "object",
+    properties: { text: { type: "string" } }, required: ["text"] },
+}
+      <span class="c">// + a matching case in the dispatch switch</span></pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="EDITOR: add \"word_count\" into an existing entry in BUILTIN_TOOLSETS, e.g. builtin-research's toolIds array."
+      data-narration="Wire it into a group by adding its id to a toolIds array in BUILTIN_TOOLSETS — a tool with a definition but no group membership never appears in the tools panel at all, because the panel lists groups, not individual tool ids.">
+      <p class="eyebrow">Wire it into a group</p>
+      <h2>toolIds needs the new id too</h2>
+      <pre class="term">toolIds: ["web_search", "fetch_page", "wikipedia", "word_count"]</pre>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="SWITCH TO APP: open a chat's tools panel, find the group, confirm word_count is listed and toggled with the rest of the group."
+      data-narration="Reload the app, open a chat's tools panel, and there it is — inside its group, same as Files or Web, indistinguishable from a tool that's been there since day one. That's the whole test: does it show up exactly where a built-in belongs.">
+      <p class="eyebrow">Verify</p>
+      <h2>It shows up in the per-chat tools panel</h2>
+      <p class="lead">Indistinguishable from a tool that shipped on day one.</p>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide title"
+      data-seconds="7"
+      data-narration="Next, the same contribution exercise on the UI layer — extending an existing small panel with a real feature, wired properly into the store from E66.">
+      <p class="eyebrow">Up next</p>
+      <h1>E73 · Extending<br/>a view</h1>
+      <p class="lead">A small, real feature added to an existing panel.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

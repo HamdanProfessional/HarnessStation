@@ -1,0 +1,82 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:07.000
+This one's genuinely advanced and code-literate: the actual llama-server flags the app can pass, what each does, and why they're safe to leave alone if you never touch this screen.
+
+2
+00:00:07.000 --> 00:00:08.369
+Every flag on this screen is opt-in.
+
+3
+00:00:08.369 --> 00:00:12.551
+Leave a field unset and nothing is emitted for it on the command line — the server just uses its own defaults.
+
+4
+00:00:12.551 --> 00:00:17.000
+That single rule is what lets an older llama-server build launch cleanly even with a newer app version pointed at it.
+
+5
+00:00:17.000 --> 00:00:21.592
+Threads sets CPU thread count — best set near your physical core count, not your logical thread count.
+
+6
+00:00:21.592 --> 00:00:24.833
+Flash attention is close to a free win almost everywhere, so turn it on.
+
+7
+00:00:24.833 --> 00:00:31.000
+Mlock pins the model in RAM so it can't be swapped to disk; no-mmap loads it fully into RAM up front instead of memory-mapping it lazily.
+
+8
+00:00:31.000 --> 00:00:33.256
+The one worth knowing by heart: MoE offload.
+
+9
+00:00:33.256 --> 00:00:39.256
+Cpu-moe pushes every expert layer of a mixture-of-experts model onto system RAM; n-cpu-moe N pushes just the first N.
+
+10
+00:00:39.256 --> 00:00:47.000
+Attention stays on the GPU, the experts sit in RAM — that's the trick for running a big MoE model on a small GPU that could never hold the whole thing.
+
+11
+00:00:47.000 --> 00:00:47.303
+Llama.
+
+12
+00:00:47.303 --> 00:00:49.775
+cpp auto-fits itself to your hardware by default.
+
+13
+00:00:49.775 --> 00:00:58.000
+Fit off turns that auto-fit off entirely if you want manual control, and fit-target sets the memory margin in megabytes it leaves free per GPU when auto-fit is on.
+
+14
+00:00:58.000 --> 00:01:00.521
+This isn't just a claim — the launch_tests module in local.
+
+15
+00:01:00.521 --> 00:01:06.248
+rs unit-tests exactly this: an empty options struct produces an empty argument list, and each flag appears only when its field is set.
+
+16
+00:01:06.248 --> 00:01:08.000
+That's the opt-in design, proven in code.
+
+17
+00:01:08.000 --> 00:01:11.861
+The gotcha: these flags only take effect on an engine new enough to know them.
+
+18
+00:01:11.861 --> 00:01:18.000
+If you set a flag and see no difference, the first thing to check isn't your settings — it's the llama-server build version.
+
+19
+00:01:18.000 --> 00:01:19.125
+Local models covered.
+
+20
+00:01:19.125 --> 00:01:24.000
+Next we leave the machine entirely and connect two of your own devices together — the mesh.
+

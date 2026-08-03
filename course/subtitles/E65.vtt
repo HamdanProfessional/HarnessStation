@@ -1,0 +1,122 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:01.396
+Track D is for developers.
+
+2
+00:00:01.396 --> 00:00:04.349
+We're switching from using the app to reading its code.
+
+3
+00:00:04.349 --> 00:00:08.000
+First, map the repository so nothing that follows feels like a maze.
+
+4
+00:00:08.000 --> 00:00:09.080
+Seven top-level folders.
+
+5
+00:00:09.080 --> 00:00:10.251
+src is the React frontend.
+
+6
+00:00:10.251 --> 00:00:11.601
+src-tauri is the Rust backend.
+
+7
+00:00:11.601 --> 00:00:13.132
+extension is the Chrome MV3 build.
+
+8
+00:00:13.132 --> 00:00:15.158
+server is an optional benchmark-data gateway.
+
+9
+00:00:15.158 --> 00:00:16.463
+docs-site is the public docs.
+
+10
+00:00:16.463 --> 00:00:17.633
+docs is internal planning.
+
+11
+00:00:17.633 --> 00:00:18.804
+tests is the Vitest suite.
+
+12
+00:00:18.804 --> 00:00:22.000
+And web is the browser build and its shims — the seam behind Module 14.
+
+13
+00:00:22.000 --> 00:00:28.211
+Inside src slash components, the convention is one file per major view — ChatWindow, SettingsView, McpView, and so on.
+
+14
+00:00:28.211 --> 00:00:33.000
+If you're looking for where a screen lives, that folder is always the first place to check.
+
+15
+00:00:33.000 --> 00:00:35.507
+Inside src slash lib is where the actual logic lives.
+
+16
+00:00:35.507 --> 00:00:36.547
+State in store dot ts.
+
+17
+00:00:36.547 --> 00:00:38.108
+Provider clients under providers.
+
+18
+00:00:38.108 --> 00:00:38.723
+MCP handling.
+
+19
+00:00:38.723 --> 00:00:39.054
+Memory.
+
+20
+00:00:39.054 --> 00:00:40.236
+Tools and tool discovery.
+
+21
+00:00:40.236 --> 00:00:41.797
+Agents, workflows, and schedules.
+
+22
+00:00:41.797 --> 00:00:42.554
+The device mesh.
+
+23
+00:00:42.554 --> 00:00:45.061
+Voice — Kokoro, Piper, Whisper, and the system voice.
+
+24
+00:00:45.061 --> 00:00:46.243
+Cost and budget tracking.
+
+25
+00:00:46.243 --> 00:00:46.432
+RAG.
+
+26
+00:00:46.432 --> 00:00:47.000
+And storage.
+
+27
+00:00:47.000 --> 00:00:50.987
+Everything in src is React — the frontend you've been watching for sixty-four episodes.
+
+28
+00:00:50.987 --> 00:00:55.296
+src-tauri is the Rust half: audio, MCP, the browser bridge, mesh, the OS keychain, and speech.
+
+29
+00:00:55.296 --> 00:00:58.000
+The frontend calls into it, but never the other way around.
+
+30
+00:00:58.000 --> 00:01:05.000
+With the map in hand, next episode zooms into the single most important file in that lib folder — store dot ts — and how the whole app's state actually flows through it.
+

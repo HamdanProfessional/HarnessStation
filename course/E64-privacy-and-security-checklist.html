@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E64 · Privacy and security checklist before showing anyone</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="8"
+      data-narration="This closes out the advanced track — a single reference episode that pulls every privacy and security point made across the whole series into one checklist, before you show this to anyone else.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track C · Advanced · Episode 64 · Module 16</p>
+      <h1>Privacy and security checklist before showing anyone</h1>
+      <p class="lead">Every privacy point from the series, in one place.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Start with what leaves the machine at all — restated from episode twelve as one table. Local models and local embeddings never leave. A cloud model call sends your prompt and context to that provider. Nothing else phones home on its own.">
+      <p class="eyebrow">What leaves the machine (from E12)</p>
+      <h2>One table, restated</h2>
+      <pre class="term"><span class="a">local model / embeddings</span>   never leaves
+<span class="a">cloud model call</span>          prompt + context → provider
+<span class="a">everything else</span>          stays local by default</pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="Five things worth being careful with: terminal tool reach — how much of the filesystem it can touch. Browser session delegation — it can act inside your logged-in browser. Unattended schedules — running with nobody watching. The mesh's plaintext transport. And passive memory accumulation, quietly building up over time.">
+      <p class="eyebrow">Be careful with</p>
+      <h2>Five things that widen the blast radius</h2>
+      <ul>
+        <li>Terminal tool reach</li>
+        <li>Browser session delegation</li>
+        <li>Unattended schedules</li>
+        <li class="warn">The mesh's plaintext transport</li>
+        <li>Passive memory accumulation</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="14"
+      data-cue="APP: build a private-by-default config live — local model, local embeddings, Kokoro/Piper, Whisper, mesh off/LAN-only."
+      data-narration="Let's build private-by-default, live: a local model instead of cloud, local embeddings, Kokoro or Piper for speech instead of a cloud voice, Whisper for transcription, and the mesh either off entirely or restricted to LAN-only. Five switches, and nothing needs to leave the machine.">
+      <p class="eyebrow">Building private-by-default</p>
+      <h2>Five switches, nothing needs to leave</h2>
+      <ul>
+        <li>Local model + local embeddings</li>
+        <li>Kokoro / Piper for speech, Whisper for transcription</li>
+        <li class="ok">Mesh off, or LAN-only</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="After the fact, you can review exactly what an agent did: read the tool-call cards right in the chat, or grep the conversations folder under home dot harnessx for a tool name or a keyword. Nothing about an agent's actions is hidden from you.">
+      <p class="eyebrow">Reviewing after the fact</p>
+      <h2>Tool-call cards, or grep the logs</h2>
+      <pre class="term">grep -r "run_command" ~/.harnessx/conversations/</pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="Last point: sharing a conversation export is safe in one specific sense and risky in another. It contains everything the model read — never your keys, those stay in the credential store. So the risk isn't credential leakage, it's your codebase's contents. Read before you share.">
+      <p class="eyebrow">Sharing safely</p>
+      <h2>The risk is your code, not your keys</h2>
+      <ul>
+        <li class="ok">An export never contains your keys</li>
+        <li class="warn">It contains everything the model read — read before sharing</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="7"
+      data-narration="That's the advanced track, complete. Track D starts now, for anyone who wants to open the codebase itself — beginning with a tour of the repository.">
+      <p class="eyebrow">Up next</p>
+      <h1>E65 · Repository tour</h1>
+      <p class="lead">Track D begins — mapping the repo before touching code.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

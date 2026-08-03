@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E74 · Release process and where the project is headed</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="The last episode. We close the developer track, and the whole series, by looking at the project's own planning documents — where it started, what actually shipped, and what's genuinely still open.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track D · For developers · Episode 74 · Module 19</p>
+      <h1>Release process and where the project is headed</h1>
+      <p class="lead">Then vs. now, and what's genuinely still open.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="14"
+      data-cue="SWITCH TO EDITOR: open docs/PLAN.md — the phase 1/2/3 outline."
+      data-narration="docs/PLAN.md is the original master plan — phase 1, a very simple chat app over any endpoint, deliberately excluding local hosting, MCP, attachments, RAG, projects, multi-window. Phase 2 was LM Studio-style local model hosting. Phase 3 was server mode and Claude Desktop-style extras. Reading it now, next to the app you've spent seventy-three episodes in, is the point of this slide.">
+      <p class="eyebrow">Then</p>
+      <h2>docs/PLAN.md — phases 1, 2, 3</h2>
+      <pre class="term">Phase 1  chat UI, providers, system instructions
+Phase 2  local model hosting (LM Studio-style)
+Phase 3  server mode, MCP, attachments
+      <span class="c">explicitly deferred: projects, RAG, artifacts…</span></pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="Now, versus then. Everything explicitly deferred in phase 1 — projects, knowledge RAG, MCP — shipped anyway, along with a great deal the original plan never mentioned at all: voice and 3D avatars, the device mesh, swarms, the entire browser build with its in-tab Linux VM, evals, benchmarks. The plan was a starting point, not a ceiling.">
+      <p class="eyebrow">Now</p>
+      <h2>Everything deferred, shipped anyway</h2>
+      <ul class="ok">
+        <li>Projects, knowledge/RAG, MCP — all shipped, all deferred in phase 1</li>
+        <li>Never planned at all: voice, avatars, mesh, swarms, the browser build, evals</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="SWITCH TO EDITOR: open docs/roadmap.md — scroll past the long Shipped table to Tier 1."
+      data-narration="docs/roadmap.md tracks what's current. Its Shipped table is long — nearly everything in this series is on it. What's left sits in two tiers: Tier 1 is release readiness, needing secrets rather than code; Tier 2 is real feature work, like better avatar lip-sync and semantic search across all chat history.">
+      <p class="eyebrow">roadmap.md</p>
+      <h2>A long Shipped table, a short open list</h2>
+      <pre class="term">Tier 1  release readiness (needs secrets, not code)
+Tier 2  avatar lip-sync, JSX artifacts,
+        cross-chat semantic search</pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="14"
+      data-cue="SWITCH TO EDITOR: open docs/release.md — point at the code-signing section."
+      data-narration="And the single most-referenced open item across the whole doc set, in both roadmap.md and release.md, is code-signing. The installer isn't signed with a real certificate yet — that's exactly why E02 had you click through Windows SmartScreen. It's not a technical gap; the pipeline is wired and waiting, it's purely a procurement step: buy a certificate, set two repository secrets, and every future install stops tripping SmartScreen.">
+      <p class="eyebrow">The most-referenced open item</p>
+      <h2>Code-signing</h2>
+      <ul class="warn">
+        <li>Not a technical gap — the CI pipeline is already wired for it</li>
+        <li>A procurement step: buy a cert, set WINDOWS_CERTIFICATE + its password</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Two companion documents are worth reading on your own time if you want to understand why the app's shape is what it is: lm-studio-plan.md, on how local model hosting actually works under the hood, and claude-desktop-plan.md, on the instruction-layering design from E11 and E27 and where it was borrowed from.">
+      <p class="eyebrow">Background reading</p>
+      <h2>Two companion planning docs</h2>
+      <pre class="term">docs/lm-studio-plan.md       <span class="c">local model hosting, explained</span>
+docs/claude-desktop-plan.md  <span class="c">where the instruction layers came from</span></pre>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="If you're going to contribute, the pattern across every developer episode in this module holds: read the existing tests before writing code, keep side effects thin and pure logic tested — E71 — and land big features as a sequence of small, independently useful commits — E69. That's genuinely how this codebase grew."
+      >
+      <p class="eyebrow">If you contribute</p>
+      <h2>The pattern that got the codebase here</h2>
+      <ul>
+        <li>Tests before code; pure logic tested, side effects thin — E71</li>
+        <li>Big features as small, independently useful commits — E69</li>
+      </ul>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide title"
+      data-seconds="10"
+      data-narration="The end. Nineteen modules, seventy-four episodes, from installing on Windows through booting Linux in a browser tab to reading the code itself — thank you for watching the whole way. Go build something with it."
+      >
+      <p class="eyebrow">The end</p>
+      <h1>Thank you for<br/>watching</h1>
+      <p class="lead">19 modules, 74 episodes. Go build something with it.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

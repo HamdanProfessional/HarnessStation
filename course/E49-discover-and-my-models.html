@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E49 · Discover and My Models — downloading a GGUF</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="You know the size to look for. Now let's actually get a model — the app's own download path, separate from Ollama or LM Studio, straight from Library, Discover."
+      >
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track C · Advanced · Episode 49 · Module 12</p>
+      <h1>Discover and My Models</h1>
+      <p class="lead">Downloading a GGUF, straight from the app.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="SWITCH TO APP: Library › Discover. Search by name, then paste a Hugging Face resolve URL."
+      data-narration="Library, Discover. Search a GGUF model by name, or skip search entirely and paste a Hugging Face URL directly — the resolve link ending in the .gguf filename. Either way lands on the same download step."
+      >
+      <p class="eyebrow">Library › Discover</p>
+      <h2>Search by name, or paste a URL</h2>
+      <pre class="term"><span class="c">url</span>  huggingface.co/…/resolve/main/<span class="g">model.Q4_K_M.gguf</span></pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="APP: start a download, show the progress bar to completion."
+      data-narration="Start the download and watch the progress bar. It lands under the harnessx models folder in your home directory, ready to load — no separate model manager, no Ollama required."
+      >
+      <p class="eyebrow">Download</p>
+      <h2>Progress bar → your models folder</h2>
+      <p class="lead">Lands under <code>~/.harnessx/models</code>, ready to load.</p>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: open My Models, point out the “will it fit” indicator on a couple of entries."
+      data-narration="My Models lists everything downloaded, lets you set which one loads by default, and shows a “will it fit” indicator tied to the RAM and VRAM the app actually detected on this machine — a straight answer before you commit to a load."
+      >
+      <p class="eyebrow">My Models</p>
+      <h2>Load defaults, and “will it fit”</h2>
+      <ul>
+        <li>The local-models list, with a default to load on startup</li>
+        <li class="ok">“Will it fit” — tied to detected RAM/VRAM, before you load it</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="A little of the Rust underneath, for credibility. hw_info detects total RAM, AVX2 support, and an NVIDIA GPU via nvidia-smi — that is what powers the fit check. Downloads stream to a temporary .part file and only rename to the final name on success. And archives — zip and tar.gz — are extracted in-process, with path-traversal protection so a malicious archive can't write outside the models folder."
+      >
+      <p class="eyebrow">The Rust underneath</p>
+      <h2>hw_info, streamed downloads, safe extraction</h2>
+      <ul>
+        <li><code>hw_info</code> detects RAM, AVX2, and NVIDIA GPU via <code>nvidia-smi</code></li>
+        <li>Downloads stream to <code>.part</code>, renamed only on success</li>
+        <li class="ok">Archives extracted in-process with path-traversal protection</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="9"
+      data-narration="Gotcha: a green “will it fit” only covers loading the model into memory — it says nothing about tool-calling reliability. Come back to E48's README test before trusting a small model with real agent work."
+      >
+      <p class="eyebrow">Gotcha</p>
+      <h2>“Will it fit” ≠ “will it work well”</h2>
+      <p class="lead">It checks memory, not tool-calling reliability —
+        re-run the E48 README test before trusting it.</p>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Downloaded is not the same as running. Next we load this model into the app's own supervised server and tune context length and GPU offload."
+      >
+      <p class="eyebrow">Up next</p>
+      <h1>E50 · Loading and<br/>running a local model</h1>
+      <p class="lead">Context length and GPU offload, live.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

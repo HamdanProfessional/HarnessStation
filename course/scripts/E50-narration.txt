@@ -1,0 +1,20 @@
+# Slide 1
+Track C starts here — local models running on your own hardware, under the app's supervision. This episode: load a downloaded model, tune the basics, and use it from chat exactly like a cloud provider.
+
+# Slide 2
+Once a model is downloaded it shows up in My Models. From there it's one button: Load. The app spawns a supervised llama-server for it in the background, and Eject shuts that server down cleanly when you're done.
+
+# Slide 3
+Two controls matter before you load. Context length sets how much conversation the model can hold at once — bigger costs more memory. GPU offload layers decides how many of the model's layers run on your GPU versus the CPU; more offloaded layers usually means faster generation, up to what your VRAM can hold.
+
+# Slide 4
+As you adjust those two controls, an estimated memory readout updates live — so you can see you're about to overshoot your VRAM before you hit Load, not after it fails.
+
+# Slide 5
+Here's the payoff. Open the chat's provider picker and there's now a Local entry, right alongside your cloud providers. Pick it, and you're talking to the model you just loaded — through the exact same OpenAI-compatible client the app uses for every cloud provider.
+
+# Slide 6
+That's the whole point of the design: local isn't a special code path bolted on the side. It's just another endpoint behind the same interface every other provider uses, which is why switching between local and cloud mid-project is completely seamless.
+
+# Slide 7
+Loading and running is the easy part. Next we go under the hood, into the actual llama-server flags this app can pass — the advanced tuning for squeezing real performance out of specific hardware.

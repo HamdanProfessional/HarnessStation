@@ -1,0 +1,70 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:03.895
+Module 11 starts with schedules — running an agent or workflow unattended.
+
+2
+00:00:03.895 --> 00:00:07.000
+The guardrails come first, before the first run, not after.
+
+3
+00:00:07.000 --> 00:00:08.958
+Go to Automation, Schedules, New schedule.
+
+4
+00:00:08.958 --> 00:00:18.000
+You pick what to run — an agent or a workflow — how often, either an interval preset or a cron expression, and where the results land: a new chat, appended to an existing one, or a notification.
+
+5
+00:00:18.000 --> 00:00:21.558
+Before the first scheduled run: set a spend cap in Settings, Usage.
+
+6
+00:00:21.558 --> 00:00:30.000
+This is a hard prerequisite, not a nice-to-have — an unattended job with no cap can run far longer, and cost far more, than anyone would approve in the moment.
+
+7
+00:00:30.000 --> 00:00:35.681
+Also turn on “keep running in the tray” in Settings, General, so schedules fire even when the window's closed.
+
+8
+00:00:35.681 --> 00:00:39.967
+One catch: a missed run — say the machine was asleep — does not fire retroactively.
+
+9
+00:00:39.967 --> 00:00:41.000
+It's simply skipped.
+
+10
+00:00:41.000 --> 00:00:42.719
+The worked example: a morning briefing.
+
+11
+00:00:42.719 --> 00:00:46.508
+An agent runs daily, checks a few sources, and posts a short digest as a notification.
+
+12
+00:00:46.508 --> 00:00:54.000
+The instruction that keeps it worth opening after two weeks: “if nothing needs my attention, say so plainly” — so a quiet day produces one honest line instead of padding.
+
+13
+00:00:54.000 --> 00:00:57.441
+The gotcha: good schedule candidates report — they draft, summarize, and tell you.
+
+14
+00:00:57.441 --> 00:01:02.392
+Poor candidates act unreviewed — sending mail, posting publicly, committing code — with nobody watching in the moment.
+
+15
+00:01:02.392 --> 00:01:06.000
+Draft-and-tell beats do-it-automatically for anything that isn't trivially reversible.
+
+16
+00:01:06.000 --> 00:01:07.429
+Presets don't cover every cadence.
+
+17
+00:01:07.429 --> 00:01:11.000
+Next, a quick reference for cron expressions when the schedule you need is irregular.
+

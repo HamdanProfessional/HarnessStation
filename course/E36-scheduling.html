@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E36 · Scheduling an agent or workflow</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Module 11 starts with schedules — running an agent or workflow unattended. The guardrails come first, before the first run, not after.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 36 · Module 11</p>
+      <h1>Scheduling an agent<br/>or workflow</h1>
+      <p class="lead">Guardrails first, then let it run unattended.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="SWITCH TO APP: Automation › Schedules › New schedule. Show what-to-run, interval presets vs cron, and result destination."
+      data-narration="Go to Automation, Schedules, New schedule. You pick what to run — an agent or a workflow — how often, either an interval preset or a cron expression, and where the results land: a new chat, appended to an existing one, or a notification.">
+      <p class="eyebrow">Where it lives</p>
+      <h2>Automation › Schedules › New</h2>
+      <ul>
+        <li>What to run — an agent or a workflow</li>
+        <li>Interval presets, or a cron expression</li>
+        <li>Where results land — new chat, append, or notification</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="APP: Settings › Usage — set a spend cap before enabling the schedule."
+      data-narration="Before the first scheduled run: set a spend cap in Settings, Usage. This is a hard prerequisite, not a nice-to-have — an unattended job with no cap can run far longer, and cost far more, than anyone would approve in the moment.">
+      <p class="eyebrow">Hard prerequisite</p>
+      <h2>Settings › Usage — spend cap first</h2>
+      <ul>
+        <li class="warn">Set the cap <b>before</b> the first scheduled run, not after</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: Settings › General — enable keep running in the tray."
+      data-narration="Also turn on “keep running in the tray” in Settings, General, so schedules fire even when the window's closed. One catch: a missed run — say the machine was asleep — does not fire retroactively. It's simply skipped.">
+      <p class="eyebrow">Settings › General</p>
+      <h2>Keep running in the tray</h2>
+      <ul>
+        <li>Lets schedules fire with the window closed</li>
+        <li class="warn">A missed run does <b>not</b> fire retroactively — it's just skipped</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="APP: build the morning briefing schedule — a daily agent run with the say-nothing-needed instruction."
+      data-narration="The worked example: a morning briefing. An agent runs daily, checks a few sources, and posts a short digest as a notification. The instruction that keeps it worth opening after two weeks: “if nothing needs my attention, say so plainly” — so a quiet day produces one honest line instead of padding.">
+      <p class="eyebrow">Worked example</p>
+      <h2>The morning briefing</h2>
+      <pre class="term"><span class="a">instruction</span>  if nothing needs attention,
+           say plainly “nothing needs
+           you today”</pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="The gotcha: good schedule candidates report — they draft, summarize, and tell you. Poor candidates act unreviewed — sending mail, posting publicly, committing code — with nobody watching in the moment. Draft-and-tell beats do-it-automatically for anything that isn't trivially reversible.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Report, don't act unreviewed</h2>
+      <ul>
+        <li class="ok">Good candidates <b>report</b> — draft, summarize, notify</li>
+        <li class="no">Poor candidates <b>act</b> — send mail, post, commit — with nobody watching</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="5"
+      data-narration="Presets don't cover every cadence. Next, a quick reference for cron expressions when the schedule you need is irregular.">
+      <p class="eyebrow">Up next</p>
+      <h1>E37 · Cron expressions<br/>for irregular schedules</h1>
+      <p class="lead">A quick reference.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

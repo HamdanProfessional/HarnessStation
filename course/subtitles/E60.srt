@@ -1,0 +1,68 @@
+1
+00:00:00,000 --> 00:00:01,608
+Rewind steps back through whole turns.
+
+2
+00:00:01,608 --> 00:00:08,000
+This episode is finer-grained: deleting a single reasoning block, a single tool call, or a single tool response, without touching the rest of the chat.
+
+3
+00:00:08,000 --> 00:00:09,762
+Three controls, all triggered by hovering.
+
+4
+00:00:09,762 --> 00:00:12,741
+Hover a reasoning block and you get “Delete this thinking from context.
+
+5
+00:00:12,741 --> 00:00:15,594
+” Hover a tool call and you get “Delete this tool call from context.
+
+6
+00:00:15,594 --> 00:00:18,657
+” Hover its response and you get “Delete this tool response from context.
+
+7
+00:00:18,657 --> 00:00:20,000
+” Each targets exactly one item.
+
+8
+00:00:20,000 --> 00:00:23,944
+Why this exists: a long tool-using session accumulates noisy or flat-out wrong intermediate steps.
+
+9
+00:00:23,944 --> 00:00:29,941
+That's poisoning the model's context — it keeps referring back to a bad grep or a stale file read — but the thread as a whole is still worth keeping.
+
+10
+00:00:29,941 --> 00:00:33,000
+Full compaction is too blunt, and starting over throws away everything good.
+
+11
+00:00:33,000 --> 00:00:35,418
+So surgical deletion beats the two blunt alternatives.
+
+12
+00:00:35,418 --> 00:00:45,000
+Instead of starting over and losing the whole thread, or running a full compaction that summarizes everything, you remove exactly the items that are wrong or irrelevant, and leave the rest of the context untouched.
+
+13
+00:00:45,000 --> 00:00:46,782
+And the direct payoff: fewer tokens.
+
+14
+00:00:46,782 --> 00:00:55,000
+Every deleted reasoning block, tool call, or tool response is context the model no longer has to read on the next turn — a smaller, cleaner prompt, and a cheaper one.
+
+15
+00:00:55,000 --> 00:00:59,013
+Gotcha: these controls are disabled while a reply is streaming.
+
+16
+00:00:59,013 --> 00:01:05,000
+Deletion only applies to settled history — you can't reach in and edit context mid-generation.
+
+17
+00:01:05,000 --> 00:01:11,000
+Module 16 turns to keeping the app itself current — how updates work, and why a failed signature check gets refused rather than quietly applied.
+

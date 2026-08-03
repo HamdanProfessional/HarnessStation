@@ -1,0 +1,74 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:02.381
+Module 16 is about deployment and staying current.
+
+2
+00:00:02.381 --> 00:00:07.000
+First: how the app updates itself, and how it proves an update is trustworthy before applying it.
+
+3
+00:00:07.000 --> 00:00:12.182
+The app checks for updates on startup, automatically, no action needed.
+
+4
+00:00:12.182 --> 00:00:17.000
+If one's found you'll see it — otherwise it stays out of your way.
+
+5
+00:00:17.000 --> 00:00:21.809
+Want to check right now instead of waiting for the next launch?
+
+6
+00:00:21.809 --> 00:00:25.321
+Settings, Data and updates, Check for updates.
+
+7
+00:00:25.321 --> 00:00:27.000
+Same check, on demand.
+
+8
+00:00:27.000 --> 00:00:28.925
+What matters most here: updates are signed.
+
+9
+00:00:28.925 --> 00:00:31.612
+Before anything is applied, the app verifies that signature.
+
+10
+00:00:31.612 --> 00:00:38.015
+If the check fails — a corrupted download, a tampered file, anything that doesn't match — the update is refused outright, not silently applied.
+
+11
+00:00:38.015 --> 00:00:39.000
+Fail closed, not open.
+
+12
+00:00:39.000 --> 00:00:40.000
+Why bother signing at all?
+
+13
+00:00:40.000 --> 00:00:44.077
+Because an update replaces the app's own binary — the one thing on your machine that's implicitly trusted.
+
+14
+00:00:44.077 --> 00:00:46.423
+A silent bad update would be the worst possible failure mode.
+
+15
+00:00:46.423 --> 00:00:49.962
+Signing turns “trust the download” into “trust the download only if it proves who it's from.
+
+16
+00:00:49.962 --> 00:00:50.000
+”
+
+17
+00:00:50.000 --> 00:00:51.234
+Updates keep the app current.
+
+18
+00:00:51.234 --> 00:00:56.000
+Next: what happens when you're done with it — the uninstall path, and exactly what does and doesn't get removed.
+

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E63 · Backing up and moving to a new machine</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Last episode showed where your data lives. This one is the real walkthrough: compress it, move it, restore it on a new machine — and one gotcha that trips people up.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track C · Advanced · Episode 63 · Module 16</p>
+      <h1>Backing up and moving to a new machine</h1>
+      <p class="lead">Compress, move, restore — and re-pair when you're there.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="TERMINAL: tar -czf harnessx-backup.tar.gz ~/.harnessx  (or Compress-Archive on Windows)."
+      data-narration="Step one, compress the folder. On Linux, tar dot g z. On Windows, Compress-Archive. Either way you end up with one archive file that holds your whole setup.">
+      <p class="eyebrow">Step one — compress</p>
+      <h2>tar.gz on Linux, Compress-Archive on Windows</h2>
+      <pre class="term"><span class="a">Linux</span>    tar -czf backup.tar.gz ~/.harnessx
+<span class="a">Windows</span>  Compress-Archive ~/.harnessx backup.zip</pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="Step two, move that archive to the new machine and extract it into place. Then re-enter your keys by hand — they live only in the OS credential store, not inside the folder, so the archive genuinely doesn't carry them. That's expected, not a bug.">
+      <p class="eyebrow">Step two — restore</p>
+      <h2>Extract, then re-enter your keys</h2>
+      <ul>
+        <li>Move the archive, extract it into place</li>
+        <li class="warn">Keys live in the <b>OS credential store</b> only — re-enter them by hand</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Worth saying plainly: this is the whole app in one folder. There's no separate database server, no cloud account holding your history hostage — one archive of one directory is a complete, working backup.">
+      <p class="eyebrow">Why it's this simple</p>
+      <h2>One folder is the whole app</h2>
+      <p class="lead">No database server, no cloud account holding your history —
+        <b>one folder</b> is a complete backup.</p>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="14"
+      data-narration="The gotcha: device identity is per-machine. A copied install keeps the old device's mesh identity, and if both machines happen to run at once, the mesh gets confused about which one is actually which. The fix is simple — re-pair from the new machine, and give it its own identity.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Device identity doesn't travel with the copy</h2>
+      <p class="lead">A copied install keeps the <b>old device id</b> — running both at once
+        confuses the mesh. Re-pair from the new machine.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="That's the full deployment picture. To close out the advanced track, next episode pulls every privacy and security point from the whole series into one reference checklist.">
+      <p class="eyebrow">Up next</p>
+      <h1>E64 · Privacy and security<br/>checklist before showing anyone</h1>
+      <p class="lead">Every privacy point from the series, in one place.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

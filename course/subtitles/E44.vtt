@@ -1,0 +1,70 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:06.100
+One reference episode covering every settings panel, so every later video can just say “see E44” instead of re-explaining.
+
+2
+00:00:06.100 --> 00:00:07.000
+Worth bookmarking.
+
+3
+00:00:07.000 --> 00:00:12.652
+Eight panels total: General, Providers, Media models, Voice, Memory, Devices, Usage, and Data & updates.
+
+4
+00:00:12.652 --> 00:00:17.000
+We have touched most of these already — this is the map that ties them together.
+
+5
+00:00:17.000 --> 00:00:20.636
+The search box at the top matches on what a setting does, not what it is called.
+
+6
+00:00:20.636 --> 00:00:26.000
+Type “interrupt” and it finds barge-in, because that is the behavior, even though the word never appears in its label.
+
+7
+00:00:26.000 --> 00:00:28.166
+Every panel uses the same draft-and-save model.
+
+8
+00:00:28.166 --> 00:00:30.654
+Changes show an unsaved marker until you press Ctrl+S.
+
+9
+00:00:30.654 --> 00:00:36.000
+Navigate away with unsaved changes and it confirms before discarding them — nothing is written until you tell it to.
+
+10
+00:00:36.000 --> 00:00:45.181
+If you only change a handful of settings, make it these: spend caps, the voice engine, speech rewrite, auto-compact, the embedding model, background mode, and how much of the context window memory is allowed to use.
+
+11
+00:00:45.181 --> 00:00:48.000
+Every one of them has come up already in this series for a reason.
+
+12
+00:00:48.000 --> 00:00:54.318
+A few things people go looking for and will not find: a per-tool default model, cloud sync, and a memory share above the twenty-five percent ceiling.
+
+13
+00:00:54.318 --> 00:01:00.000
+Each is a deliberate absence, not a missing feature — simplicity, no account to sync to, and protecting the context window on purpose.
+
+14
+00:01:00.000 --> 00:01:04.164
+One update worth flagging: new chats now enable the built-in tools by default, rather than starting empty.
+
+15
+00:01:04.164 --> 00:01:11.000
+That is a starting point, not a standing “enable everything forever” switch — you still trim it down per chat, the same habit from Module 7 about fewer tools choosing better.
+
+16
+00:01:11.000 --> 00:01:12.656
+Settings covered the app's own configuration.
+
+17
+00:01:12.656 --> 00:01:17.000
+Next we go deep on one panel specifically — Memory — the three scopes it tracks and the budget that keeps it in check.
+

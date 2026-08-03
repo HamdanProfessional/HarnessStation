@@ -1,0 +1,110 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:01.965
+E58 showed the v86 Linux VM as a viewer feature.
+
+2
+00:00:01.965 --> 00:00:07.000
+This episode reopens it as a developer — the source, the design decisions, and the actual commit history behind landing it.
+
+3
+00:00:07.000 --> 00:00:07.121
+vm.
+
+4
+00:00:07.121 --> 00:00:14.289
+ts talks to v86 through one narrow interface: add_listener for serial bytes coming out of the guest, serial0_send for typing into it, and create_file/read_file for the 9p bridge.
+
+5
+00:00:14.289 --> 00:00:19.000
+Everything else in the file is built on just those four calls — deliberately narrow, so v86 itself stays a black box.
+
+6
+00:00:19.000 --> 00:00:20.926
+The guest only talks back one byte at a time over serial, so vm.
+
+7
+00:00:20.926 --> 00:00:24.928
+ts turns that into something awaitable: onSerialByte appends every byte to a running buffer and checks it against a list of watchers.
+
+8
+00:00:24.928 --> 00:00:28.750
+waitFor registers one — a test function and a timeout — and resolves the moment the buffer satisfies it, or rejects on timeout.
+
+9
+00:00:28.750 --> 00:00:32.000
+That's how bootVM waits for the shell prompt, and how every command run waits for its own completion marker.
+
+10
+00:00:32.000 --> 00:00:36.342
+The 9p bridge is what makes this more than a toy: the guest mounts a share at slash mnt, and the host's create_file with a workspace-prefixed path appears there.
+
+11
+00:00:36.342 --> 00:00:43.031
+So GUEST_WORKDIR is slash mnt slash workspace, and before every command pushWorkspace walks the OPFS tree and copies each file in over that bridge; after the command, pullWorkspace runs find in the guest and copies anything new or changed back out.
+
+12
+00:00:43.031 --> 00:00:45.000
+The file tools and a real Linux command end up looking at the same files.
+
+13
+00:00:45.000 --> 00:00:48.526
+Only one command name is registered for all of this: run_command, the same name the coreutils shell shim in shell.
+
+14
+00:00:48.526 --> 00:00:49.021
+ts also answers.
+
+15
+00:00:49.021 --> 00:00:51.093
+The router is a Settings toggle read from localStorage — vmEnabled.
+
+16
+00:00:51.093 --> 00:00:54.371
+On, it tries the VM and falls back to the shell if boot fails; off, it goes straight to the instant shell.
+
+17
+00:00:54.371 --> 00:00:57.000
+One invoke call site in the app, two completely different implementations underneath.
+
+18
+00:00:57.000 --> 00:01:02.976
+And here's how it actually landed, in order, in the real history: first a shell scaffold — a coreutils subset over the same OPFS workspace, shipping something useful immediately.
+
+19
+00:01:02.976 --> 00:01:05.830
+Then a VM milestone that only boots and runs a raw command, no filesystem bridge yet.
+
+20
+00:01:05.830 --> 00:01:08.851
+Then a second VM milestone that wires the 9p bridge in and switches run_command's routing.
+
+21
+00:01:08.851 --> 00:01:11.000
+Three separate, independently useful commits, not one giant one.
+
+22
+00:01:11.000 --> 00:01:15.370
+The lesson worth taking from this into your own contribution: each of those three commits worked and shipped value on its own.
+
+23
+00:01:15.370 --> 00:01:16.757
+The shell alone was a complete terminal.
+
+24
+00:01:16.757 --> 00:01:17.936
+The VM that only boots was a demo.
+
+25
+00:01:17.936 --> 00:01:23.000
+Only the third commit needed the other two — and by then the risky, novel part (does v86 even boot reliably) had already been proven in isolation.
+
+26
+00:01:23.000 --> 00:01:24.624
+You've now read a real feature end to end.
+
+27
+00:01:24.624 --> 00:01:30.000
+Time to build one yourself — a small command, implemented on both sides of the seam, run from both the desktop build and the browser build.
+

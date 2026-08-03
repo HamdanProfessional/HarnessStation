@@ -1,0 +1,48 @@
+1
+00:00:00,000 --> 00:00:02,333
+A full spoken exchange with no server behind it.
+
+2
+00:00:02,333 --> 00:00:07,000
+This episode covers how the browser build hears you and how it talks back, entirely client-side.
+
+3
+00:00:07,000 --> 00:00:13,294
+Click the mic and mic dot ts captures your voice with getUserMedia, no plugin, no native permission dialog — just the browser's own microphone prompt.
+
+4
+00:00:13,294 --> 00:00:19,000
+By default the browser build hands that audio straight to the browser's own built-in speech recognition — fast, and nothing to download.
+
+5
+00:00:19,000 --> 00:00:29,588
+If that's not available — an older browser, a locked-down one — it falls back to the same record-then-transcribe path as desktop: a 16 kilohertz WAV written into OPFS, transcribed client-side with transformers dot js Whisper.
+
+6
+00:00:29,588 --> 00:00:31,000
+Same behavior, one extra step.
+
+7
+00:00:31,000 --> 00:00:43,000
+For the reply, speak dot ts gives you three options: Kokoro, which is already WASM so it just runs; any cloud voice engine you've configured; or the browser's own SpeechSynthesis as the built-in, always-available fallback.
+
+8
+00:00:43,000 --> 00:00:53,000
+Put it together and it's a full spoken exchange — ask a question out loud, hear the answer back — in a plain tab, with no Tauri process, no native app, nothing installed.
+
+9
+00:00:53,000 --> 00:00:58,000
+Worth remembering: browser SpeechRecognition quality and language coverage varies by browser and OS.
+
+10
+00:00:58,000 --> 00:01:02,000
+If it feels off, Whisper is still there as the consistent, model-based fallback.
+
+11
+00:01:02,000 --> 00:01:03,588
+Voice works with no server.
+
+12
+00:01:03,588 --> 00:01:08,000
+Next, a much bigger claim: real Python, running inside the browser tab too.
+

@@ -1,0 +1,76 @@
+1
+00:00:00,000 --> 00:00:01,031
+Module 10 is automation.
+
+2
+00:00:01,031 --> 00:00:07,000
+First up, workflows — a way to chain steps so one step's output feeds the next, instead of one long prompt trying to do everything at once.
+
+3
+00:00:07,000 --> 00:00:09,111
+Go to Automation, Workflows, New workflow.
+
+4
+00:00:09,111 --> 00:00:17,000
+A workflow is a fixed sequence of steps, each one its own prompt, its own tools, even its own model, run in order with each step's output handed to the next.
+
+5
+00:00:17,000 --> 00:00:19,273
+The example: a weekly repo summary in three steps.
+
+6
+00:00:19,273 --> 00:00:22,818
+Step one, Gather, pulls the week's commits and issues with a tool-using model.
+
+7
+00:00:22,818 --> 00:00:25,045
+Step two, Group, sorts that raw list into themes.
+
+8
+00:00:25,045 --> 00:00:28,136
+Step three, Write, turns the grouped themes into a readable summary.
+
+9
+00:00:28,136 --> 00:00:30,000
+Each step is small and does one job well.
+
+10
+00:00:30,000 --> 00:00:32,343
+Run it, and watch each step's output as it lands.
+
+11
+00:00:32,343 --> 00:00:41,000
+That's worth doing at least once — seeing exactly what Gather handed to Group, and what Group handed to Write, is how you catch a step quietly going wrong before it reaches the end.
+
+12
+00:00:41,000 --> 00:00:42,920
+Two reliability habits worth building in from the start.
+
+13
+00:00:42,920 --> 00:00:48,303
+Tell early steps not to summarize — say “return the output unchanged” — so nothing gets quietly trimmed before the step that's actually meant to condense it.
+
+14
+00:00:48,303 --> 00:00:53,000
+And have steps signal failure explicitly: “if no results, reply exactly: NO DATA” gives the next step something unambiguous to check for.
+
+15
+00:00:53,000 --> 00:00:57,092
+The gotcha: a workflow only works for a known shape — a sequence you can name in advance.
+
+16
+00:00:57,092 --> 00:01:01,322
+If the next step depends on what gets discovered along the way, a fixed sequence fights you.
+
+17
+00:01:01,322 --> 00:01:05,000
+That's the job for a chat with tools, which can decide its next move as it goes.
+
+18
+00:01:05,000 --> 00:01:08,524
+That raises the bigger question — agent, workflow, or chat: which one for which job?
+
+19
+00:01:08,524 --> 00:01:11,000
+Next episode is a short reference you can jump straight to.
+

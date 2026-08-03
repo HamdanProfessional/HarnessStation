@@ -1,0 +1,20 @@
+# Slide 1
+Module 14 is the web build — the same app, running in an ordinary browser tab, no install. This episode is the architectural trick that makes that possible without forking the UI.
+
+# Slide 2
+One command: npm run web:dev, then open localhost 5175. That's the entire app, running with no Tauri process behind it at all.
+
+# Slide 3
+The desktop app never talks to Rust directly — it goes through five Tauri imports: core, plugin-fs, plugin-http, api event, plugin-opener, and plugin-updater. The web build swaps each of those five imports for a browser implementation living in web slash shims. Same src tree, same features, zero forked UI.
+
+# Slide 4
+Walking the shim table: core dot ts is the command dispatcher, fs dot ts is backed by the browser's Origin Private File System, http dot ts uses the native fetch so real CORS rules apply, event dot ts is a local no-op bus, and secret dot ts is the browser's own secret store.
+
+# Slide 5
+What still can't run in a tab: local models over localhost, since an https page can't reach plain http localhost — that's mixed content; stdio MCP servers; the device mesh; and the native in-app browser. Each just fails as an ordinary “not available” error, never a crash.
+
+# Slide 6
+One update since the curriculum was written: local models are no longer purely a desktop feature. On a GPU that supports WebGPU, the browser build can now run models in-tab too — that's next episode's territory, alongside browser speech recognition.
+
+# Slide 7
+The seam is in place. Next: a full spoken conversation, transcription and speech, entirely in that same browser tab.

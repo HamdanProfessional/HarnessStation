@@ -1,0 +1,20 @@
+# Slide 1
+Module 9 is about knowledge — giving the model real documents to draw on instead of guessing. In this one we build our first knowledge base and attach it to a chat.
+
+# Slide 2
+Before you add a single document, pick an embedding model in Settings, Providers, Embeddings. This choice matters more than it looks — it decides how every document gets indexed, and you'll see why shortly.
+
+# Slide 3
+Two real options. Local, with Ollama's nomic-embed-text — free, and your documents never leave the machine. Cloud, with text-embedding-3-small — cheap per document, but every file you index gets uploaded to the provider to be embedded. Pick based on how sensitive the documents are.
+
+# Slide 4
+Now the base itself. Automation, Knowledge, New knowledge base — give it a name, then add a handful of PDFs and Markdown files. The app chunks and embeds them in the background using the model you just picked.
+
+# Slide 5
+Attach the base to a chat and ask a question that's only answered inside one of your documents. No explicit search instruction needed — retrieval happens automatically before the model even starts composing a reply, and the answer comes back grounded in your text.
+
+# Slide 6
+The gotcha: changing the embedding model invalidates every index built with the old one. And re-indexing is not incremental — it redoes the whole base from scratch. Pick your embedding model deliberately before you import a large collection, because switching later is expensive.
+
+# Slide 7
+You've seen retrieval work. Next we open the hood — chunking, embedding, and nearest-neighbor search — and cover exactly when this approach does and doesn't work.

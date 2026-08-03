@@ -1,0 +1,20 @@
+# Slide 1
+You know the size to look for. Now let's actually get a model — the app's own download path, separate from Ollama or LM Studio, straight from Library, Discover.
+
+# Slide 2
+Library, Discover. Search a GGUF model by name, or skip search entirely and paste a Hugging Face URL directly — the resolve link ending in the .gguf filename. Either way lands on the same download step.
+
+# Slide 3
+Start the download and watch the progress bar. It lands under the harnessx models folder in your home directory, ready to load — no separate model manager, no Ollama required.
+
+# Slide 4
+My Models lists everything downloaded, lets you set which one loads by default, and shows a “will it fit” indicator tied to the RAM and VRAM the app actually detected on this machine — a straight answer before you commit to a load.
+
+# Slide 5
+A little of the Rust underneath, for credibility. hw_info detects total RAM, AVX2 support, and an NVIDIA GPU via nvidia-smi — that is what powers the fit check. Downloads stream to a temporary .part file and only rename to the final name on success. And archives — zip and tar.gz — are extracted in-process, with path-traversal protection so a malicious archive can't write outside the models folder.
+
+# Slide 6
+Gotcha: a green “will it fit” only covers loading the model into memory — it says nothing about tool-calling reliability. Come back to E48's README test before trusting a small model with real agent work.
+
+# Slide 7
+Downloaded is not the same as running. Next we load this model into the app's own supervised server and tune context length and GPU offload.

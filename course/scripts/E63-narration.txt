@@ -1,0 +1,17 @@
+# Slide 1
+Last episode showed where your data lives. This one is the real walkthrough: compress it, move it, restore it on a new machine — and one gotcha that trips people up.
+
+# Slide 2
+Step one, compress the folder. On Linux, tar dot g z. On Windows, Compress-Archive. Either way you end up with one archive file that holds your whole setup.
+
+# Slide 3
+Step two, move that archive to the new machine and extract it into place. Then re-enter your keys by hand — they live only in the OS credential store, not inside the folder, so the archive genuinely doesn't carry them. That's expected, not a bug.
+
+# Slide 4
+Worth saying plainly: this is the whole app in one folder. There's no separate database server, no cloud account holding your history hostage — one archive of one directory is a complete, working backup.
+
+# Slide 5
+The gotcha: device identity is per-machine. A copied install keeps the old device's mesh identity, and if both machines happen to run at once, the mesh gets confused about which one is actually which. The fix is simple — re-pair from the new machine, and give it its own identity.
+
+# Slide 6
+That's the full deployment picture. To close out the advanced track, next episode pulls every privacy and security point from the whole series into one reference checklist.

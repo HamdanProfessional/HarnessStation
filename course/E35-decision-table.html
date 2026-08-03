@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E35 · Agents vs workflows vs chats</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="A short reference episode you can jump straight to later: agent, workflow, or chat — how to pick, in one screen.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 35 · Module 10</p>
+      <h1>Agents vs workflows<br/>vs chats</h1>
+      <p class="lead">The decision table.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="One job, one role, done repeatedly — that's an agent. You define its scope once, and it handles every instance of that job the same way, whether it's triggered by you, a schedule, or an event.">
+      <p class="eyebrow">Repeated · one role</p>
+      <h2>An agent</h2>
+      <ul>
+        <li class="ok">One job, one role, <b>repeated</b> — the same task shape every time</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="A fixed sequence where each step's output feeds the next — that's a workflow. You know the shape in advance: gather, then group, then write, always in that order.">
+      <p class="eyebrow">Fixed sequence · output feeds forward</p>
+      <h2>A workflow</h2>
+      <ul>
+        <li class="ok">A <b>known, fixed</b> sequence of steps, each output feeding the next</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Open-ended, needs judgment about what to do next based on what it finds — that's a chat with tools. Nothing about the path is fixed in advance; the model decides its next move as it goes.">
+      <p class="eyebrow">Open-ended · judgment</p>
+      <h2>A chat with tools</h2>
+      <ul>
+        <li class="ok">Open-ended — <b>judgment</b> about what's next, decided as it goes</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="Side by side: agent for a repeated role, workflow for a known fixed sequence, chat for open-ended judgment. When you're not sure which one fits, ask whether you could write the steps down in advance — if yes, workflow; if the steps depend on what's discovered, chat; if it's the same job over and over, agent.">
+      <p class="eyebrow">Side by side</p>
+      <h2>Pick by shape, not by size</h2>
+      <div class="two-col">
+        <div class="card">
+          <h3>Agent</h3>
+          <p>One role, repeated</p>
+        </div>
+        <div class="card">
+          <h3>Workflow</h3>
+          <p>Fixed sequence, known shape</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="If none of that fits — if you genuinely don't know what step two will be until step one finishes — that's the sign you want a chat with tools, not a workflow forced into a shape it doesn't have.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Don't force a shape that isn't there</h2>
+      <p class="lead" style="max-width:1600px">Can't write the steps down in advance?
+        <span class="pill warn">use a chat</span></p>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="With the decision made, the next question is running things unattended — safely. That's schedules, starting with the guardrails you set up first.">
+      <p class="eyebrow">Up next</p>
+      <h1>E36 · Scheduling an<br/>agent or workflow</h1>
+      <p class="lead">Guardrails first, then let it run unattended.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

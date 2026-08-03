@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E32 · Swarms</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="One agent handles one job well. But some jobs are actually several independent jobs at once — that's what swarms are for. Let's see when that's worth it, and when it's just an expensive way to go slower.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 32 · Module 10</p>
+      <h1>Swarms</h1>
+      <p class="lead">Several agents on one job, at once.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="SWITCH TO APP: in a chat or agent run, toggle Swarm on."
+      data-narration="Turn on Swarm and, instead of one agent working through a job step by step, several agents run at the same time, each on their own slice of it.">
+      <p class="eyebrow">Turn it on</p>
+      <h2>Enable Swarm</h2>
+      <p class="lead">Several agents run <b>at the same time</b>, each on its own slice.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="The distinction that decides whether it helps: genuinely parallel work, like reviewing twelve independent files at once, is exactly what a swarm speeds up. Sequential work, where step two needs step one's answer, gets no benefit — a swarm there is just slower and more expensive than one agent working through it in order.">
+      <p class="eyebrow">When it helps</p>
+      <h2>Parallel work, not sequential</h2>
+      <div class="two-col">
+        <div class="card">
+          <h3>Parallel — good fit</h3>
+          <p>Reviewing twelve independent files at once.</p>
+        </div>
+        <div class="card">
+          <h3>Sequential — bad fit</h3>
+          <p>Step two needs step one's answer. Slower and dearer than one agent.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="APP: show the shared swarm view listing which file each agent is currently touching."
+      data-narration="While a swarm runs, a shared view shows exactly which file each agent is touching right now, so nothing gets edited twice by accident. And if one agent changes a file another depends on, that second agent is explicitly told about the change before it continues.">
+      <p class="eyebrow">Coordination</p>
+      <h2>A shared view of who's touching what</h2>
+      <ul>
+        <li>Live list of which file each agent is working on</li>
+        <li class="ok">A dependent agent is told when a file it relies on changes</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="The gotcha, and it's a cost one: several agents means several conversations billed at the same time, not one. A twelve-file swarm can be twelve concurrent runs. That's fine when the job is genuinely parallel and time matters — but it is not a default choice, and it's not free just because it's faster.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Several agents, several bills — at once</h2>
+      <p class="lead">Several agents means <b>several conversations</b> running
+        concurrently. Not a default — a deliberate cost decision.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Agents and swarms handle work. But some things aren't work at all — they're reference material the model should only load when it's actually relevant. That's skills, next.">
+      <p class="eyebrow">Up next</p>
+      <h1>E33 · Skills</h1>
+      <p class="lead">Reference material, loaded on demand.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

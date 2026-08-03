@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E62 · Uninstalling without losing your data</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Uninstalling shouldn't mean losing every conversation and setting you've built up. Here's the clean uninstall path, and exactly where the “actually delete everything” line is.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track C · Advanced · Episode 62 · Module 16</p>
+      <h1>Uninstalling without losing your data</h1>
+      <p class="lead">The app leaves, your data stays — until you say otherwise.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="Uninstall the normal way for your platform: through Windows Settings, or dpkg minus r on Linux. Standard uninstall, nothing special to remember on this step.">
+      <p class="eyebrow">The uninstall step</p>
+      <h2>Windows Settings, or dpkg -r</h2>
+      <pre class="term"><span class="a">Windows</span>   Settings → Apps → uninstall
+<span class="a">Linux</span>     dpkg -r <span class="c">&lt;package&gt;</span></pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="Here's the deliberate part: the ~/.harnessx folder is left behind. That's on purpose — it's your conversations, your keys, your configuration. An uninstall removes the program, not your history. If you reinstall later, it's all still there waiting.">
+      <p class="eyebrow">What's left behind</p>
+      <h2>~/.harnessx survives, on purpose</h2>
+      <ul>
+        <li class="ok">Conversations, config, and data stay in <code>~/.harnessx</code></li>
+        <li>Uninstall removes the program, not your history</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="TERMINAL: rm -rf ~/.harnessx (or delete the folder in File Explorer)."
+      data-narration="Want everything gone? Delete ~/.harnessx by hand. That's the actual line — the installer never touches it, so removing it is entirely your call.">
+      <p class="eyebrow">Actually deleting it</p>
+      <h2>Delete ~/.harnessx by hand</h2>
+      <pre class="term">rm -rf ~/.harnessx   <span class="g">← the real “delete everything”</span></pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="If you're backing that folder up instead, know what's in it: models and engines are the large folders, and they're entirely re-downloadable. Excluding them from a backup saves gigabytes without losing anything that can't be fetched again.">
+      <p class="eyebrow">If you're backing up instead</p>
+      <h2>models/ and engines/ are worth skipping</h2>
+      <ul>
+        <li><b>models/</b>, <b>engines/</b> — large, but re-downloadable</li>
+        <li class="ok">Exclude them from backups to save real space</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Speaking of backups — next episode is the real walkthrough: compressing that folder, moving it to a new machine, and what to watch for when you get there.">
+      <p class="eyebrow">Up next</p>
+      <h1>E63 · Backing up and<br/>moving to a new machine</h1>
+      <p class="lead">A real backup, restore, and migrate.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

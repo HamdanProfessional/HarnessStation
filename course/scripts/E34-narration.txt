@@ -1,0 +1,20 @@
+# Slide 1
+Module 10 is automation. First up, workflows — a way to chain steps so one step's output feeds the next, instead of one long prompt trying to do everything at once.
+
+# Slide 2
+Go to Automation, Workflows, New workflow. A workflow is a fixed sequence of steps, each one its own prompt, its own tools, even its own model, run in order with each step's output handed to the next.
+
+# Slide 3
+The example: a weekly repo summary in three steps. Step one, Gather, pulls the week's commits and issues with a tool-using model. Step two, Group, sorts that raw list into themes. Step three, Write, turns the grouped themes into a readable summary. Each step is small and does one job well.
+
+# Slide 4
+Run it, and watch each step's output as it lands. That's worth doing at least once — seeing exactly what Gather handed to Group, and what Group handed to Write, is how you catch a step quietly going wrong before it reaches the end.
+
+# Slide 5
+Two reliability habits worth building in from the start. Tell early steps not to summarize — say “return the output unchanged” — so nothing gets quietly trimmed before the step that's actually meant to condense it. And have steps signal failure explicitly: “if no results, reply exactly: NO DATA” gives the next step something unambiguous to check for.
+
+# Slide 6
+The gotcha: a workflow only works for a known shape — a sequence you can name in advance. If the next step depends on what gets discovered along the way, a fixed sequence fights you. That's the job for a chat with tools, which can decide its next move as it goes.
+
+# Slide 7
+That raises the bigger question — agent, workflow, or chat: which one for which job? Next episode is a short reference you can jump straight to.

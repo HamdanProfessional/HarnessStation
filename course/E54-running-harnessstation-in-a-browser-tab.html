@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E54 · Running HarnessStation in a browser tab</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Module 14 is the web build — the same app, running in an ordinary browser tab, no install. This episode is the architectural trick that makes that possible without forking the UI.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track C · Advanced · Episode 54 · Module 14</p>
+      <h1>Running HarnessStation in a browser tab</h1>
+      <p class="lead">Same app, zero install, one clever seam.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="TERMINAL: npm run web:dev, then open http://localhost:5175 in a plain browser tab."
+      data-narration="One command: npm run web:dev, then open localhost 5175. That's the entire app, running with no Tauri process behind it at all.">
+      <p class="eyebrow">Standing it up</p>
+      <h2>npm run web:dev</h2>
+      <pre class="term"><span class="a">$</span> npm run web:dev
+<span class="c">→</span> <span class="g">http://localhost:5175</span></pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="15"
+      data-narration="The desktop app never talks to Rust directly — it goes through five Tauri imports: core, plugin-fs, plugin-http, api event, plugin-opener, and plugin-updater. The web build swaps each of those five imports for a browser implementation living in web slash shims. Same src tree, same features, zero forked UI.">
+      <p class="eyebrow">The seam</p>
+      <h2>Five imports, one swap</h2>
+      <p class="lead">Desktop talks to Rust through five <code>@tauri-apps/*</code> imports.
+        The web build aliases each to a browser impl in <code>web/shims/</code> — same
+        <code>src/</code> tree, no forked UI.</p>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="EDITOR: open web/shims/ and show core.ts, fs.ts, http.ts, event.ts, secret.ts side by side."
+      data-narration="Walking the shim table: core dot ts is the command dispatcher, fs dot ts is backed by the browser's Origin Private File System, http dot ts uses the native fetch so real CORS rules apply, event dot ts is a local no-op bus, and secret dot ts is the browser's own secret store.">
+      <p class="eyebrow">web/shims/</p>
+      <h2>The shim table</h2>
+      <pre class="term"><span class="a">core.ts</span>    command dispatcher
+<span class="a">fs.ts</span>      OPFS
+<span class="a">http.ts</span>    native fetch — CORS applies
+<span class="a">event.ts</span>   local no-op bus
+<span class="a">secret.ts</span>  browser secret store</pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="What still can't run in a tab: local models over localhost, since an https page can't reach plain http localhost — that's mixed content; stdio MCP servers; the device mesh; and the native in-app browser. Each just fails as an ordinary “not available” error, never a crash.">
+      <p class="eyebrow">What doesn't run in a tab</p>
+      <h2>Mixed content and native-only features</h2>
+      <ul>
+        <li>Local models via localhost — blocked as mixed content</li>
+        <li>stdio MCP servers, the device mesh, the native in-app browser</li>
+        <li class="ok">Each fails as an ordinary “not available” error, not a crash</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="One update since the curriculum was written: local models are no longer purely a desktop feature. On a GPU that supports WebGPU, the browser build can now run models in-tab too — that's next episode's territory, alongside browser speech recognition.">
+      <p class="eyebrow">Since then</p>
+      <h2>WebGPU is the exception</h2>
+      <p class="lead">Local models can now run <b>in-tab</b> too, on a WebGPU-capable GPU — the
+        one exception to “local models don't run in the browser.”</p>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="The seam is in place. Next: a full spoken conversation, transcription and speech, entirely in that same browser tab.">
+      <p class="eyebrow">Up next</p>
+      <h1>E55 · Voice in<br/>the browser</h1>
+      <p class="lead">Whisper and Kokoro without a server.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

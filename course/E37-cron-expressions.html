@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E37 · Cron expressions for irregular schedules</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="A quick reference for when the presets don't cover the cadence you need: cron expressions, in four worked examples.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 37 · Module 11</p>
+      <h1>Cron expressions for<br/>irregular schedules</h1>
+      <p class="lead">A quick reference, four examples.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="A cron expression is five fields — minute, hour, day of month, month, day of week — each either a number or a star meaning any. Presets cover the common cases; cron covers everything else.">
+      <p class="eyebrow">The five fields</p>
+      <h2>minute hour day month weekday</h2>
+      <pre class="term"><span class="c">min  hour  day  month  weekday</span>
+<span class="a">*    *     *    *      *</span></pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="APP: enter 0 8 * * 1-5 as the schedule's cron expression."
+      data-narration="Weekday mornings at eight: zero, eight, star, star, one through five. The weekday field takes a range, so Monday through Friday is one dash five.">
+      <p class="eyebrow">Example 1</p>
+      <h2>Weekday mornings, 8am</h2>
+      <pre class="term"><span class="g">0 8 * * 1-5</span></pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="APP: enter 0 */4 * * * as the schedule's cron expression."
+      data-narration="Every four hours: zero minutes past, and a slash-four on the hour field means every fourth hour starting from zero — midnight, four, eight, and on.">
+      <p class="eyebrow">Example 2</p>
+      <h2>Every 4 hours</h2>
+      <pre class="term"><span class="g">0 */4 * * *</span></pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="APP: enter 0 9 1 * * as the schedule's cron expression."
+      data-narration="Monthly, on the first at nine: zero, nine, one in the day-of-month field, star for month, star for weekday.">
+      <p class="eyebrow">Example 3</p>
+      <h2>Monthly, the 1st at 9am</h2>
+      <pre class="term"><span class="g">0 9 1 * *</span></pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="APP: enter 0 17 * * 5 as the schedule's cron expression."
+      data-narration="Friday evening at five: zero, seventeen for the 24-hour clock, star, star, and five for Friday in the weekday field.">
+      <p class="eyebrow">Example 4</p>
+      <h2>Friday evening, 5pm</h2>
+      <pre class="term"><span class="g">0 17 * * 5</span></pre>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Schedules covered. Now the browser — a real, model-visible window your agent can drive from inside a conversation.">
+      <p class="eyebrow">Up next</p>
+      <h1>E38 · Browser control<br/>— the in-app browser</h1>
+      <p class="lead">Drive a real browser from inside a chat.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

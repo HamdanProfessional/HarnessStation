@@ -1,0 +1,76 @@
+1
+00:00:00,000 --> 00:00:04,191
+Module 8 is about projects — the feature that stops unrelated work from bleeding into each other.
+
+2
+00:00:04,191 --> 00:00:07,000
+In this one we create a project and see exactly what it isolates.
+
+3
+00:00:07,000 --> 00:00:11,170
+A project is a container with its own instructions, its own knowledge bases, and its own enabled tools.
+
+4
+00:00:11,170 --> 00:00:13,680
+Any chat you start inside it inherits all three automatically.
+
+5
+00:00:13,680 --> 00:00:17,000
+Nothing about it leaks to chats outside the project, and nothing outside leaks in.
+
+6
+00:00:17,000 --> 00:00:20,620
+To create one, click the plus beside Projects in the sidebar and give it a name.
+
+7
+00:00:20,620 --> 00:00:27,000
+You land on three tabs — Instructions, Knowledge, and Tools — and whatever you set there applies to every chat you start inside this project.
+
+8
+00:00:27,000 --> 00:00:29,970
+The worked example: two client projects, Acme and Brightside.
+
+9
+00:00:29,970 --> 00:00:36,007
+Each gets its own instruction — house style, contact names, pricing — and its own knowledge base of that client's documents.
+
+10
+00:00:36,007 --> 00:00:40,000
+They never mix, even though you're using the same app, the same day, back to back.
+
+11
+00:00:40,000 --> 00:00:44,947
+Start a chat inside Acme and it automatically has Acme's instructions and knowledge, no setup needed.
+
+12
+00:00:44,947 --> 00:00:50,384
+Start a plain chat outside any project and ask about Acme — it sees neither the instructions nor the knowledge.
+
+13
+00:00:50,384 --> 00:00:52,000
+That boundary is the whole point.
+
+14
+00:00:52,000 --> 00:00:54,533
+The gotcha: deleting a project does not delete its chats.
+
+15
+00:00:54,533 --> 00:00:58,178
+They don't vanish — they return to your ungrouped chat list, still fully readable.
+
+16
+00:00:58,178 --> 00:01:02,133
+What actually gets deleted is the project's memory: the accumulated facts it had learned.
+
+17
+00:01:02,133 --> 00:01:04,000
+Keep that in mind before you clean one up.
+
+18
+00:01:04,000 --> 00:01:05,589
+Projects give you one instruction layer.
+
+19
+00:01:05,589 --> 00:01:10,000
+Next we put all three layers — global, project, and chat — side by side and watch them stack in a single reply.
+

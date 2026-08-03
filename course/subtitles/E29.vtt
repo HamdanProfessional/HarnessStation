@@ -1,0 +1,90 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:01.678
+Last episode we saw retrieval work.
+
+2
+00:00:01.678 --> 00:00:07.000
+This time we open the hood — so you can predict when it will find the right passage, and when it quietly won't.
+
+3
+00:00:07.000 --> 00:00:07.495
+Three steps.
+
+4
+00:00:07.495 --> 00:00:09.063
+Every document gets split into chunks.
+
+5
+00:00:09.063 --> 00:00:11.210
+Each chunk gets turned into a vector — an embedding.
+
+6
+00:00:11.210 --> 00:00:16.410
+When you ask a question, the question is embedded too, and the app finds the nearest chunks by meaning, not by matching words.
+
+7
+00:00:16.410 --> 00:00:20.000
+That's why asking about undoing a deploy finds a document about rolling back a release.
+
+8
+00:00:20.000 --> 00:00:21.297
+Three structural limits, not bugs.
+
+9
+00:00:21.297 --> 00:00:26.027
+It's not exhaustive — it returns the nearest few chunks, not every relevant one, so a fact three chunks away can get missed.
+
+10
+00:00:26.027 --> 00:00:29.232
+Chunk boundaries can split a sentence in half, separating a fact from its qualifier.
+
+11
+00:00:29.232 --> 00:00:34.000
+And it matches meaning, not keywords, which is usually a strength but occasionally misses an exact term you needed literally.
+
+12
+00:00:34.000 --> 00:00:35.319
+A checklist for better answers.
+
+13
+00:00:35.319 --> 00:00:37.489
+Use the documents' own vocabulary in your question.
+
+14
+00:00:37.489 --> 00:00:39.362
+Ask narrow questions rather than broad ones.
+
+15
+00:00:39.362 --> 00:00:42.851
+Explicitly ask it to say when something is absent, so it doesn't guess past a gap.
+
+16
+00:00:42.851 --> 00:00:44.766
+Split unrelated material into separate bases.
+
+17
+00:00:44.766 --> 00:00:48.000
+And name each base descriptively, so it's obvious later which one to attach.
+
+18
+00:00:48.000 --> 00:00:52.074
+The gotcha that catches people every time: a scanned PDF is just an image of text, not text.
+
+19
+00:00:52.074 --> 00:00:57.122
+The app does no OCR, so indexing it silently succeeds and returns nothing useful — no error, just empty retrieval.
+
+20
+00:00:57.122 --> 00:01:00.000
+If a document is a scan, run OCR on it yourself before adding it.
+
+21
+00:01:00.000 --> 00:01:01.854
+Knowledge grounds a chat in documents.
+
+22
+00:01:01.854 --> 00:01:06.000
+Module 10 goes further — packaging a whole role, tools included, as a reusable agent.
+

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E51 · Advanced llama-server launch flags</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="This one's genuinely advanced and code-literate: the actual llama-server flags the app can pass, what each does, and why they're safe to leave alone if you never touch this screen.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track C · Advanced · Episode 51 · Module 12</p>
+      <h1>Advanced llama-server launch flags</h1>
+      <p class="lead">Squeeze real performance out of specific hardware.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="Every flag on this screen is opt-in. Leave a field unset and nothing is emitted for it on the command line — the server just uses its own defaults. That single rule is what lets an older llama-server build launch cleanly even with a newer app version pointed at it.">
+      <p class="eyebrow">Design first</p>
+      <h2>Every flag is opt-in</h2>
+      <p class="lead">Unset a field and <b>nothing</b> is emitted for it — an older
+        llama-server build still launches cleanly.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="14"
+      data-cue="SWITCH TO APP: Local model advanced launch options panel."
+      data-narration="Threads sets CPU thread count — best set near your physical core count, not your logical thread count. Flash attention is close to a free win almost everywhere, so turn it on. Mlock pins the model in RAM so it can't be swapped to disk; no-mmap loads it fully into RAM up front instead of memory-mapping it lazily.">
+      <p class="eyebrow">The everyday flags</p>
+      <h2>threads, flash-attn, mlock, no-mmap</h2>
+      <pre class="term"><span class="a">--threads N</span>      near the physical core count
+<span class="a">--flash-attn on</span>  near-universal speed/memory win
+<span class="a">--mlock</span>          pin the model in RAM, no swap
+<span class="a">--no-mmap</span>        load fully into RAM, skip mmap</pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="16"
+      data-narration="The one worth knowing by heart: MoE offload. Cpu-moe pushes every expert layer of a mixture-of-experts model onto system RAM; n-cpu-moe N pushes just the first N. Attention stays on the GPU, the experts sit in RAM — that's the trick for running a big MoE model on a small GPU that could never hold the whole thing.">
+      <p class="eyebrow">The power move</p>
+      <h2>--cpu-moe / --n-cpu-moe N</h2>
+      <pre class="term"><span class="a">--cpu-moe</span>        all MoE expert layers → system RAM
+<span class="a">--n-cpu-moe N</span>    first N expert layers → system RAM
+<span class="c">↳</span> attention stays on <span class="g">GPU</span>, experts sit in <span class="g">RAM</span></pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: toggle --fit off and show the --fit-target margin field."
+      data-narration="Llama.cpp auto-fits itself to your hardware by default. Fit off turns that auto-fit off entirely if you want manual control, and fit-target sets the memory margin in megabytes it leaves free per GPU when auto-fit is on.">
+      <p class="eyebrow">Auto-fit</p>
+      <h2>--fit off / --fit-target</h2>
+      <pre class="term"><span class="a">--fit off</span>            disable llama.cpp's auto-fit
+<span class="a">--fit-target N</span>       memory margin (MB) per GPU when it's on</pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="APP or editor: src-tauri/src/local.rs, the launch_tests module."
+      data-narration="This isn't just a claim — the launch_tests module in local.rs unit-tests exactly this: an empty options struct produces an empty argument list, and each flag appears only when its field is set. That's the opt-in design, proven in code.">
+      <p class="eyebrow">Proof, not a promise</p>
+      <h2>src-tauri/src/local.rs → launch_tests</h2>
+      <p class="lead">Unit tests assert an empty <code>LaunchOpts</code> emits
+        <b>zero</b> arguments, and each flag appears only when set.</p>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="The gotcha: these flags only take effect on an engine new enough to know them. If you set a flag and see no difference, the first thing to check isn't your settings — it's the llama-server build version.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Flags need an engine that knows them</h2>
+      <ul>
+        <li class="warn">No effect from a flag? Check the <b>llama-server build version</b> first.</li>
+      </ul>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Local models covered. Next we leave the machine entirely and connect two of your own devices together — the mesh.">
+      <p class="eyebrow">Up next</p>
+      <h1>E52 · Turning on<br/>and pairing the mesh</h1>
+      <p class="lead">Two machines, one trusted connection.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

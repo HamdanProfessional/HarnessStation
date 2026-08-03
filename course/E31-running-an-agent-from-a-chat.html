@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E31 · Running an agent from a chat</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="An agent doesn't only run from its own panel. It can be called mid-conversation, handed a subtask, and hand back just the result. Let's see that, and the memory it keeps between runs.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 31 · Module 10</p>
+      <h1>Agents from a chat</h1>
+      <p class="lead">Delegate a subtask; the agent keeps its own memory.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="SWITCH TO APP: in a chat, open the tools panel and enable the Agents tool group."
+      data-narration="First, turn on the Agents tool group inside a chat. That's what lets the model in this conversation reach out and call one of your saved agents as a tool, instead of doing the work itself.">
+      <p class="eyebrow">Turn it on</p>
+      <h2>Enable the Agents tool group</h2>
+      <p class="lead">Lets this chat call a saved agent as a <b>tool</b>.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="APP: ask the chat to have the code-reviewer agent look at a file; watch the delegated call and its result card."
+      data-narration="Ask the chat to have the code-reviewer agent look at a specific file. It hands off the subtask, the agent runs its full spec, and only the result comes back — you see a tool-call card, not the agent's internal back-and-forth.">
+      <p class="eyebrow">Delegate</p>
+      <h2>Ask it to hand off a subtask</h2>
+      <pre class="term"><span class="a">you</span>     have the code-reviewer agent check auth.ts
+<span class="a">chat</span>    <span class="g">→ delegates → returns the review</span></pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Notice what's not in the main conversation: the agent's own tool calls, its reasoning, any files it opened along the way. All of that stays inside the delegated run. Your chat only sees the finished output — which keeps the main conversation short and readable.">
+      <p class="eyebrow">What stays hidden</p>
+      <h2>Delegated work stays out of the chat</h2>
+      <ul>
+        <li class="ok">Only the finished output lands in the main conversation</li>
+        <li>The agent's own tool calls and reasoning stay inside its run</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="Each agent also keeps its own memory, separate from chat, project, or global memory. Run the code-reviewer twenty times and it accumulates what it's specifically learned about this codebase's conventions — that memory travels with the agent, not with any one conversation.">
+      <p class="eyebrow">Agent memory</p>
+      <h2>Separate from chat, project, global</h2>
+      <p class="lead">It accumulates what <b>that agent specifically</b> has learned —
+        and travels with it, not with any one chat.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="A checklist for writing an agent worth delegating to: be specific about its scope, say exactly what output format you want back, give it the minimum tools it actually needs, and tell it what to do when it gets stuck instead of leaving it to guess.">
+      <p class="eyebrow">Writing-instructions checklist</p>
+      <h2>Four habits for a delegate-worthy agent</h2>
+      <ul>
+        <li>Be specific about scope</li>
+        <li>Say what output format you want</li>
+        <li>Give it the minimum necessary tools</li>
+        <li>Say what to do when it's stuck</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="One agent, delegated to. Next, several agents working the same job at once — swarms — and when that's actually worth the extra cost.">
+      <p class="eyebrow">Up next</p>
+      <h1>E32 · Swarms</h1>
+      <p class="lead">Several agents, one job, at once.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

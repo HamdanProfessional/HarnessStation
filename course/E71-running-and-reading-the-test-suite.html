@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E71 · Running and reading the test suite</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Module 19 is testing and contributing. Before touching a single line, know how to prove nothing broke — the same two commands the project's own CI runs on every push.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track D · For developers · Episode 71 · Module 19</p>
+      <h1>Running and reading the test suite</h1>
+      <p class="lead">What the project checks before it trusts a change.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="12"
+      data-cue="TERMINAL: run npm test — let it finish and show the pass count."
+      data-narration="npm test runs Vitest over the tests folder. Hundreds of specs, covering the pure logic across the codebase plus the sharper stuff: the store's streaming path, the tool-call loop, the lazy chat-hydration invariants, the agent loop, the memory store, the voice stack. This is the same command E04 had you run right after building from source, back in Module 1 — now you're seeing what it's actually protecting.">
+      <p class="eyebrow">The frontend suite</p>
+      <h2>npm test</h2>
+      <pre class="term">$ npm test
+      <span class="a">Vitest — tests/</span>
+      <span class="g">✓ streaming, tool loop, lazy hydration,
+  agent loop, memory, voice — all green</span></pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="TERMINAL: run npx tsc --noEmit — point out it exits clean with no output."
+      data-narration="npx tsc --noEmit is the second half — no test runs, it just type-checks the whole project. This is what catches a shim whose signature drifted from the real Tauri import, or a component destructuring a store action that got renamed. Clean output, no errors, is success — silence is the passing state.">
+      <p class="eyebrow">The type check</p>
+      <h2>npx tsc --noEmit</h2>
+      <pre class="term">$ npx tsc --noEmit
+      <span class="c">(nothing printed = success)</span></pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="SWITCH TO EDITOR: open .github/workflows/ci.yml briefly."
+      data-narration="Both of these, plus a Vite build and cargo clippy and cargo test on the Rust side, run automatically in ci.yml on every push and every pull request. Nothing merges without all four passing — so running them locally first is just doing on your machine what would otherwise fail in public a few minutes later.">
+      <p class="eyebrow">Same checks, automated</p>
+      <h2>ci.yml runs all of this on every push</h2>
+      <ul>
+        <li>npm test · npx tsc --noEmit · vite build</li>
+        <li>cargo clippy -D warnings · cargo test (Linux)</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="14"
+      data-cue="SWITCH TO EDITOR: open src-tauri/src/local.rs, jump to fn launch_flag_args and the #[cfg(test)] mod launch_tests block below start_server."
+      data-narration="Now the Rust side of testing, as a concrete example, revisiting E51. start_server has a real side effect — it spawns a process — so it can't be unit-tested directly without actually launching llama-server. The fix: launch_flag_args, the part that turns LaunchOpts into a Vec of command-line strings, was pulled out as its own pure function. No side effects, so it's trivial to test in isolation.">
+      <p class="eyebrow">A concrete example</p>
+      <h2>launch_flag_args, pulled out of start_server</h2>
+      <pre class="term">fn launch_flag_args(o: &amp;LaunchOpts) -&gt; Vec&lt;String&gt; {
+    <span class="c">// pure: reads o, returns strings, no process spawned</span>
+}
+pub fn start_server(..., opts) {
+    args.extend(launch_flag_args(&amp;opts.unwrap_or_default()));
+    <span class="c">// then, and only then, actually spawn the process</span>
+}</pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="EDITOR: read the unset_options_emit_nothing test inside mod launch_tests."
+      data-narration="And the test itself checks the exact compatibility guarantee from E51: a default LaunchOpts, with nothing set, must produce an empty Vec — no flags at all. That's what lets an older llama-server binary that's never heard of --n-cpu-moe or --fit-target still launch cleanly. One assertion, no process, no server, and it runs in milliseconds as part of cargo test.">
+      <p class="eyebrow">What the test actually proves</p>
+      <h2>unset_options_emit_nothing</h2>
+      <pre class="term">#[test]
+fn unset_options_emit_nothing() {
+    assert!(launch_flag_args(&amp;LaunchOpts::default()).is_empty());
+}</pre>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="The pattern generalizes past this one file. Anything with a side effect — spawning a process, hitting the network, touching a real filesystem — resists testing directly. The fix is almost always the same: pull the decision-making part out as a pure function of its inputs, test that thoroughly, and keep the side effect itself as a thin, un-tested wrapper around it.">
+      <p class="eyebrow">The general pattern</p>
+      <h2>Extract the pure decision from the side effect</h2>
+      <ul class="ok">
+        <li>Side-effecting code (spawn, network, disk) stays thin and untested</li>
+        <li>The logic that decides what to do becomes a pure, thoroughly tested function</li>
+      </ul>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide title"
+      data-seconds="7"
+      data-narration="With the checks understood, next episode is your first real contribution — adding a genuine built-in tool to the codebase, the way a real pull request would, rather than a user-authored script.">
+      <p class="eyebrow">Up next</p>
+      <h1>E72 · Adding a new<br/>built-in tool</h1>
+      <p class="lead">The real contribution path, not a user script.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

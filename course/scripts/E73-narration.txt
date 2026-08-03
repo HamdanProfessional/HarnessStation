@@ -1,0 +1,23 @@
+# Slide 1
+Second contribution exercise, this time on the UI layer. We take a small component you already know from the sidebar — the notification bell — and extend it with one small, real, end-to-end feature.
+
+# Slide 2
+NotificationBell.tsx is deliberately small — a button with an unread badge, and a dropdown listing history from useToast, its own little Zustand store, same one-object-plus-actions shape as store.ts from E66 but scoped to just toasts: history, unread, clearUnread, clearHistory.
+
+# Slide 3
+The feature: let a viewer mute one kind of notification — say, info toasts, which fire the most and matter least — without touching success or error. Small, real, and it needs a setting that survives a restart, not just component state.
+
+# Slide 4
+That's why this hooks into the real store.ts, not toast.ts's local one — a mute preference belongs alongside every other durable setting, saved to settings.json like everything in E44. Add a field to the settings shape, mutedToastKinds, and use the store's existing update action to change it — the same pattern any settings panel in the app already uses.
+
+# Slide 5
+toast.ts's push function is where every notification is born, so that's where muting has to be enforced: read the current mutedToastKinds from the main store, and if this kind is in it, skip appending to history and skip incrementing unread. One conditional, right at the source.
+
+# Slide 6
+Last piece: a control inside the bell's own dropdown, next to Clear — a small toggle per kind, calling updateSettings straight from the component, exactly the way ChatWindow.tsx called store actions in E66. No new panel, no new route — the feature lives entirely inside the component it extends.
+
+# Slide 7
+Verify end to end: mute info, trigger something that would normally toast info, confirm silence — then restart the app entirely and confirm the mute survived, because it's in settings.json now, not component state that resets on reload.
+
+# Slide 8
+One episode left in the entire series. We close the developer track, and the course, by looking at where this project has actually been and where it's actually going.

@@ -1,0 +1,68 @@
+1
+00:00:00,000 --> 00:00:06,000
+Module 11 closes with the question everyone eventually asks: why did this get expensive, and what actually brings the number down.
+
+2
+00:00:06,000 --> 00:00:09,542
+Back to the loop from Episode 11: eight tool calls means nine requests, not one.
+
+3
+00:00:09,542 --> 00:00:14,723
+And the ninth resends everything from the first eight — the whole growing history goes out again on every single lap.
+
+4
+00:00:14,723 --> 00:00:18,000
+That resend is why agentic tasks cost so much more than a single question.
+
+5
+00:00:18,000 --> 00:00:19,985
+Where the money actually goes: input tokens.
+
+6
+00:00:19,985 --> 00:00:27,789
+Global, project, and chat instructions; recalled memory; retrieved knowledge passages; every enabled tool's definition; and the entire conversation history, resent each lap.
+
+7
+00:00:27,789 --> 00:00:30,000
+The reply you get back is usually the cheap part.
+
+8
+00:00:30,000 --> 00:00:43,000
+Ranked, what actually saves money: pick a smaller model for most work, compact long chats, start a fresh chat for a new topic instead of dragging the old one along, enable fewer tools, be specific so the loop stays short, and split large tasks into smaller ones.
+
+9
+00:00:43,000 --> 00:00:47,682
+What does not help much: shortening your own message, turning memory off, or avoiding tools altogether.
+
+10
+00:00:47,682 --> 00:00:53,000
+None of those touch the real sinks — instructions, history, and tool definitions dwarf a shorter question every time.
+
+11
+00:00:53,000 --> 00:00:55,184
+Set caps in Settings, Usage.
+
+12
+00:00:55,184 --> 00:01:04,000
+Once a cap is reached, the app stops rather than continuing silently — you get a clear halt, not a surprise bill.
+
+13
+00:01:04,000 --> 00:01:05,173
+Gotcha: the underrated sinks.
+
+14
+00:01:05,173 --> 00:01:13,059
+Scheduled runs firing unattended, swarms running several conversations at once, a long browser session where every page read gets resent on every following request, and image or video generation.
+
+15
+00:01:13,059 --> 00:01:15,000
+Watch those before you watch your prompt length.
+
+16
+00:01:15,000 --> 00:01:15,800
+That closes Track B.
+
+17
+00:01:15,800 --> 00:01:21,000
+Track C goes local — starting with the question everyone with real hardware eventually asks: which model actually fits my machine.
+

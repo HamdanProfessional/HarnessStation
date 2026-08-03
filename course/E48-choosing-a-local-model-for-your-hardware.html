@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E48 · Choosing a local model for your hardware</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="Track C, Advanced. We start with the question that decides everything else about running local: which model size actually fits the machine you already own.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track C · Advanced · Episode 48 · Module 12</p>
+      <h1>Choosing a local model for your hardware</h1>
+      <p class="lead">Matching model size to what you actually own.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="A realistic sizing table, four-bit quantized: eight gigabytes of RAM gets you a three-to-four billion parameter model. Sixteen gigabytes, seven-to-eight billion. Thirty-two gigabytes, fourteen billion. Sixty-four gigabytes and up, thirty-two to seventy billion. Bigger RAM buys bigger models, roughly linearly.">
+      <p class="eyebrow">Sizing table (4-bit quantized)</p>
+      <h2>Match RAM/VRAM to parameter count</h2>
+      <pre class="term"><span class="c">8GB</span>    → 3–4B
+<span class="c">16GB</span>   → 7–8B
+<span class="c">32GB</span>   → 14B
+<span class="c">64GB+</span> → 32–70B</pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="But the size that matters more than raw parameter count is tool-calling reliability. A small model can write fine prose and still fail to call a tool correctly — and this app is built around tools. Prose quality is the wrong thing to optimize first."
+      >
+      <p class="eyebrow">The real bottleneck</p>
+      <h2>Tool-calling reliability, not prose</h2>
+      <ul>
+        <li class="warn">A model can write well and still call tools unreliably</li>
+        <li>Tool reliability is the bottleneck this app actually cares about</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: re-run the E09 README-summarize-with-Files-tool prompt on a candidate local model."
+      data-narration="Test this early, with the same prompt from Episode 9 — read the README in this folder and tell me what the project does, with the Files tool on. If a candidate model can't complete that reliably, its parameter count does not matter.">
+      <p class="eyebrow">Test it early</p>
+      <h2>Reuse the E09 README prompt</h2>
+      <p class="lead">Files tool on, ask it to read and summarize a real README.
+        If that fails, the model fails — regardless of size.</p>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="You are not choosing one model for everything. Mix local and cloud per chat: local for everyday, private work where a smaller model is plenty; cloud for the hard reasoning tasks where quality matters more than privacy or cost."
+      >
+      <p class="eyebrow">Mixing routes</p>
+      <h2>Local for everyday, cloud for hard reasoning</h2>
+      <ul>
+        <li class="ok">Local — everyday, private work</li>
+        <li>Cloud — hard reasoning, when quality outweighs cost</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="Gotcha: there is a real quality gap between a quantized local model and a frontier cloud one. Set that expectation before recording anything else in this module — local is genuinely capable, not a drop-in replacement for everything."
+      >
+      <p class="eyebrow">Gotcha</p>
+      <h2>Local has a real quality gap — expect it</h2>
+      <p class="lead">Capable, not a drop-in replacement for a frontier cloud
+        model on every task.</p>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Sizing tells you what to look for. Next we actually go get one — searching and downloading a GGUF straight from inside the app."
+      >
+      <p class="eyebrow">Up next</p>
+      <h1>E49 · Discover and<br/>My Models</h1>
+      <p class="lead">Downloading a GGUF, straight from the app.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

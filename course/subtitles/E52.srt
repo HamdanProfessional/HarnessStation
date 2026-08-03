@@ -1,0 +1,72 @@
+1
+00:00:00,000 --> 00:00:03,012
+Module 13 is the device mesh — letting two machines you own work together.
+
+2
+00:00:03,012 --> 00:00:07,000
+This episode: turn it on, find each other, and pair them with a real proof-of-knowledge handshake.
+
+3
+00:00:07,000 --> 00:00:08,040
+Settings, Devices.
+
+4
+00:00:08,040 --> 00:00:14,283
+Give this machine a name, hit Turn on, and optionally set it to start with the app so it's always reachable.
+
+5
+00:00:14,283 --> 00:00:17,000
+That's the whole setup on one side of the link.
+
+6
+00:00:17,000 --> 00:00:20,404
+On the same LAN, machines with the mesh on find each other automatically.
+
+7
+00:00:20,404 --> 00:00:26,000
+If discovery doesn't show one — different subnet, different network — you can always add it directly by address instead.
+
+8
+00:00:26,000 --> 00:00:30,339
+Pairing: on the target machine, click Show pairing code — it's valid five minutes and single-use.
+
+9
+00:00:30,339 --> 00:00:33,022
+On the initiator, enter that code plus the target's address.
+
+10
+00:00:33,022 --> 00:00:40,000
+Behind the scenes it's a proof-of-knowledge handshake, so neither the short code nor the long-lived token it produces ever crosses the network in the clear.
+
+11
+00:00:40,000 --> 00:00:45,637
+Once that handshake completes, the two machines have a long-lived trust relationship — you don't re-pair every session.
+
+12
+00:00:45,637 --> 00:00:49,000
+What that trust does and doesn't grant is next episode's whole subject.
+
+13
+00:00:49,000 --> 00:00:52,149
+Say this one loud and clear: the mesh traffic itself is not encrypted yet.
+
+14
+00:00:52,149 --> 00:00:58,957
+The handshake protects your credentials and blocks replay attacks, but everything after that — prompts, tool output, retrieved documents — travels in plaintext.
+
+15
+00:00:58,957 --> 00:01:00,489
+That's fine on a home LAN you trust.
+
+16
+00:01:00,489 --> 00:01:05,000
+Across the open internet, only inside a VPN or tunnel, Tailscale, WireGuard, SSH — never a forwarded port.
+
+17
+00:01:05,000 --> 00:01:05,935
+Two machines are paired.
+
+18
+00:01:05,935 --> 00:01:11,000
+Next: exactly what that pairing lets one machine do on the other — and the hard boundaries that hold no matter what you switch on.
+

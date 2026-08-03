@@ -1,0 +1,20 @@
+# Slide 1
+A real, model-visible browser window, driven from inside a conversation. Let's turn it on and watch it open and read a page.
+
+# Slide 2
+Turn on the Browser tool group. Once it's on, ask the agent to open a page and summarize something on it — that's the whole loop for this episode.
+
+# Slide 3
+The tool list: open_url loads a page, read_all_text and find_text pull content off it, list_buttons and click_button let it interact, and take_screenshot or read_screenshot let it look. That's enough to browse, search, and click through most pages.
+
+# Slide 4
+Why a real positioned window, not an iframe embedded in the app? Cross-origin iframes can't be scripted from outside, and most real sites refuse to be framed at all. So the app opens an actual browser window and positions it — which is also why that panel holds still below the chat instead of scrolling along with it.
+
+# Slide 5
+One view, no tabs — this browser follows one page at a time, the way you'd expect from something the model is reading directly rather than juggling.
+
+# Slide 6
+The gotcha: the in-app browser cannot take a screenshot — that capability needs the browser extension, which is next episode. Combined with having only one view and no tabs, it's built for reading and clicking, not for visual work.
+
+# Slide 7
+For a session you're already signed into, or for real screenshots and tabs, the browser extension is the next step.

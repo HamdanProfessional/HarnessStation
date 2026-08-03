@@ -1,0 +1,78 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:01.321
+You know the size to look for.
+
+2
+00:00:01.321 --> 00:00:07.000
+Now let's actually get a model — the app's own download path, separate from Ollama or LM Studio, straight from Library, Discover.
+
+3
+00:00:07.000 --> 00:00:07.990
+Library, Discover.
+
+4
+00:00:07.990 --> 00:00:14.865
+Search a GGUF model by name, or skip search entirely and paste a Hugging Face URL directly — the resolve link ending in the .
+
+5
+00:00:14.865 --> 00:00:15.635
+gguf filename.
+
+6
+00:00:15.635 --> 00:00:18.000
+Either way lands on the same download step.
+
+7
+00:00:18.000 --> 00:00:20.644
+Start the download and watch the progress bar.
+
+8
+00:00:20.644 --> 00:00:28.000
+It lands under the harnessx models folder in your home directory, ready to load — no separate model manager, no Ollama required.
+
+9
+00:00:28.000 --> 00:00:39.000
+My Models lists everything downloaded, lets you set which one loads by default, and shows a “will it fit” indicator tied to the RAM and VRAM the app actually detected on this machine — a straight answer before you commit to a load.
+
+10
+00:00:39.000 --> 00:00:40.605
+A little of the Rust underneath, for credibility.
+
+11
+00:00:40.605 --> 00:00:44.207
+hw_info detects total RAM, AVX2 support, and an NVIDIA GPU via nvidia-smi — that is what powers the fit check.
+
+12
+00:00:44.207 --> 00:00:45.287
+Downloads stream to a temporary .
+
+13
+00:00:45.287 --> 00:00:47.088
+part file and only rename to the final name on success.
+
+14
+00:00:47.088 --> 00:00:47.972
+And archives — zip and tar.
+
+15
+00:00:47.972 --> 00:00:52.000
+gz — are extracted in-process, with path-traversal protection so a malicious archive can't write outside the models folder.
+
+16
+00:00:52.000 --> 00:00:57.365
+Gotcha: a green “will it fit” only covers loading the model into memory — it says nothing about tool-calling reliability.
+
+17
+00:00:57.365 --> 00:01:01.000
+Come back to E48's README test before trusting a small model with real agent work.
+
+18
+00:01:01.000 --> 00:01:02.640
+Downloaded is not the same as running.
+
+19
+00:01:02.640 --> 00:01:07.000
+Next we load this model into the app's own supervised server and tune context length and GPU offload.
+

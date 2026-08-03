@@ -1,0 +1,20 @@
+# Slide 1
+Is the expensive model actually better for the thing you're doing? Compare answers that in under a minute, side by side, with the numbers right there.
+
+# Slide 2
+Go to Library, Compare. Pick several models, and get ready to send the same prompt to all of them at once.
+
+# Slide 3
+Type one prompt, send it once, and every chosen model answers it in parallel — replies side by side, each with its token count and its cost, so you're not just comparing quality, you're comparing quality against what it actually cost to get it.
+
+# Slide 4
+Read it as one question: for this specific prompt, does the pricier model's answer justify its cost? Sometimes yes, clearly. Sometimes a cheaper model is indistinguishable for the task at hand — and now you have the evidence, not a guess.
+
+# Slide 5
+This is a spot check on one prompt, not a benchmark — it's fast precisely because it's narrow. Good for a quick gut check before committing to a model for a task.
+
+# Slide 6
+Gotcha: one prompt is one data point. If the task varies a lot between runs, run Compare a few times with different real examples before trusting the verdict.
+
+# Slide 7
+Compare is great for a real prompt you care about. Next, public benchmarks — what they're good for, and where they stop being trustworthy.

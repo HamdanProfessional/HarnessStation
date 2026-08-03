@@ -1,0 +1,20 @@
+# Slide 1
+Time to talk about Benchmarks — the leaderboard scores you have probably seen elsewhere, and why the app hands them to you for free but does not want you stopping there.
+
+# Slide 2
+Open Library, Benchmarks. It is a table of public leaderboard scores — coding, reasoning, general knowledge — pulled in for every model the app knows about, so you can sort and compare without leaving the app.
+
+# Slide 3
+This is the one thing the app fetches for you instead of routing through your own provider key. A small gateway serves the scores; it needs no key of yours, and it carries no data about you or your machine — just public numbers matched against the model list.
+
+# Slide 4
+Here is the catch. These test questions are, at this point, plastered across the internet. Training data for newer models likely includes material that looks a lot like the benchmark itself — so a high score partly reflects memorization, not raw capability.
+
+# Slide 5
+Which makes a benchmark a weak proxy for your actual task. A model that tops a coding leaderboard can still fumble the exact tool-calling pattern your workflow depends on. Use benchmarks to narrow the field — three or four candidates — never to make the final call.
+
+# Slide 6
+So the rule: shortlist with Benchmarks, then test with Evals — your own test cases, on your own task. That is next episode, and it is the step that actually tells you which model wins for you.
+
+# Slide 7
+So how do you build a test that actually reflects your work? Next episode we build a real eval set — a handful of test cases with a right answer, run straight against any model.

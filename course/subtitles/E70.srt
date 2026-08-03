@@ -1,0 +1,104 @@
+1
+00:00:00,000 --> 00:00:00,636
+Hands-on episode.
+
+2
+00:00:00,636 --> 00:00:05,128
+We add one small new command — get clipboard text — twice: once as a real Tauri command in Rust, once as a browser shim.
+
+3
+00:00:05,128 --> 00:00:07,000
+Same invoke call site, unmodified, on both builds.
+
+4
+00:00:07,000 --> 00:00:08,641
+The target: get_clipboard_text.
+
+5
+00:00:08,641 --> 00:00:16,000
+A tiny, self-contained command — no dependencies on anything else in the app — so the whole shim pattern from E68 is visible without noise.
+
+6
+00:00:16,000 --> 00:00:16,541
+Rust side first.
+
+7
+00:00:16,541 --> 00:00:21,512
+A #[tauri::command] function, using the arboard crate or Tauri's own clipboard plugin to read the system clipboard and return a String or an error.
+
+8
+00:00:21,512 --> 00:00:30,000
+Then the one easy step to forget: add it to generate_handler's list in the invoke_handler chain — a command that exists but isn't listed there is invisible to the frontend and fails with a not-found error that looks nothing like a permissions problem.
+
+9
+00:00:30,000 --> 00:00:32,740
+Browser side: a new tiny file, web/shims/clipboard.
+
+10
+00:00:32,740 --> 00:00:34,888
+ts, importing registerCommand from core.
+
+11
+00:00:34,888 --> 00:00:40,529
+ts and registering exactly the same command name — get_clipboard_text — backed by the standard navigator.
+
+12
+00:00:40,529 --> 00:00:41,066
+clipboard.
+
+13
+00:00:41,066 --> 00:00:41,764
+readText API.
+
+14
+00:00:41,764 --> 00:00:43,000
+That's the entire shim.
+
+15
+00:00:43,000 --> 00:00:47,330
+One wiring step the new file needs: something has to import it so its registerCommand call actually runs.
+
+16
+00:00:47,330 --> 00:00:51,495
+The other shims are pulled in from a central entry point purely for that side effect — add clipboard.
+
+17
+00:00:51,495 --> 00:00:52,320
+ts alongside secret.
+
+18
+00:00:52,320 --> 00:00:52,773
+ts, opener.
+
+19
+00:00:52,773 --> 00:00:55,000
+ts and the rest there, or it silently never registers.
+
+20
+00:00:55,000 --> 00:01:05,000
+And the call site, wherever it lives in src/ — a tool, a component, doesn't matter — needs exactly one line, and it's the same line either build reads it in.
+
+21
+00:01:05,000 --> 00:01:05,677
+Prove it both ways.
+
+22
+00:01:05,677 --> 00:01:08,954
+npm run tauri dev, trigger the call, confirm it returns whatever's really on your clipboard.
+
+23
+00:01:08,954 --> 00:01:14,511
+Then, separately, npm run web:dev — no Tauri process behind it at all — trigger the exact same call, and confirm the browser's own clipboard API answers it.
+
+24
+00:01:14,511 --> 00:01:19,000
+That side-by-side proof is the whole point of the architecture from E68: the call site never knew which one it was talking to.
+
+25
+00:01:19,000 --> 00:01:20,729
+You've now touched both sides of the seam.
+
+26
+00:01:20,729 --> 00:01:26,000
+Module 19 turns to process: how the app is actually tested, and how a real change gets contributed and verified before it ships.
+

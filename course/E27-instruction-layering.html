@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E27 · Instruction layering</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="6"
+      data-narration="Back in the agent-loop episode we said instructions stack instead of replacing each other. Now let's make that concrete with a real project in front of us — global, project, and chat, all three at once.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 27 · Module 8</p>
+      <h1>Instruction layering</h1>
+      <p class="lead">Global, project, and chat — all three apply at once.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: Settings › Instructions — add a global instruction: reply in UK English."
+      data-narration="First, a global instruction in Settings — this applies everywhere, in every project and every chat. We'll set it to something simple: always reply in UK English.">
+      <p class="eyebrow">Layer 1</p>
+      <h2>Global — Settings › Instructions</h2>
+      <pre class="term"><span class="a">global</span>  Always reply in UK English.</pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: inside the Acme project, its Instructions tab — add: always mention the account manager's name."
+      data-narration="Second, a project instruction, set on the Acme project itself: always mention the account manager's name in a reply. This only applies inside Acme — Brightside never sees it.">
+      <p class="eyebrow">Layer 2</p>
+      <h2>Project — Acme › Instructions</h2>
+      <pre class="term"><span class="a">project</span>  Always mention the account manager's name.</pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="11"
+      data-cue="APP: inside a chat in Acme, its own instruction icon — add: keep replies under three sentences."
+      data-narration="Third, a chat instruction, set on one specific conversation inside Acme: keep replies under three sentences. That's the narrowest layer — it only touches this one chat.">
+      <p class="eyebrow">Layer 3</p>
+      <h2>Chat — this conversation only</h2>
+      <pre class="term"><span class="a">chat</span>  Keep replies under three sentences.</pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="13"
+      data-cue="APP: send a message in that chat, expand the reply — point out UK spelling, the manager's name, and the short length, all present together."
+      data-narration="Send a message and look at the reply: it's in UK English, it names the account manager, and it's three sentences or fewer. All three layers showed up at once, because none of them replaced any other — they stacked, exactly like the agent-loop episode described.">
+      <p class="eyebrow">One reply, three layers</p>
+      <h2>All three show up together</h2>
+      <ul>
+        <li class="ok">UK spelling — from global</li>
+        <li class="ok">Names the account manager — from project</li>
+        <li class="ok">Three sentences or fewer — from chat</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="13"
+      data-narration="Two diagnoses worth memorizing. Facts from one project leaking into another? Check Settings, Memory — the scope may be set wider than project-only. A chat not picking up project instructions at all? It simply isn't inside the project yet — drag it in, or start it from the project's own new-chat button.">
+      <p class="eyebrow">Diagnose</p>
+      <h2>Two common complaints</h2>
+      <ul>
+        <li class="warn"><b>Facts leak between projects</b> → check Settings › Memory scope</li>
+        <li class="warn"><b>Chat ignores project instructions</b> → it isn't in the project yet</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Instructions are one way to shape a reply. Next, Module 9 covers a bigger one — giving the model your own documents to draw on.">
+      <p class="eyebrow">Up next · Module 9</p>
+      <h1>E28 · Your first<br/>knowledge base</h1>
+      <p class="lead">Index real documents for grounded answers.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>

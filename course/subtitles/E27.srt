@@ -1,0 +1,68 @@
+1
+00:00:00,000 --> 00:00:02,687
+Back in the agent-loop episode we said instructions stack instead of replacing each other.
+
+2
+00:00:02,687 --> 00:00:06,000
+Now let's make that concrete with a real project in front of us — global, project, and chat, all three at once.
+
+3
+00:00:06,000 --> 00:00:12,806
+First, a global instruction in Settings — this applies everywhere, in every project and every chat.
+
+4
+00:00:12,806 --> 00:00:17,000
+We'll set it to something simple: always reply in UK English.
+
+5
+00:00:17,000 --> 00:00:24,376
+Second, a project instruction, set on the Acme project itself: always mention the account manager's name in a reply.
+
+6
+00:00:24,376 --> 00:00:28,000
+This only applies inside Acme — Brightside never sees it.
+
+7
+00:00:28,000 --> 00:00:35,114
+Third, a chat instruction, set on one specific conversation inside Acme: keep replies under three sentences.
+
+8
+00:00:35,114 --> 00:00:39,000
+That's the narrowest layer — it only touches this one chat.
+
+9
+00:00:39,000 --> 00:00:45,100
+Send a message and look at the reply: it's in UK English, it names the account manager, and it's three sentences or fewer.
+
+10
+00:00:45,100 --> 00:00:52,000
+All three layers showed up at once, because none of them replaced any other — they stacked, exactly like the agent-loop episode described.
+
+11
+00:00:52,000 --> 00:00:53,348
+Two diagnoses worth memorizing.
+
+12
+00:00:53,348 --> 00:00:55,261
+Facts from one project leaking into another?
+
+13
+00:00:55,261 --> 00:00:58,304
+Check Settings, Memory — the scope may be set wider than project-only.
+
+14
+00:00:58,304 --> 00:01:00,478
+A chat not picking up project instructions at all?
+
+15
+00:01:00,478 --> 00:01:05,000
+It simply isn't inside the project yet — drag it in, or start it from the project's own new-chat button.
+
+16
+00:01:05,000 --> 00:01:07,000
+Instructions are one way to shape a reply.
+
+17
+00:01:07,000 --> 00:01:11,000
+Next, Module 9 covers a bigger one — giving the model your own documents to draw on.
+

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E44 · Settings, panel by panel</title>
+<link rel="stylesheet" href="assets/deck.css" />
+</head>
+<body>
+<div class="help">→ next · ← back · C captions · N notes · A autoplay · F fullscreen</div>
+<div id="stage">
+  <div class="canvas">
+    <div class="bar"></div>
+    <div class="counter"></div>
+    <div class="captions"></div>
+    <div class="cue"></div>
+
+    <!-- 1 -->
+    <section class="slide title current"
+      data-seconds="7"
+      data-narration="One reference episode covering every settings panel, so every later video can just say “see E44” instead of re-explaining. Worth bookmarking.">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+          <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <span class="name">Harness<span>Station</span></span>
+      </div>
+      <p class="eyebrow">Track B · Intermediate · Episode 44 · Module 11</p>
+      <h1>Settings, panel by panel</h1>
+      <p class="lead">Every panel, once, so nothing later needs re-explaining.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide"
+      data-seconds="10"
+      data-cue="SWITCH TO APP: Settings. Click through all eight panel tabs left to right."
+      data-narration="Eight panels total: General, Providers, Media models, Voice, Memory, Devices, Usage, and Data & updates. We have touched most of these already — this is the map that ties them together.">
+      <p class="eyebrow">Eight panels</p>
+      <h2>General · Providers · Media models · Voice</h2>
+      <h2 style="margin-top:-20px">Memory · Devices · Usage · Data &amp; updates</h2>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide"
+      data-seconds="9"
+      data-cue="APP: type “interrupt” in the settings search box, show it lands on barge-in."
+      data-narration="The search box at the top matches on what a setting does, not what it is called. Type “interrupt” and it finds barge-in, because that is the behavior, even though the word never appears in its label.">
+      <p class="eyebrow">The search box</p>
+      <h2>Matches behavior, not the label</h2>
+      <pre class="term"><span class="c">search</span>  interrupt
+<span class="a">→</span>       finds <span class="g">Barge-in</span> (Voice panel)</pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide"
+      data-seconds="10"
+      data-narration="Every panel uses the same draft-and-save model. Changes show an unsaved marker until you press Ctrl+S. Navigate away with unsaved changes and it confirms before discarding them — nothing is written until you tell it to.">
+      <p class="eyebrow">The draft/Save model</p>
+      <h2>Nothing saves until you say so</h2>
+      <ul>
+        <li>Unsaved changes show a marker — <b>Ctrl+S</b> to commit</li>
+        <li class="ok">Navigating away with unsaved changes asks first</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="If you only change a handful of settings, make it these: spend caps, the voice engine, speech rewrite, auto-compact, the embedding model, background mode, and how much of the context window memory is allowed to use. Every one of them has come up already in this series for a reason.">
+      <p class="eyebrow">Most worth changing</p>
+      <h2>The short list that actually matters</h2>
+      <ul>
+        <li>Spend caps · Voice engine · Speech rewrite</li>
+        <li>Auto-compact · Embedding model</li>
+        <li>Background mode · Memory share</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide"
+      data-seconds="12"
+      data-narration="A few things people go looking for and will not find: a per-tool default model, cloud sync, and a memory share above the twenty-five percent ceiling. Each is a deliberate absence, not a missing feature — simplicity, no account to sync to, and protecting the context window on purpose.">
+      <p class="eyebrow">Deliberate absences</p>
+      <h2>Things people expect, and will not find</h2>
+      <ul>
+        <li class="no">A per-tool default model</li>
+        <li class="no">Cloud sync — there is no account to sync to</li>
+        <li class="no">Memory share above 25% — a hard cap, on purpose</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide"
+      data-seconds="11"
+      data-narration="One update worth flagging: new chats now enable the built-in tools by default, rather than starting empty. That is a starting point, not a standing “enable everything forever” switch — you still trim it down per chat, the same habit from Module 7 about fewer tools choosing better.">
+      <p class="eyebrow">Gotcha</p>
+      <h2>Tools now default on — still trim per chat</h2>
+      <ul>
+        <li>New chats start with built-in tools enabled, not empty</li>
+        <li class="warn">That is a default, not a permanent “enable everything” — trim per chat</li>
+      </ul>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide title"
+      data-seconds="6"
+      data-narration="Settings covered the app's own configuration. Next we go deep on one panel specifically — Memory — the three scopes it tracks and the budget that keeps it in check.">
+      <p class="eyebrow">Up next</p>
+      <h1>E45 · Memory —<br/>scopes and budget</h1>
+      <p class="lead">Three scopes, one shared budget.</p>
+    </section>
+
+    <aside class="notes">
+      <h4>Narration</h4>
+      <div class="n-narr"></div>
+      <h4>Director cue</h4>
+      <div class="n-cue"></div>
+    </aside>
+  </div>
+</div>
+<script src="assets/deck.js"></script>
+</body>
+</html>
