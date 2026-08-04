@@ -42,3 +42,6 @@ docs-site/dist
 
 # Built web app
 web/dist
+
+# Community library data (lives only on the box, like .env)
+server/library.json

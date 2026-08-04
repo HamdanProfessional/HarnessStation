@@ -18,6 +18,7 @@
  */
 import express from "express";
 import fs from "node:fs";
+import crypto from "node:crypto";
 
 const PORT = process.env.PORT ?? 8787;
 const AA_API_KEY = process.env.AA_API_KEY ?? "";
@@ -82,14 +83,19 @@ function startRefreshLoop() {
 
 app.use((req, res, next) => {
   // The desktop app has an opaque/tauri origin, so a wildcard is the practical
-  // choice. Nothing served here is user-specific and every route is a public read.
+  // choice. GET routes are public reads; the community library also accepts POST
+  // (publish / like / download) — still no accounts, keyed only by a hashed IP.
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   if (req.method === "OPTIONS") return res.sendStatus(204);
-  if (req.method !== "GET") return res.sendStatus(405);
+  if (req.method !== "GET" && req.method !== "POST") return res.sendStatus(405);
   next();
 });
+
+// Parse JSON bodies for the library's POST routes. Cap the size so a payload
+// can't be used to exhaust memory.
+app.use(express.json({ limit: "300kb" }));
 
 const hits = new Map(); // ip -> { n, resetAt }
 app.use((req, res, next) => {
@@ -211,6 +217,157 @@ function loadDirectory() {
 }
 app.get("/api/mcp/directory", (_req, res) => res.json(directory));
 
+/**
+ * Community library: a public marketplace for user-made Skills, Agents,
+ * Workflows and Schedules. No accounts — publishing is anonymous with a chosen
+ * author name, and a "like" is keyed to a hashed IP so one visitor counts once.
+ *
+ * Persisted to library.json on the box (like .env, kept out of git). Held in
+ * memory and written back debounced, since traffic is low and each item is small.
+ */
+const LIBRARY_FILE = process.env.LIBRARY_FILE
+  ? new URL(process.env.LIBRARY_FILE, `file://${process.cwd()}/`)
+  : new URL("./library.json", import.meta.url);
+// Salt so stored like-keys aren't reversible to raw IPs.
+const LIBRARY_SALT = process.env.LIBRARY_SALT ?? "hs-library-v1";
+const KINDS = new Set(["skill", "agent", "workflow", "schedule"]);
+
+let library = [];
+try {
+  const rows = JSON.parse(fs.readFileSync(LIBRARY_FILE, "utf8"));
+  if (Array.isArray(rows)) library = rows;
+} catch {
+  /* no file yet — start empty */
+}
+
+let saveTimer = null;
+function persistLibrary() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      fs.writeFileSync(LIBRARY_FILE, JSON.stringify(library));
+    } catch (e) {
+      console.warn(`[gateway] could not write library.json: ${e}`);
+    }
+  }, 500);
+  saveTimer.unref?.();
+}
+
+function ipKey(req) {
+  return crypto.createHash("sha256").update(`${LIBRARY_SALT}:${req.ip ?? ""}`).digest("hex").slice(0, 16);
+}
+
+/** Public shape of an item (no payload, no raw like-keys). */
+function publicItem(item, requester) {
+  return {
+    id: item.id,
+    type: item.type,
+    name: item.name,
+    description: item.description,
+    author: item.author,
+    tags: item.tags,
+    createdAt: item.createdAt,
+    downloads: item.downloads,
+    likes: item.likes,
+    liked: requester ? !!item.likedBy[requester] : false,
+  };
+}
+
+/** Trending favours things that are both liked and recent. */
+function trendingScore(item, now) {
+  const ageDays = (now - item.createdAt) / 86_400_000;
+  return (item.likes * 3 + item.downloads) * Math.exp(-ageDays / 14);
+}
+
+app.get("/api/library", (req, res) => {
+  const requester = ipKey(req);
+  const type = String(req.query.type ?? "all");
+  const tag = String(req.query.tag ?? "").toLowerCase();
+  const q = String(req.query.q ?? "").toLowerCase().trim();
+  const sort = String(req.query.sort ?? "trending");
+  const limit = Math.min(Number(req.query.limit) || 60, 100);
+  const now = Date.now();
+
+  let items = library.filter((i) => (type === "all" || i.type === type));
+  if (tag) items = items.filter((i) => (i.tags ?? []).some((t) => t.toLowerCase() === tag));
+  if (q) {
+    items = items.filter((i) =>
+      `${i.name} ${i.description} ${i.author} ${(i.tags ?? []).join(" ")}`.toLowerCase().includes(q),
+    );
+  }
+  const by = {
+    newest: (a, b) => b.createdAt - a.createdAt,
+    downloaded: (a, b) => b.downloads - a.downloads || b.likes - a.likes,
+    recommended: (a, b) => b.likes - a.likes || b.downloads - a.downloads,
+    trending: (a, b) => trendingScore(b, now) - trendingScore(a, now),
+  };
+  items = items.slice().sort(by[sort] ?? by.trending).slice(0, limit);
+
+  // A small tag cloud so the client can offer filters without a second request.
+  const tagCount = {};
+  for (const i of library) for (const t of i.tags ?? []) tagCount[t] = (tagCount[t] ?? 0) + 1;
+  const tags = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).slice(0, 24).map(([t]) => t);
+
+  res.json({ items: items.map((i) => publicItem(i, requester)), total: library.length, tags });
+});
+
+app.get("/api/library/:id", (req, res) => {
+  const item = library.find((i) => i.id === req.params.id);
+  if (!item) return res.status(404).json({ error: "not found" });
+  res.json({ ...publicItem(item, ipKey(req)), payload: item.payload });
+});
+
+app.post("/api/library/publish", (req, res) => {
+  const b = req.body ?? {};
+  const type = String(b.type ?? "");
+  const name = String(b.name ?? "").trim();
+  const description = String(b.description ?? "").trim();
+  const author = (String(b.author ?? "").trim() || "Anonymous").slice(0, 40);
+  const payload = String(b.payload ?? "");
+  const tags = Array.isArray(b.tags)
+    ? [...new Set(b.tags.map((t) => String(t).trim().toLowerCase()).filter(Boolean))].slice(0, 8)
+    : [];
+  if (!KINDS.has(type)) return res.status(400).json({ error: "bad type" });
+  if (name.length < 2 || name.length > 80) return res.status(400).json({ error: "name must be 2–80 chars" });
+  if (description.length > 600) return res.status(400).json({ error: "description too long" });
+  if (!payload || payload.length > 280_000) return res.status(400).json({ error: "payload missing or too large" });
+
+  const item = {
+    id: crypto.randomUUID(),
+    type, name, description, author, tags, payload,
+    createdAt: Date.now(),
+    downloads: 0,
+    likes: 0,
+    likedBy: {},
+  };
+  library.push(item);
+  persistLibrary();
+  res.json(publicItem(item, ipKey(req)));
+});
+
+app.post("/api/library/:id/like", (req, res) => {
+  const item = library.find((i) => i.id === req.params.id);
+  if (!item) return res.status(404).json({ error: "not found" });
+  const key = ipKey(req);
+  if (item.likedBy[key]) {
+    delete item.likedBy[key];
+    item.likes = Math.max(0, item.likes - 1);
+  } else {
+    item.likedBy[key] = 1;
+    item.likes += 1;
+  }
+  persistLibrary();
+  res.json({ likes: item.likes, liked: !!item.likedBy[key] });
+});
+
+app.post("/api/library/:id/download", (req, res) => {
+  const item = library.find((i) => i.id === req.params.id);
+  if (!item) return res.status(404).json({ error: "not found" });
+  item.downloads += 1;
+  persistLibrary();
+  res.json({ payload: item.payload, downloads: item.downloads });
+});
+
 app.get("/api/health", (_req, res) => {
   const feeds = {};
   for (const name of Object.keys(FEEDS)) {
@@ -221,7 +378,7 @@ app.get("/api/health", (_req, res) => {
       error: hit?.error ?? null,
     };
   }
-  res.json({ ok: true, refreshMinutes: REFRESH_MS / 60_000, feeds, trials: loadTrials().length });
+  res.json({ ok: true, refreshMinutes: REFRESH_MS / 60_000, feeds, trials: loadTrials().length, library: library.length });
 });
 
 // ---------- boot ----------

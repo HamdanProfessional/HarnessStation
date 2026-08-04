@@ -4,6 +4,7 @@ import { computeNextRun, describeCadence, formatWhen } from "../lib/schedule";
 import { useStore } from "../lib/store";
 import type { Cadence, Schedule } from "../lib/types";
 import { EmptyState } from "./EmptyState";
+import { PublishButton } from "./PublishButton";
 import { IconClock } from "./icons";
 
 function emptySchedule(providerId: string, model: string): Schedule {
@@ -247,6 +248,13 @@ export function SchedulesView() {
               <button className="btn small" onClick={() => setEditing(structuredClone(s))}>
                 Edit
               </button>
+              <PublishButton
+                kind="schedule"
+                defaultName={s.name}
+                defaultDescription={`Runs a ${s.targetType} — ${describeCadence(s.cadence)}`}
+                getEntity={() => s}
+                className="btn small"
+              />
               <button
                 className="icon-btn"
                 onClick={async () => {

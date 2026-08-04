@@ -74,6 +74,7 @@ export type View =
   | "knowledge"
   | "skills"
   | "mcp"
+  | "community"
   | "browser";
 
 /** What `deleteItem` removes: a whole message, its text, its reasoning, or one tool call. */

@@ -451,6 +451,7 @@ export function Sidebar() {
             {navBtn("workflows", "Workflows", <IconFlow size={15} />)}
             {navBtn("schedules", "Schedules", <IconClock size={15} />)}
             {navBtn("mcp", "MCP Servers", <IconPlug size={15} />)}
+            {navBtn("community", "Community", <IconGrid size={15} />)}
             {/* No Browser nav item: the browser opens on its own in the
                 conversation when the model uses it, so a sidebar toggle was
                 redundant clutter. */}

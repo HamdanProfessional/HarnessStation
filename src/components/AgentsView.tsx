@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { confirmDialog } from "../lib/dialog";
 import { EmptyState } from "./EmptyState";
+import { PublishButton } from "./PublishButton";
 import { IconAgent } from "./icons";
 import { prettyName } from "../lib/format";
 import { toast } from "../lib/toast";
@@ -317,6 +318,12 @@ export function AgentsView() {
               <button className="link-btn" onClick={() => setEditing(structuredClone(a))}>
                 Edit
               </button>
+              <PublishButton
+                kind="agent"
+                defaultName={a.name}
+                defaultDescription={a.description}
+                getEntity={() => a}
+              />
               <button
                 className="link-btn danger-link"
                 onClick={async () => {

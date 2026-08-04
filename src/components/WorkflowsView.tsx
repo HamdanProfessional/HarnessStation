@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { confirmDialog } from "../lib/dialog";
+import { PublishButton } from "./PublishButton";
 import { useStore } from "../lib/store";
 import { runWorkflow } from "../lib/workflow";
 import { mediaConfigFromSettings } from "../lib/media";
@@ -253,6 +254,13 @@ export function WorkflowsView() {
               >
                 Duplicate
               </button>
+              <PublishButton
+                kind="workflow"
+                defaultName={w.name}
+                defaultDescription={w.description}
+                getEntity={() => w}
+                className="btn small"
+              />
               <button
                 className="icon-btn"
                 onClick={async () => {

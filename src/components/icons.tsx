@@ -176,6 +176,35 @@ export const IconAgent = ({ size }: IconProps) =>
     size,
   );
 
+export const IconHeart = ({ size, filled }: IconProps & { filled?: boolean }) =>
+  svg(
+    <path
+      d="M12 20.5 4.2 12.7a4.6 4.6 0 0 1 6.5-6.5l1.3 1.3 1.3-1.3a4.6 4.6 0 0 1 6.5 6.5z"
+      fill={filled ? "currentColor" : "none"}
+    />,
+    size,
+  );
+
+export const IconDownload = ({ size }: IconProps) =>
+  svg(
+    <>
+      <path d="M12 3v12" />
+      <path d="m7 12 5 5 5-5" />
+      <path d="M5 21h14" />
+    </>,
+    size,
+  );
+
+export const IconUpload = ({ size }: IconProps) =>
+  svg(
+    <>
+      <path d="M12 21V9" />
+      <path d="m7 12 5-5 5 5" />
+      <path d="M5 3h14" />
+    </>,
+    size,
+  );
+
 export const IconPencil = ({ size }: IconProps) =>
   svg(
     <>

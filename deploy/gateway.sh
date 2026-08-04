@@ -22,7 +22,7 @@ echo "==> Uploading server code to $HOST:$DIR"
 # node_modules and .env are deliberately excluded: deps are installed on the
 # box, and the env file with the API key stays there and is never overwritten.
 tar -czf - -C server \
-  --exclude=node_modules --exclude=.env --exclude=trials.json \
+  --exclude=node_modules --exclude=.env --exclude=trials.json --exclude=library.json \
   index.mjs package.json package-lock.json mcp-directory.json .env.example trials.example.json README.md \
   | ssh "$HOST" "
     set -eu

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { confirmDialog } from "../lib/dialog";
 import { EmptyState } from "./EmptyState";
+import { PublishButton } from "./PublishButton";
 import { IconBook } from "./icons";
 import { toast } from "../lib/toast";
 import { useStore } from "../lib/store";
@@ -172,6 +173,12 @@ export function SkillsView() {
               <button className="link-btn" onClick={() => void openEditor(s)}>
                 Edit
               </button>
+              <PublishButton
+                kind="skill"
+                defaultName={s.name}
+                defaultDescription={s.description}
+                getEntity={() => readSkillRaw(s.slug)}
+              />
               <button
                 className="link-btn danger-link"
                 onClick={async () => {

@@ -4732,3 +4732,53 @@ textarea {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ---- Community library ---- */
+.community-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+.community-search { flex: 1 1 220px; min-width: 180px; }
+
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 14px; }
+.tag-row.compact { margin: 6px 0 0; }
+.tag-chip {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.tag-chip:hover { color: var(--text); border-color: var(--accent); }
+.tag-chip.active { color: #fff; background: var(--accent); border-color: var(--accent); }
+.tag-chip.static { cursor: default; }
+.tag-chip.static:hover { color: var(--text-dim); border-color: var(--border); }
+
+.like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 11px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.like-btn:hover { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
+.like-btn.liked { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, transparent); background: color-mix(in srgb, var(--danger) 10%, transparent); }
+
+.dl-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}

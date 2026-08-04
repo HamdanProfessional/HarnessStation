@@ -79,6 +79,8 @@ export interface Settings {
    * here; the value is in the OS keychain (web: localStorage) keyed `vault:<ref>`.
    */
   secrets?: VaultSecret[];
+  /** Remembered author name for publishing to the community library. */
+  communityAuthor?: string;
 }
 
 /**
