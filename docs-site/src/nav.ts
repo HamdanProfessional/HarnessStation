@@ -79,6 +79,7 @@ export const NAV: NavSection[] = [
       { slug: "guide/agents", label: "Agents" },
       { slug: "guide/workflows", label: "Workflows" },
       { slug: "guide/schedules", label: "Schedules" },
+      { slug: "guide/hooks", label: "Hooks & guardrails" },
     ],
   },
   {

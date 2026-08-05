@@ -111,3 +111,13 @@ your instructions about format and length, the less it wanders.
 **It ran up a bill.** A loop with nobody watching. This is what
 [spend caps](../concepts/cost) are for, and why they should be set before the
 first scheduled run rather than after.
+
+## Delivering the result
+
+By default a schedule's output is saved as a new chat. It can also **POST the
+result to a webhook or Slack** when it finishes — set a destination URL and
+format (JSON or Slack message) on the schedule. So a nightly briefing or a
+weekly report can land straight in a channel.
+
+This uses the same delivery mechanism as [Hooks & guardrails](hooks), where you
+can also fire webhooks on other events (a turn finishing, a tool call, an error).

@@ -81,3 +81,16 @@ should also carry tools and knowledge.
 One JSON file per chat under `~/.harnessx/conversations/`, plus an index for the
 sidebar. Plain text, readable, and yours to back up or grep.
 → [Where your data lives](../advanced/data)
+
+## Pulling in context with @-references
+
+You can inject content straight into a message with an `@`-reference:
+
+- `@file:notes/spec.md` — reads a file, resolved against the chat's
+  [working directory](tools#the-working-directory).
+- `@https://example.com/page` — fetches a URL and strips it down to text.
+
+For example: *"@file:README.md summarise this"* or *"compare
+@https://a.com/x and @https://b.com/y"*. Each reference is fetched and attached
+to your message as context (capped in size), so you don't have to paste it. A
+reference that can't be loaded is noted inline rather than failing the message.
