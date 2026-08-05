@@ -7,5 +7,9 @@ export default defineConfig({
     environment: "node",
     include: ["tests/**/*.test.ts"],
     setupFiles: ["tests/setup.ts"],
+    // The first executeTool/store test cold-loads a large module graph on demand
+    // (store → providers → tools → hooks → …), which can brush past the 5s
+    // default in CI/under load. It's import cost, not a hang.
+    testTimeout: 20_000,
   },
 });

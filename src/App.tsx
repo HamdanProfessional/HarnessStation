@@ -117,6 +117,15 @@ export default function App() {
     return () => un?.();
   }, []);
 
+  // Messaging channels (Telegram / Discord) connect while the desktop app runs.
+  // Re-sync whenever their config changes; never on the web build (bot APIs need
+  // direct, non-CORS access).
+  useEffect(() => {
+    if (!ready) return;
+    if ((globalThis as unknown as { __HS_WEB__?: boolean }).__HS_WEB__) return;
+    void import("./lib/channels").then((m) => m.syncChannels(settings.channels));
+  }, [ready, settings.channels]);
+
   // Mirror the background-mode setting into Rust, which owns the close behaviour.
   useEffect(() => {
     if (!ready) return;

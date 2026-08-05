@@ -648,12 +648,20 @@ export async function executeTool(
     const { listSecretsForModel } = await import("./secrets");
     return listSecretsForModel();
   }
-  // Guardrails: a tool may be blocked, or require confirmation, before it runs.
-  const { guardTool, fireHook } = await import("./hooks");
-  const gate = await guardTool(tool.id);
-  if (gate !== "allow") return gate;
-  fireHook("tool-call", { tool: tool.id });
   const { resolveSecretsInArgs, redactSecrets } = await import("./secrets");
+  // Guardrails & hooks — only pull in the hooks module when the user has actually
+  // configured a tool policy or a webhook, so the common path stays cheap.
+  const { useStore } = await import("./store");
+  const gs = useStore.getState().settings;
+  if ((gs.blockTools?.length ?? 0) + (gs.confirmTools?.length ?? 0) > 0) {
+    const { guardTool } = await import("./hooks");
+    const gate = await guardTool(tool.id);
+    if (gate !== "allow") return gate;
+  }
+  if ((gs.webhooks?.length ?? 0) > 0) {
+    const { fireHook } = await import("./hooks");
+    fireHook("tool-call", { tool: tool.id });
+  }
   const resolvedArgs = await resolveSecretsInArgs(args);
   const out = await executeToolInner(tool, resolvedArgs, cwd, media, target, sessionId);
   return redactSecrets(out);

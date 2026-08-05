@@ -6,6 +6,7 @@ import { checkForUpdate, installUpdate, type UpdateInfo } from "../lib/updater";
 import { DevicesPanel } from "./DevicesPanel";
 import { SecretsPanel } from "./SecretsPanel";
 import { HooksPanel } from "./HooksPanel";
+import { ChannelsPanel } from "./ChannelsPanel";
 import { WebLlmCard } from "./WebLlmCard";
 import { useStore } from "../lib/store";
 import { useModal } from "../lib/useModal";
@@ -85,6 +86,12 @@ const TABS = [
     label: "Hooks & guardrails",
     blurb: "Tool policies and event webhooks",
     keywords: "guardrail confirm block deny allow tool policy webhook hook slack event turn error notify alert automation",
+  },
+  {
+    id: "channels",
+    label: "Channels",
+    blurb: "Reach your agent from Telegram & Discord",
+    keywords: "telegram discord channel bot message chat gateway messaging platform reach mobile",
   },
   { id: "usage", label: "Usage", blurb: "Spend caps and totals", keywords: "cost spend budget cap daily monthly tokens price" },
   {
@@ -635,6 +642,10 @@ export function SettingsView() {
 
       <section hidden={tab !== "hooks"}>
         <HooksPanel />
+      </section>
+
+      <section hidden={tab !== "channels"}>
+        <ChannelsPanel />
       </section>
 
       <section hidden={tab !== "usage"}>
