@@ -45,6 +45,38 @@ instructions, model, tools and knowledge. Leave it on **Default** for a plain
 completion. Replies are trimmed to each platform's limit (4096 characters on
 Telegram, 2000 on Discord).
 
+## Access control
+
+By default a channel is open to anyone who can reach the bot. Lock it down:
+
+- **Only reply to these ids** — an allowlist of chat/user ids (or `@usernames`
+  on Telegram). Anyone not on it is ignored.
+- **Discord — only listen in these channel ids** — restrict the bot to specific
+  channels, so it stays silent everywhere else.
+- **Discord — only respond when @-mentioned** — for busy servers.
+
+Allowlists are checked *before* the agent runs, so an unlisted sender never
+reaches your model or its tools.
+
+## Reply options
+
+- **Reply to the message** — sends the answer as a reply (a reply/thread on
+  Discord) rather than a loose message.
+- **Show “typing…”** — a typing indicator while the agent is thinking, so a slow
+  reply doesn't look dead.
+
+## Sending out (channel tools)
+
+An agent can also *send* messages through your bot, not just reply. Enable the
+**Channels** tool group (or the `telegram_send` / `discord_send` tools) on an
+agent or in a chat, and it can post to a chat/channel **by id**:
+
+- `telegram_send(chat_id, text)` — chat id or `@channelusername`.
+- `discord_send(channel_id, text)` — a channel id (snowflake).
+
+That's how you build alerts, cross-posting, or a [scheduled](schedules) broadcast
+that lands in a channel.
+
 ## Security — read this
 
 An incoming message runs the agent **with its tools**. A remote sender could, in
