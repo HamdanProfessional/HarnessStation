@@ -15,7 +15,7 @@
   --t-base: 180ms;
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 
-  --header-h: 58px;
+  --header-h: 62px;
   --nav-w: 258px;
   --toc-w: 210px;
 }
@@ -84,11 +84,23 @@ body {
   height: var(--header-h);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 20px;
+  gap: 12px;
+  padding: 0 22px;
   background: var(--bg-glass);
-  backdrop-filter: blur(14px);
+  backdrop-filter: blur(16px) saturate(140%);
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 8px 30px -22px rgba(0, 0, 0, 0.7);
+}
+/* a whisper-thin accent line under the header for definition */
+.docs-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 45%, transparent), color-mix(in srgb, var(--accent-2) 40%, transparent), transparent);
+  opacity: 0.5;
 }
 
 .grow {
@@ -98,24 +110,58 @@ body {
 .brand {
   display: flex;
   align-items: center;
-  gap: 9px;
-  font-weight: 650;
-  font-size: 15px;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
   color: var(--text);
   text-decoration: none;
 }
-
-.brand-mark {
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
-  background: var(--grad);
+.brand b {
+  color: var(--accent);
+  font-weight: 700;
+}
+.brand:hover b {
+  color: var(--accent-2);
 }
 
 .brand-sub {
   color: var(--text-dim);
-  font-weight: 400;
-  font-size: 13px;
+  font-weight: 600;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+/* right-side header links */
+.header-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.header-links a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 7px 11px;
+  border-radius: var(--radius-sm);
+  transition:
+    background var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease);
+}
+.header-links a:hover {
+  color: var(--text);
+  background: var(--bg-3);
+}
+@media (max-width: 860px) {
+  .header-links {
+    display: none;
+  }
 }
 
 .icon-btn {
@@ -123,17 +169,19 @@ body {
   border: 1px solid transparent;
   color: var(--text-dim);
   cursor: pointer;
-  padding: 5px 9px;
+  padding: 6px 10px;
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: 15px;
   transition:
     background var(--t-fast) var(--ease),
-    color var(--t-fast) var(--ease);
+    color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease);
 }
 
 .icon-btn:hover {
   background: var(--bg-3);
   color: var(--text);
+  border-color: var(--border);
 }
 
 .menu-btn {

@@ -93,10 +93,14 @@ export function App() {
           ☰
         </button>
         <a className="brand" href={href("index")}>
-          HarnessStation
+          Harness<b>Station</b>
           <span className="brand-sub">docs</span>
         </a>
         <div className="grow" />
+        <nav className="header-links" aria-label="HarnessStation">
+          <a href="https://hsapp.retris.io" target="_blank" rel="noreferrer">Web app ↗</a>
+          <a href="https://github.com/najma-lp/harnessstation" target="_blank" rel="noreferrer">GitHub ↗</a>
+        </nav>
         <Search />
         <ThemeToggle />
       </header>
