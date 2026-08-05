@@ -218,36 +218,39 @@ body {
 }
 
 .nav-group-title {
-  font-size: 11px;
+  font-size: 10.5px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.11em;
   color: var(--text-dim);
-  margin: 0 0 6px 10px;
-  font-weight: 600;
+  margin: 0 0 7px 12px;
+  font-weight: 700;
+  opacity: 0.85;
 }
 
 .nav-link {
   position: relative;
   display: block;
-  padding: 6px 11px;
+  padding: 6.5px 12px;
   border-radius: var(--radius-sm);
   color: var(--text-dim);
   text-decoration: none;
-  font-size: 14px;
+  font-size: 13.5px;
   transition:
     background var(--t-fast) var(--ease),
-    color var(--t-fast) var(--ease);
+    color var(--t-fast) var(--ease),
+    padding-left var(--t-fast) var(--ease);
 }
 
 .nav-link:hover {
   background: var(--bg-3);
   color: var(--text);
+  padding-left: 15px;
 }
 
 .nav-link.active {
   color: var(--text);
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  font-weight: 550;
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  font-weight: 600;
 }
 
 .nav-link.active::before {
@@ -257,9 +260,33 @@ body {
   top: 50%;
   transform: translateY(-50%);
   width: 3px;
-  height: 62%;
+  height: 66%;
   border-radius: 0 3px 3px 0;
   background: var(--grad);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+/* Thin, unobtrusive scrollbars for the two rails. */
+.docs-nav::-webkit-scrollbar,
+.docs-toc::-webkit-scrollbar {
+  width: 8px;
+}
+.docs-nav::-webkit-scrollbar-thumb,
+.docs-toc::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 8px;
+}
+.docs-nav::-webkit-scrollbar-thumb:hover,
+.docs-toc::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+  background-clip: padding-box;
+}
+.docs-nav,
+.docs-toc {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
 }
 
 .docs-content {
@@ -279,38 +306,43 @@ body {
 }
 
 .toc-title {
-  font-size: 11px;
+  font-size: 10.5px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.11em;
   color: var(--text-dim);
-  margin: 0 0 8px;
-  font-weight: 600;
+  margin: 0 0 10px;
+  font-weight: 700;
+  opacity: 0.85;
 }
 
 .toc-link {
   color: var(--text-dim);
   text-decoration: none;
   font-size: 13px;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-left: 2px solid var(--border);
   line-height: 1.45;
   transition:
     color var(--t-fast) var(--ease),
-    border-color var(--t-fast) var(--ease);
+    border-color var(--t-fast) var(--ease),
+    background var(--t-fast) var(--ease);
 }
 
 .toc-link.depth-3 {
-  padding-left: 22px;
+  padding-left: 24px;
   font-size: 12.5px;
 }
 
 .toc-link:hover {
   color: var(--text);
+  border-left-color: var(--border-strong);
 }
 
 .toc-link.active {
   color: var(--accent);
+  font-weight: 600;
   border-left-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 /* ---- document ---------------------------------------------------------- */
