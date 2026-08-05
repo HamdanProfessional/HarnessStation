@@ -53,6 +53,11 @@ export const BUILTIN_TOOLSETS: ToolSet[] = [
     name: "Swarm (multi-agent)",
     toolIds: ["swarm_spawn", "swarm_send", "swarm_status", "side_panel"],
   },
+  {
+    id: "builtin-channels",
+    name: "Channels (Telegram / Discord)",
+    toolIds: ["telegram_send", "discord_send"],
+  },
 ];
 
 export interface FsEntry {
@@ -100,6 +105,40 @@ export const BUILTIN_TOOLS: Tool[] = [
     parameters: { type: "object", properties: {}, required: [] },
     code: `return new Date().toString();`,
     builtin: true,
+  },
+  {
+    id: "telegram_send",
+    name: "telegram_send",
+    description:
+      "Send a message to a Telegram chat through the configured bot. Use to proactively message a user or group by their chat id (a number, or @channelusername).",
+    parameters: {
+      type: "object",
+      properties: {
+        chat_id: { type: "string", description: "Telegram chat id (number) or @channelusername." },
+        text: { type: "string", description: "Message text (max 4096 chars)." },
+      },
+      required: ["chat_id", "text"],
+    },
+    code: "",
+    builtin: true,
+    group: "Channels",
+  },
+  {
+    id: "discord_send",
+    name: "discord_send",
+    description:
+      "Send a message to a Discord channel through the configured bot. Use to proactively post in a channel by its channel id.",
+    parameters: {
+      type: "object",
+      properties: {
+        channel_id: { type: "string", description: "Discord channel id (a numeric snowflake)." },
+        text: { type: "string", description: "Message content (max 2000 chars)." },
+      },
+      required: ["channel_id", "text"],
+    },
+    code: "",
+    builtin: true,
+    group: "Channels",
   },
   {
     id: "list_secrets",
@@ -647,6 +686,12 @@ export async function executeTool(
   if (tool.id === "list_secrets") {
     const { listSecretsForModel } = await import("./secrets");
     return listSecretsForModel();
+  }
+  if (tool.id === "telegram_send" || tool.id === "discord_send") {
+    const { sendVia } = await import("./channels");
+    const kind = tool.id === "telegram_send" ? "telegram" : "discord";
+    const target = String(args.chat_id ?? args.channel_id ?? "");
+    return sendVia(kind, target, String(args.text ?? ""));
   }
   const { resolveSecretsInArgs, redactSecrets } = await import("./secrets");
   // Guardrails & hooks — only pull in the hooks module when the user has actually

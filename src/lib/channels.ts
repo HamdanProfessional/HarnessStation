@@ -7,10 +7,13 @@
  * WebSocket. Both talk to bot APIs that don't send CORS headers / need bot auth,
  * so this is a desktop feature — on the web build it's shown as unavailable.
  *
+ * Access is controlled per channel: an allowlist of who may talk to the bot and,
+ * on Discord, which channels it listens in. The agent can also *send* messages
+ * out through the `telegram_send` / `discord_send` tools (see sendVia).
+ *
  * Security note: an incoming message runs your agent with whatever tools that
- * agent has. Point a channel at an agent with a *restricted* toolset, and lean on
- * the guardrails (Settings › Hooks & guardrails) — a remote sender should not be
- * able to run your terminal.
+ * agent has. Point a channel at a restricted agent, use an allowlist, and lean on
+ * guardrails (Settings › Hooks & guardrails).
  */
 import { create } from "zustand";
 import { fetch } from "@tauri-apps/plugin-http";
@@ -25,6 +28,14 @@ export interface ChannelConfig {
   agentId?: string;
   /** Discord only: only respond when the bot is @-mentioned. */
   mentionOnly?: boolean;
+  /** Allowlist of chat/user ids (or @usernames). Empty = anyone may talk to it. */
+  allowFrom?: string[];
+  /** Discord only: channel ids the bot listens in. Empty = every channel it can see. */
+  allowChannels?: string[];
+  /** Reply as a reply to the incoming message (a thread on Discord). */
+  replyInThread?: boolean;
+  /** Show a "typing…" indicator while the agent is thinking. */
+  showTyping?: boolean;
 }
 
 export interface ChannelsSettings {
@@ -47,6 +58,14 @@ export const useChannelStatus = create<{
 
 const setStatus = (k: ChannelKind, v: ChannelState, note?: string) => useChannelStatus.getState().set(k, v, note);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Case-insensitive id/username match against an allowlist (empty = allow all). */
+function allowed(list: string[] | undefined, ...values: (string | number | undefined | null)[]): boolean {
+  if (!list || !list.length) return true;
+  const norm = (v: unknown) => String(v ?? "").replace(/^@/, "").toLowerCase();
+  const set = new Set(list.map(norm).filter(Boolean));
+  return values.some((v) => v != null && set.has(norm(v)));
+}
 
 /** Run the configured agent (or a plain completion) for one incoming message. */
 async function respond(text: string, cfg: ChannelConfig): Promise<string> {
@@ -75,6 +94,9 @@ class TelegramChannel {
   private api(method: string) {
     return `https://api.telegram.org/bot${this.cfg.token}/${method}`;
   }
+  private post(method: string, body: unknown) {
+    return fetch(this.api(method), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  }
 
   start() {
     this.running = true;
@@ -92,8 +114,7 @@ class TelegramChannel {
         setStatus("telegram", "on");
         for (const u of data.result ?? []) {
           this.offset = u.update_id + 1;
-          const m = u.message;
-          if (m?.text) await this.handle(m.chat.id, String(m.text));
+          if (u.message?.text) await this.handle(u.message);
         }
       } catch (e) {
         if (!this.running) break;
@@ -103,16 +124,19 @@ class TelegramChannel {
     }
   }
 
-  private async handle(chatId: number | string, text: string) {
-    const reply = await respond(text, this.cfg);
+  private async handle(m: any) {
+    const from = m.from ?? {};
+    if (!allowed(this.cfg.allowFrom, m.chat?.id, from.id, from.username)) return;
+    if (this.cfg.showTyping) void this.post("sendChatAction", { chat_id: m.chat.id, action: "typing" }).catch(() => {});
+    const reply = await respond(String(m.text), this.cfg);
     try {
-      await fetch(this.api("sendMessage"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: chatId, text: reply.slice(0, 4096) }),
+      await this.post("sendMessage", {
+        chat_id: m.chat.id,
+        text: reply.slice(0, 4096),
+        ...(this.cfg.replyInThread ? { reply_to_message_id: m.message_id } : {}),
       });
     } catch {
-      /* the send failed — nothing we can do from here */
+      /* send failed */
     }
   }
 
@@ -126,6 +150,7 @@ class TelegramChannel {
 // ---------- Discord (gateway WebSocket + REST replies) ----------
 
 const DISCORD_INTENTS = (1 << 9) | (1 << 12) | (1 << 15); // GUILD_MESSAGES | DIRECT_MESSAGES | MESSAGE_CONTENT
+const discordApi = (path: string) => `https://discord.com/api/v10/${path}`;
 
 class DiscordChannel {
   private running = false;
@@ -156,11 +181,17 @@ class DiscordChannel {
   private send(op: number, d: unknown) {
     this.ws?.send(JSON.stringify({ op, d }));
   }
+  private rest(path: string, body: unknown) {
+    return fetch(discordApi(path), {
+      method: "POST",
+      headers: { Authorization: `Bot ${this.cfg.token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
 
   private onGateway(msg: any) {
     if (typeof msg.s === "number") this.seq = msg.s;
     if (msg.op === 10) {
-      // HELLO — start heartbeating, then identify.
       const interval = msg.d.heartbeat_interval as number;
       this.heartbeat = setInterval(() => this.send(1, this.seq), interval);
       this.send(2, {
@@ -173,26 +204,27 @@ class DiscordChannel {
         this.botId = msg.d?.user?.id ?? "";
         setStatus("discord", "on");
       } else if (msg.t === "MESSAGE_CREATE") {
-        // Serialize handling so two messages don't run agents in parallel.
         this.queue = this.queue.then(() => this.onMessage(msg.d)).catch(() => {});
       }
     } else if (msg.op === 7 || msg.op === 9) {
-      this.ws?.close(); // reconnect / invalid session → reconnect via onclose
+      this.ws?.close();
     }
   }
 
   private async onMessage(m: any) {
     if (!this.running || m?.author?.bot) return;
+    if (!allowed(this.cfg.allowChannels, m.channel_id)) return;
+    if (!allowed(this.cfg.allowFrom, m.author?.id, m.author?.username)) return;
     const mentioned = (m.mentions ?? []).some((u: any) => u.id === this.botId);
     if (this.cfg.mentionOnly && !mentioned) return;
-    let text = String(m.content ?? "").replace(new RegExp(`<@!?${this.botId}>`, "g"), "").trim();
+    const text = String(m.content ?? "").replace(new RegExp(`<@!?${this.botId}>`, "g"), "").trim();
     if (!text) return;
+    if (this.cfg.showTyping) void this.rest(`channels/${m.channel_id}/typing`, {}).catch(() => {});
     const reply = await respond(text, this.cfg);
     try {
-      await fetch(`https://discord.com/api/v10/channels/${m.channel_id}/messages`, {
-        method: "POST",
-        headers: { Authorization: `Bot ${this.cfg.token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ content: reply.slice(0, 2000) }),
+      await this.rest(`channels/${m.channel_id}/messages`, {
+        content: reply.slice(0, 2000),
+        ...(this.cfg.replyInThread ? { message_reference: { message_id: m.id, channel_id: m.channel_id, guild_id: m.guild_id } } : {}),
       });
     } catch {
       /* reply failed */
@@ -204,6 +236,37 @@ class DiscordChannel {
     if (this.heartbeat) clearInterval(this.heartbeat);
     this.ws?.close();
     setStatus("discord", "off");
+  }
+}
+
+// ---------- outbound send (used by the telegram_send / discord_send tools) ----------
+
+/** Send a message to a specific chat/channel via the configured bot. Returns a status line. */
+export async function sendVia(kind: ChannelKind, target: string, text: string): Promise<string> {
+  const { useStore } = await import("./store");
+  const cfg = useStore.getState().settings.channels?.[kind];
+  if (!cfg?.token) return `The ${kind} channel isn't configured (add a bot token in Settings › Channels).`;
+  const t = target.trim();
+  if (!t) return "No target id given.";
+  try {
+    if (kind === "telegram") {
+      const res = await fetch(`https://api.telegram.org/bot${cfg.token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: t, text: text.slice(0, 4096) }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } else {
+      const res = await fetch(discordApi(`channels/${t}/messages`), {
+        method: "POST",
+        headers: { Authorization: `Bot ${cfg.token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ content: text.slice(0, 2000) }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    }
+    return `Sent to ${kind} ${t}.`;
+  } catch (e) {
+    return `Failed to send to ${kind} ${t}: ${(e as Error).message}`;
   }
 }
 
