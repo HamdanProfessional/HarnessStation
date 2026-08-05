@@ -228,8 +228,17 @@ app.get("/api/mcp/directory", (_req, res) => res.json(directory));
 const LIBRARY_FILE = process.env.LIBRARY_FILE
   ? new URL(process.env.LIBRARY_FILE, `file://${process.cwd()}/`)
   : new URL("./library.json", import.meta.url);
-// Salt so stored like-keys aren't reversible to raw IPs.
-const LIBRARY_SALT = process.env.LIBRARY_SALT ?? "hs-library-v1";
+// Salt so stored like/report keys aren't reversible to raw IPs. MUST be set to a
+// private value in production; the default is only for local dev.
+const LIBRARY_SALT = process.env.LIBRARY_SALT ?? "hs-library-dev-only";
+if (!process.env.LIBRARY_SALT) {
+  console.warn("[gateway] LIBRARY_SALT is not set — using the dev default. Set a private value in production.");
+}
+// Bearer token for the admin moderation routes. If unset, those routes are off.
+const LIBRARY_ADMIN_TOKEN = process.env.LIBRARY_ADMIN_TOKEN ?? "";
+// Publishes allowed per IP per hour, and reports that auto-hide an item pending review.
+const PUBLISH_LIMIT = Number(process.env.LIBRARY_PUBLISH_LIMIT ?? 10);
+const REPORT_THRESHOLD = Number(process.env.LIBRARY_REPORT_THRESHOLD ?? 4);
 const KINDS = new Set(["skill", "agent", "workflow", "schedule"]);
 
 let library = [];
@@ -279,6 +288,45 @@ function trendingScore(item, now) {
   return (item.likes * 3 + item.downloads) * Math.exp(-ageDays / 14);
 }
 
+/** Strip control characters (keeps newlines) so listings can't inject junk. */
+function clean(s) {
+  // eslint-disable-next-line no-control-regex
+  return String(s ?? "").replace(/[ --]/g, "").trim();
+}
+
+/** A visible item is one an ordinary visitor may see (not hidden by moderation). */
+const visible = (i) => !i.hidden;
+
+/** Non-skill payloads must be a JSON object; skills are free-form markdown. */
+function payloadValid(type, payload) {
+  if (type === "skill") return true;
+  try {
+    const v = JSON.parse(payload);
+    return !!v && typeof v === "object" && !Array.isArray(v);
+  } catch {
+    return false;
+  }
+}
+
+/** Bearer-token gate for moderation routes. Off entirely when no token is set. */
+function isAdmin(req) {
+  return !!LIBRARY_ADMIN_TOKEN && req.get("authorization") === `Bearer ${LIBRARY_ADMIN_TOKEN}`;
+}
+
+// Per-IP publish throttle, on top of the global rate limiter.
+const publishHits = new Map(); // ipHash -> { n, resetAt }
+function publishAllowed(key) {
+  const now = Date.now();
+  const rec = publishHits.get(key);
+  if (!rec || now > rec.resetAt) {
+    publishHits.set(key, { n: 1, resetAt: now + 3_600_000 });
+    return true;
+  }
+  if (rec.n >= PUBLISH_LIMIT) return false;
+  rec.n += 1;
+  return true;
+}
+
 app.get("/api/library", (req, res) => {
   const requester = ipKey(req);
   const type = String(req.query.type ?? "all");
@@ -288,7 +336,7 @@ app.get("/api/library", (req, res) => {
   const limit = Math.min(Number(req.query.limit) || 60, 100);
   const now = Date.now();
 
-  let items = library.filter((i) => (type === "all" || i.type === type));
+  let items = library.filter((i) => visible(i) && (type === "all" || i.type === type));
   if (tag) items = items.filter((i) => (i.tags ?? []).some((t) => t.toLowerCase() === tag));
   if (q) {
     items = items.filter((i) =>
@@ -305,32 +353,36 @@ app.get("/api/library", (req, res) => {
 
   // A small tag cloud so the client can offer filters without a second request.
   const tagCount = {};
-  for (const i of library) for (const t of i.tags ?? []) tagCount[t] = (tagCount[t] ?? 0) + 1;
+  for (const i of library) if (visible(i)) for (const t of i.tags ?? []) tagCount[t] = (tagCount[t] ?? 0) + 1;
   const tags = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).slice(0, 24).map(([t]) => t);
 
-  res.json({ items: items.map((i) => publicItem(i, requester)), total: library.length, tags });
+  res.json({ items: items.map((i) => publicItem(i, requester)), total: library.filter(visible).length, tags });
 });
 
 app.get("/api/library/:id", (req, res) => {
   const item = library.find((i) => i.id === req.params.id);
-  if (!item) return res.status(404).json({ error: "not found" });
+  if (!item || !visible(item)) return res.status(404).json({ error: "not found" });
   res.json({ ...publicItem(item, ipKey(req)), payload: item.payload });
 });
 
 app.post("/api/library/publish", (req, res) => {
   const b = req.body ?? {};
   const type = String(b.type ?? "");
-  const name = String(b.name ?? "").trim();
-  const description = String(b.description ?? "").trim();
-  const author = (String(b.author ?? "").trim() || "Anonymous").slice(0, 40);
+  const name = clean(b.name);
+  const description = clean(b.description);
+  const author = (clean(b.author) || "Anonymous").slice(0, 40);
   const payload = String(b.payload ?? "");
   const tags = Array.isArray(b.tags)
-    ? [...new Set(b.tags.map((t) => String(t).trim().toLowerCase()).filter(Boolean))].slice(0, 8)
+    ? [...new Set(b.tags.map((t) => clean(t).toLowerCase()).filter(Boolean))].slice(0, 8)
     : [];
   if (!KINDS.has(type)) return res.status(400).json({ error: "bad type" });
   if (name.length < 2 || name.length > 80) return res.status(400).json({ error: "name must be 2–80 chars" });
   if (description.length > 600) return res.status(400).json({ error: "description too long" });
   if (!payload || payload.length > 280_000) return res.status(400).json({ error: "payload missing or too large" });
+  if (!payloadValid(type, payload)) return res.status(400).json({ error: `payload is not a valid ${type}` });
+  if (!publishAllowed(ipKey(req))) {
+    return res.status(429).json({ error: `publish limit reached (${PUBLISH_LIMIT}/hour) — try again later` });
+  }
 
   const item = {
     id: crypto.randomUUID(),
@@ -339,6 +391,8 @@ app.post("/api/library/publish", (req, res) => {
     downloads: 0,
     likes: 0,
     likedBy: {},
+    reports: {}, // ipHash -> reason
+    hidden: false,
   };
   library.push(item);
   persistLibrary();
@@ -347,7 +401,7 @@ app.post("/api/library/publish", (req, res) => {
 
 app.post("/api/library/:id/like", (req, res) => {
   const item = library.find((i) => i.id === req.params.id);
-  if (!item) return res.status(404).json({ error: "not found" });
+  if (!item || !visible(item)) return res.status(404).json({ error: "not found" });
   const key = ipKey(req);
   if (item.likedBy[key]) {
     delete item.likedBy[key];
@@ -362,10 +416,58 @@ app.post("/api/library/:id/like", (req, res) => {
 
 app.post("/api/library/:id/download", (req, res) => {
   const item = library.find((i) => i.id === req.params.id);
-  if (!item) return res.status(404).json({ error: "not found" });
+  if (!item || !visible(item)) return res.status(404).json({ error: "not found" });
   item.downloads += 1;
   persistLibrary();
   res.json({ payload: item.payload, downloads: item.downloads });
+});
+
+/** Anyone can report an item; enough distinct reports auto-hides it for review. */
+app.post("/api/library/:id/report", (req, res) => {
+  const item = library.find((i) => i.id === req.params.id);
+  if (!item || !visible(item)) return res.status(404).json({ error: "not found" });
+  const key = ipKey(req);
+  item.reports ??= {};
+  if (!item.reports[key]) item.reports[key] = clean(req.body?.reason).slice(0, 200) || "unspecified";
+  if (Object.keys(item.reports).length >= REPORT_THRESHOLD) item.hidden = true; // pending admin review
+  persistLibrary();
+  res.json({ reported: true });
+});
+
+// ---------- admin moderation (Bearer LIBRARY_ADMIN_TOKEN) ----------
+
+/** Full listing incl. hidden items and report reasons, for a moderator. */
+app.get("/api/admin/library", (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "forbidden" });
+  res.json(
+    library
+      .map((i) => ({
+        id: i.id,
+        type: i.type,
+        name: i.name,
+        author: i.author,
+        createdAt: i.createdAt,
+        downloads: i.downloads,
+        likes: i.likes,
+        hidden: !!i.hidden,
+        reportCount: Object.keys(i.reports ?? {}).length,
+        reasons: Object.values(i.reports ?? {}),
+      }))
+      .sort((a, b) => b.reportCount - a.reportCount || b.createdAt - a.createdAt),
+  );
+});
+
+/** Hide, restore, or permanently remove an item. body: { action: "hide"|"restore"|"remove" }. */
+app.post("/api/admin/library/:id", (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "forbidden" });
+  const idx = library.findIndex((i) => i.id === req.params.id);
+  if (idx < 0) return res.status(404).json({ error: "not found" });
+  const action = String(req.body?.action ?? "hide");
+  if (action === "remove") library.splice(idx, 1);
+  else if (action === "restore") { library[idx].hidden = false; library[idx].reports = {}; }
+  else library[idx].hidden = true;
+  persistLibrary();
+  res.json({ ok: true, action });
 });
 
 app.get("/api/health", (_req, res) => {
@@ -378,7 +480,15 @@ app.get("/api/health", (_req, res) => {
       error: hit?.error ?? null,
     };
   }
-  res.json({ ok: true, refreshMinutes: REFRESH_MS / 60_000, feeds, trials: loadTrials().length, library: library.length });
+  res.json({
+    ok: true,
+    refreshMinutes: REFRESH_MS / 60_000,
+    feeds,
+    trials: loadTrials().length,
+    library: library.filter((i) => !i.hidden).length,
+    hidden: library.filter((i) => i.hidden).length,
+    moderation: LIBRARY_ADMIN_TOKEN ? "on" : "off",
+  });
 });
 
 // ---------- boot ----------

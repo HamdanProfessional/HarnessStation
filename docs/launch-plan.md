@@ -30,50 +30,63 @@ shipping any of the sharp edges below into strangers' hands.
 
 These are release-gating. None are optional.
 
-- [ ] **Rotate the updater signing key.** A throwaway dev keypair (password
-  `harnessdev`) is documented in `release.md` and its public key is in
-  `tauri.conf.json` — **anyone with it can push a malicious update to every
-  install.** Generate a fresh keypair, replace `plugins.updater.pubkey`, and store
-  the private key + password in a secrets manager (never the repo). This is the
-  single most important item.
-- [ ] **Decide the repo's fate and scrub secrets from history.** The repo is
-  private today. Whatever the license decision (below), the git history contains
-  the old updater password and references to gateway secrets. If the repo ever goes
-  public, rewrite history (`git filter-repo`) to purge them **and** rotate anything
-  exposed (AA key, gateway `.env`, trial keys, `LIBRARY_SALT`). If it stays private,
-  ship binaries from a separate public releases repo.
-- [ ] **Code signing.**
-  - *Windows*: an OV/EV Authenticode certificate removes the "Windows protected
-    your PC" SmartScreen wall (an EV cert clears SmartScreen reputation
-    immediately; OV builds reputation over time). Budget ~$100–400/yr. Until then,
-    the install docs (course E02) must show the "More info → Run anyway" path.
-  - *Linux*: sign the `.deb` with a GPG key and publish the public key; sign/notarize
-    the AppImage where practical. Lower stakes than Windows.
-- [ ] **Community-library moderation.** The library is **public, anonymous, and
-  unmoderated** — a launch-day abuse magnet. Before promoting it: add a **report/flag**
-  endpoint + an **admin removal** path, a **content policy**, a stricter **per-IP
-  publish rate limit** (e.g. 10/hour on top of the global 60/min), and server-side
-  payload validation hardening. Back up `library.json` (it's the only copy).
-- [ ] **Secrets & backups audit on the box.** Confirm `.env`, `trials.json`,
-  `library.json` are `chmod 600`, excluded from deploys (they are), and backed up.
-  Add a nightly backup of `library.json` off the box.
+> **Status (2026-08-04):** the *code/config* side of Phase 0 is done and deployed;
+> what remains is machine/box-side and needs a human (generate the real key on
+> your machine, buy a cert, run the history rewrite + force-push, wire the cron
+> backup). The maintainer runbook for these is in [`../SECURITY.md`](../SECURITY.md).
+
+- [x] **Rotate the updater signing key** — *config done, key generation pending.*
+  `tauri.conf.json` → `plugins.updater.pubkey` is now the placeholder
+  `REPLACE_WITH_UPDATER_PUBLIC_KEY`, so a build **cannot ship with the compromised
+  dev key**. `release.md` now flags the old key as compromised. **You must** still
+  generate a fresh keypair on your machine and paste its public key before the
+  first signed release (SECURITY.md §1).
+- [ ] **Decide the repo's fate and scrub secrets from history.** *Runbook ready
+  (SECURITY.md §3) — execution is a destructive force-push you run.* If the repo
+  goes public, rewrite history to purge the leaked updater password + pubkey **and
+  rotate** anything exposed (AA key, gateway `.env`, trial keys, `LIBRARY_SALT`).
+  If it stays private, ship binaries from a separate public releases repo.
+- [ ] **Code signing.** *External purchase — documented in `release.md`.*
+  - *Windows*: an OV/EV Authenticode cert removes the SmartScreen wall (EV clears
+    it immediately; OV builds reputation over time). ~$100–400/yr. Until then the
+    install docs (course E02) show the "More info → Run anyway" path.
+  - *Linux*: GPG-sign the `.deb` and publish the public key.
+- [x] **Community-library moderation** — **done & deployed.** Added a public
+  **report** endpoint (distinct reports auto-hide an item pending review), **admin
+  hide/restore/remove** routes behind a `LIBRARY_ADMIN_TOKEN` bearer, a **per-IP
+  publish limit** (default 10/hour, on top of the global 60/min), **payload
+  validation** (non-skill payloads must be JSON objects; control chars stripped),
+  and a **Report** button in the app. `LIBRARY_SALT` now warns on the dev default.
+- [x] **Backups & secrets** — *script added; cron + chmod are box-side.*
+  `deploy/library-backup.sh` snapshots `library.json` nightly (wire it into cron
+  per SECURITY.md §4). `.env`/`trials.json`/`library.json` are already excluded
+  from deploys; `chmod 600` step is in SECURITY.md §5.
 
 ---
 
 ## Phase 1 — Legal & policy (parallel with Phase 0)
 
-- [ ] **Pick a license.** This is a fork in the road — see Open Decisions. It gates
-  whether the repo can be public and how the app can be monetized.
-- [ ] **Privacy policy.** Easy to write honestly because the app collects nothing:
-  no account, no telemetry, keys in the OS keychain, data in `~/.harnessx`. State
-  what the **gateway** does touch (a hashed IP for library likes/rate-limiting;
-  benchmark/HF proxy caching) and that user prompts/keys never pass through it.
-- [ ] **Terms of use** for the hosted pieces (web app, gateway, community library):
-  UGC ownership, acceptable use, no-warranty, the mesh's plaintext-transport
-  caveat, and that trial keys are rate-limited demos.
-- [ ] **Third-party attribution.** Ship a `THIRD_PARTY.md`: Tauri, v86 (BSD),
-  transformers.js/Kokoro/Whisper, WebLLM, llama.cpp, and the model licenses users
-  pull. Confirm nothing is GPL-incompatible with the chosen license.
+> **Status (2026-08-04):** the policy documents are drafted and in the repo
+> ([`PRIVACY.md`](../PRIVACY.md), [`TERMS.md`](../TERMS.md),
+> [`THIRD_PARTY.md`](../THIRD_PARTY.md), [`SECURITY.md`](../SECURITY.md)). They're
+> honest first drafts — **have counsel review before launch** — and the **license
+> decision is still yours to make** (it gates the rest).
+
+- [ ] **Pick a license.** *Blocking — see Open Decisions #1.* Gates whether the
+  repo can be public and how the app can be monetized. Add a `LICENSE` file once
+  chosen; confirm nothing in `THIRD_PARTY.md` is incompatible with it.
+- [x] **Privacy policy** — drafted (`PRIVACY.md`): no account/telemetry/sync, keys
+  in the OS keychain, data in `~/.harnessx`; the gateway only sees a salted IP hash
+  for likes/reports + public feed caching; prompts/keys never pass through it.
+- [x] **Terms of use** — drafted (`TERMS.md`): as-is/no-warranty, acceptable use,
+  UGC license for the community library, trial-key demos, the mesh plaintext caveat,
+  you-own-your-provider-costs.
+- [x] **Third-party attribution** — drafted (`THIRD_PARTY.md`): Tauri, React, v86
+  (BSD), Transformers.js/Kokoro/Whisper, WebLLM, llama.cpp, Pyodide, the Rust
+  crates, Express/Paramiko — with the caveat to verify each against the chosen
+  license.
+- [x] **Security policy** — drafted (`SECURITY.md`): reporting, trust boundaries,
+  and the maintainer secret-hygiene runbook.
 - [ ] **Trademark check** for the final name (HarnessStation cleared earlier — all
   TLDs available, no conflicts found; re-verify at filing time).
 

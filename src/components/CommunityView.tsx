@@ -4,11 +4,13 @@ import {
   communityImport,
   communityLike,
   communityList,
+  communityReport,
   type CommunityItem,
   type CommunityKind,
   type CommunitySort,
 } from "../lib/community";
 import { toast } from "../lib/toast";
+import { promptDialog } from "../lib/dialog";
 import { EmptyState } from "./EmptyState";
 import { IconHeart, IconDownload, IconSearch, IconGrid } from "./icons";
 
@@ -92,6 +94,20 @@ export function CommunityView() {
       setItems((list) => list.map((i) => (i.id === item.id ? { ...i, liked: r.liked, likes: r.likes } : i)));
     } catch (e) {
       toast.error(`Couldn't register that like: ${(e as Error).message}`);
+    }
+  };
+
+  const report = async (item: CommunityItem) => {
+    const reason = await promptDialog(`Report “${item.name}”`, {
+      message: "What's wrong with it? (spam, malicious, broken, offensive…)",
+      placeholder: "reason",
+    });
+    if (reason === null) return;
+    try {
+      await communityReport(item.id, reason.trim());
+      toast.success("Thanks — reported for review.");
+    } catch (e) {
+      toast.error(`Couldn't report that: ${(e as Error).message}`);
     }
   };
 
@@ -217,6 +233,9 @@ export function CommunityView() {
                   <IconDownload size={14} /> {item.downloads}
                 </span>
                 <span className="grow" />
+                <button className="link-btn report-link" title="Report this item" onClick={() => void report(item)}>
+                  Report
+                </button>
                 <button className="btn primary small" disabled={busy === item.id} onClick={() => void importItem(item)}>
                   {busy === item.id ? "Importing…" : "Import"}
                 </button>

@@ -4,9 +4,13 @@ The app is wired for a real Windows installer with self-update. Two one-time man
 required (they need secrets that can't live in the repo): an **updater signing keypair** and,
 ideally, a **code-signing certificate**.
 
-> NOTE: a **throwaway dev keypair** already exists at `%USERPROFILE%\.harnessx\updater.key`
-> (password `harnessdev`) and its public key is in `tauri.conf.json`. **Regenerate your own and keep
-> it secret before any real release** — anyone with this dev key could push updates.
+> ⚠️ **SECURITY — the old dev keypair is COMPROMISED.** An early throwaway updater keypair (and its
+> password) was committed to this repo's history and must be treated as public. **Never sign a
+> release with it.** `tauri.conf.json` → `plugins.updater.pubkey` is now the placeholder
+> `REPLACE_WITH_UPDATER_PUBLIC_KEY`, so a build won't ship with the compromised key by accident —
+> generate a fresh keypair (below), paste its public key, and keep the private key in a secrets
+> manager. The old key in git history should be purged during the pre-launch history scrub
+> (see the launch plan), but purging history does **not** un-leak it — rotation is what protects you.
 
 ## 1. Generate the updater keypair (one-time)
 

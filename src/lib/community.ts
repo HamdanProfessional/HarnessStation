@@ -79,6 +79,11 @@ export async function communityLike(id: string): Promise<{ likes: number; liked:
   return api(`/api/library/${id}/like`, { method: "POST" });
 }
 
+/** Flag an item for moderation. Enough distinct reports auto-hide it for review. */
+export async function communityReport(id: string, reason: string): Promise<void> {
+  await api(`/api/library/${id}/report`, { method: "POST", body: JSON.stringify({ reason }) });
+}
+
 /** Fetch the payload (counts as a download) so it can be imported. */
 async function fetchPayload(id: string): Promise<string> {
   const { payload } = await api<{ payload: string }>(`/api/library/${id}/download`, { method: "POST" });
