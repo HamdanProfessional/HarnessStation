@@ -65,10 +65,12 @@ export const NAV: NavSection[] = [
     title: "Giving it abilities",
     items: [
       { slug: "guide/tools", label: "Tools" },
+      { slug: "guide/secrets", label: "Secrets" },
       { slug: "guide/browser", label: "Browser control" },
       { slug: "guide/mcp", label: "MCP servers" },
       { slug: "guide/skills", label: "Skills" },
       { slug: "guide/media", label: "Images & media" },
+      { slug: "guide/community", label: "Community library" },
     ],
   },
   {
@@ -92,12 +94,14 @@ export const NAV: NavSection[] = [
     items: [
       { slug: "models/providers", label: "Providers & keys" },
       { slug: "models/local", label: "Running models locally" },
+      { slug: "models/in-browser", label: "In-browser models" },
       { slug: "models/comparing", label: "Comparing & evaluating" },
     ],
   },
   {
     title: "Advanced",
     items: [
+      { slug: "advanced/web", label: "The web version" },
       { slug: "advanced/devices", label: "Device mesh" },
       { slug: "advanced/data", label: "Where your data lives" },
       { slug: "advanced/privacy", label: "Privacy & security" },
