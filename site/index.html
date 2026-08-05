@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HarnessStation — run any AI model as a private, local agent</title>
+<meta name="description" content="A desktop app for running AI models as agents. Bring your own model — local or your own cloud key — with tools, files, knowledge, voice and a browser. No account, no telemetry, private by default." />
+<meta property="og:title" content="HarnessStation" />
+<meta property="og:description" content="Run any AI model as a private, local agent. No account, no telemetry, bring your own key." />
+<meta property="og:type" content="website" />
+<style>
+:root{
+  --bg:#0e0f13; --panel:#16181f; --panel-2:#1c1f28; --border:#262a35;
+  --text:#e7e9ee; --dim:#9aa0ad; --accent:#5e6ad2; --ok:#3fb984; --warn:#e0a44a;
+  --font:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono","Cascadia Code",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.5}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);
+  padding:11px 20px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent)}
+.btn:hover{border-color:var(--accent)}
+.muted{color:var(--dim)}
+.eyebrow{color:var(--accent);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:13px}
+
+/* nav */
+nav{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+nav .wrap{display:flex;align-items:center;gap:16px;height:62px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;font-size:18px}
+.brand svg{width:30px;height:30px}
+.brand span{color:var(--accent)}
+nav .grow{flex:1}
+nav a.navlink{color:var(--dim);text-decoration:none;font-size:14px;margin:0 10px}
+nav a.navlink:hover{color:var(--text)}
+@media(max-width:720px){nav a.navlink{display:none}}
+
+/* hero */
+.hero{padding:96px 0 72px;text-align:center}
+.hero h1{font-size:60px;line-height:1.04;letter-spacing:-.02em;margin:18px 0 20px;font-weight:800}
+.hero h1 .g{color:var(--accent)}
+.hero p.lead{font-size:22px;color:var(--dim);max-width:760px;margin:0 auto 34px}
+.cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.hero .note{margin-top:16px;font-size:13px;color:var(--dim)}
+@media(max-width:720px){.hero h1{font-size:40px}.hero p.lead{font-size:18px}}
+
+/* sections */
+section{padding:64px 0;border-top:1px solid var(--border)}
+h2{font-size:34px;letter-spacing:-.01em;margin:0 0 12px}
+.sub{color:var(--dim);font-size:17px;max-width:720px;margin:0 0 34px}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:26px}
+.card h3{margin:0 0 8px;font-size:19px}
+.card p{margin:0;color:var(--dim);font-size:15px}
+.card .ico{width:34px;height:34px;color:var(--accent);margin-bottom:14px}
+
+/* demos */
+.demos{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:860px){.demos{grid-template-columns:1fr}}
+.demo{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:26px}
+.demo .tag{display:inline-block;font-size:12px;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);
+  background:color-mix(in srgb,var(--accent) 12%,transparent);padding:2px 10px;border-radius:999px;margin-bottom:12px}
+.demo h3{margin:0 0 8px;font-size:20px}
+.demo p{margin:0;color:var(--dim);font-size:15px}
+
+/* privacy strip */
+.privacy{background:var(--panel-2)}
+.privacy .row{display:flex;flex-wrap:wrap;gap:14px;margin-top:22px}
+.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:999px;padding:8px 16px;font-size:14px;color:var(--text)}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+
+/* download */
+.dl{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:24px}
+@media(max-width:720px){.dl{grid-template-columns:1fr}}
+.dl .card{display:flex;flex-direction:column;gap:12px}
+.dl code{font-family:var(--mono);font-size:13px;background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:2px 8px;color:#cdd3ff}
+
+footer{border-top:1px solid var(--border);padding:40px 0 60px;color:var(--dim);font-size:14px}
+footer a{color:var(--dim);text-decoration:none;margin-right:18px}
+footer a:hover{color:var(--text)}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/>
+      <path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/>
+    </svg>
+    Harness<span>Station</span>
+  </div>
+  <div class="grow"></div>
+  <a class="navlink" href="#features">Features</a>
+  <a class="navlink" href="#demos">See it</a>
+  <a class="navlink" href="#privacy">Privacy</a>
+  <a class="navlink" href="https://hsdocs.retris.io">Docs</a>
+  <a class="btn primary" href="#download">Download</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="eyebrow">Local-first · bring your own model</span>
+  <h1>Run any AI model<br/>as a <span class="g">private, local agent</span></h1>
+  <p class="lead">A desktop app that gives a model real tools — your files, a terminal, the web, a
+    browser, voice, knowledge and memory. Local or your own cloud key. No account, no telemetry.</p>
+  <div class="cta">
+    <a class="btn primary" href="https://hsapp.retris.io">Try it in your browser →</a>
+    <a class="btn" href="#download">Download for desktop</a>
+  </div>
+  <div class="note">Free · Windows &amp; Linux · your keys stay in your OS keychain</div>
+</div></header>
+
+<section id="features"><div class="wrap">
+  <span class="eyebrow">What you plug a model into</span>
+  <h2>A harness, not another chat box</h2>
+  <p class="sub">You bring the model — free and local via Ollama, LM Studio or in-browser WebGPU, or
+    a cloud model with your own key. HarnessStation gives it everything it needs to actually do work.</p>
+  <div class="grid">
+    <div class="card"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/></svg><h3>Tools &amp; files</h3><p>Read and write files, run commands, search the web, and drive a real browser — all inside a working directory you control.</p></div>
+    <div class="card"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg><h3>Voice</h3><p>Talk to it. Local speech-to-text and neural voices, barge-in, and 3D avatars — no server required.</p></div>
+    <div class="card"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><h3>Automation</h3><p>Package roles as reusable agents, chain steps into workflows, and run them on a schedule while you're away.</p></div>
+    <div class="card"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7V3m6 4V3M7 7h10v4a5 5 0 0 1-10 0z"/><path d="M12 16v5"/></svg><h3>MCP &amp; knowledge</h3><p>Connect hundreds of MCP servers and ground answers in your own documents with local or cloud embeddings.</p></div>
+    <div class="card"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v8a2 2 0 0 1-1 1.7l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.7l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/></svg><h3>Local models</h3><p>Download a GGUF and run it with tuned llama.cpp flags, or run a small model on WebGPU right in the tab.</p></div>
+    <div class="card"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><h3>Community library</h3><p>Import skills, agents, workflows and schedules others have made — or publish your own, free.</p></div>
+  </div>
+</div></section>
+
+<section id="demos"><div class="wrap">
+  <span class="eyebrow">The three moments that make it click</span>
+  <h2>See what it does</h2>
+  <p class="sub">Watch the course on the docs site, or just open the web app and try it — everything below works today.</p>
+  <div class="demos">
+    <div class="demo"><span class="tag">First look</span><h3>It's a harness</h3><p>You bring the model; the app brings tools, files, knowledge, voice and a browser. Private by default.</p></div>
+    <div class="demo"><span class="tag">The “aha”</span><h3>Give it a tool</h3><p>Switch on Files, ask it to read your README, and watch the call → read → respond loop in an inspectable card. That's the moment a chat becomes an agent.</p></div>
+    <div class="demo"><span class="tag">The showstopper</span><h3>Linux in a browser tab</h3><p>A real Linux kernel boots client-side via WebAssembly, sharing a filesystem with the model's tools. No server, no install.</p></div>
+  </div>
+</div></section>
+
+<section id="privacy" class="privacy"><div class="wrap">
+  <span class="eyebrow">Private by design</span>
+  <h2>Your keys and data never leave your machine</h2>
+  <p class="sub">This isn't a marketing line — it's how the app is built. There's nothing to log into and
+    nothing phoning home. The only shared bits (benchmarks, the community library) go through a gateway
+    that never sees your prompts or keys.</p>
+  <div class="row">
+    <span class="pill"><span class="dot"></span> No account, no sign-up</span>
+    <span class="pill"><span class="dot"></span> No telemetry</span>
+    <span class="pill"><span class="dot"></span> No cloud sync</span>
+    <span class="pill"><span class="dot"></span> Keys in the OS keychain</span>
+    <span class="pill"><span class="dot"></span> Data in <code style="font-family:var(--mono)">~/.harnessx</code></span>
+    <span class="pill"><span class="dot"></span> Open source (Apache-2.0)</span>
+  </div>
+</div></section>
+
+<section id="download"><div class="wrap">
+  <span class="eyebrow">Get it</span>
+  <h2>Download HarnessStation</h2>
+  <p class="sub">Free, for Windows and Linux. Or skip the install and try the full app in your browser.</p>
+  <div class="dl">
+    <div class="card">
+      <h3>Windows</h3>
+      <p class="muted">Windows 10/11. The installer isn't code-signed yet, so click <b>More info → Run anyway</b> at the SmartScreen prompt.</p>
+      <a class="btn primary" href="https://github.com/najma-lp/harnessstation/releases/latest">Download for Windows</a>
+    </div>
+    <div class="card">
+      <h3>Linux</h3>
+      <p class="muted">AppImage or .deb. If the AppImage won't start: <code>sudo apt install libwebkit2gtk-4.1-0</code>.</p>
+      <a class="btn primary" href="https://github.com/najma-lp/harnessstation/releases/latest">Download for Linux</a>
+    </div>
+  </div>
+  <p class="note muted" style="margin-top:20px">Prefer not to install? <a href="https://hsapp.retris.io" style="color:var(--accent)">Run the full app in your browser →</a></p>
+</div></section>
+
+<footer><div class="wrap">
+  <div style="margin-bottom:14px" class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="9" fill="#5e6ad2"/><path d="M10.5 8.5v15M21.5 8.5v15M10.5 16h11" stroke="#fff" stroke-width="3" stroke-linecap="round"/><circle cx="16" cy="16" r="3.4" fill="#5e6ad2" stroke="#fff" stroke-width="2"/></svg>
+    Harness<span>Station</span>
+  </div>
+  <a href="https://hsdocs.retris.io">Docs</a>
+  <a href="https://hsapp.retris.io">Web app</a>
+  <a href="https://github.com/najma-lp/harnessstation">Source</a>
+  <a href="https://hsdocs.retris.io">Privacy</a>
+  <a href="https://hsdocs.retris.io">Terms</a>
+  <div style="margin-top:16px">© 2026 HarnessStation · Apache-2.0 · Bring your own model.</div>
+</div></footer>
+
+</body>
+</html>

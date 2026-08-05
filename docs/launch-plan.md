@@ -185,22 +185,51 @@ These are release-gating. None are optional.
 
 ---
 
-## Open decisions (need a call before Phase 1 can finish)
+## Open decisions — RESOLVED (2026-08-04)
 
-1. **License / source model.** Fully open-source (MIT/Apache — maximal trust and
-   contribution, hardest to monetize), **source-available** (e.g. BSL/Elastic — code
-   visible, commercial use restricted), or **closed** (binaries only, private repo)?
-   This gates the repo-public question and everything downstream.
-2. **Money.** Free forever? Donations/sponsors? A paid tier (hosted gateway, signed
-   builds, priority support) while the app stays free? The current design
-   (bring-your-own-key, no accounts) means there's no built-in billing surface yet.
-3. **Code-signing budget.** EV cert (clears Windows SmartScreen immediately, ~$300+/yr,
-   hardware token) vs OV (cheaper, reputation builds over time) vs ship-unsigned-for-now
-   (the course already handles the warning).
-4. **macOS.** Deferred at launch, or is a Mac build (+ Apple notarization, $99/yr)
-   part of v1? It's the most likely first FAQ.
-5. **Gateway hosting.** Keep it on the shared box for launch, or move it to its own
-   instance before promoting (safer under a spike)?
+Decided so execution can proceed; each is reversible before the repo goes public /
+the first release, so revisit if your thinking changes.
+
+1. **License → Apache-2.0.** Permissive maximises adoption and trust with the
+   launch audience (r/LocalLLaMA, HN, self-hosters strongly favour OSS), and the
+   patent grant is safer than MIT for a company. It blocks none of the realistic
+   money paths, since the app is client-side (no SaaS to protect). `LICENSE`,
+   `NOTICE`, and the Apache-2.0 mention across the docs are in place. *You can still
+   switch to source-available before publishing if you want to restrict commercial
+   forks.*
+2. **Money → free app; monetise around it, later.** The app stays free and open.
+   Revenue, if/when wanted, comes from a **hosted gateway / “pro” cloud tier**,
+   **support**, and the **video course** — none of which requires closing the client.
+   No billing surface is built yet; that's a post-launch decision.
+3. **Code signing → unsigned for the soft launch, OV cert for the big launch.**
+   The install docs (course E02) already handle the SmartScreen prompt, so the soft
+   launch (web demo + r/LocalLLaMA) doesn't need a cert. Buy an **OV** cert before
+   the HN/Product Hunt push (EV only if the SmartScreen friction proves costly). The
+   release workflow already has the Windows-cert plumbing (`WINDOWS_CERTIFICATE`).
+4. **macOS → deferred to post-v1.** Windows + Linux + the browser build cover launch.
+   A Mac build (+ $99/yr notarization) is the first roadmap item after a stable v1.
+5. **Gateway hosting → shared box for the soft launch, dedicated before the big one.**
+   Fine for early traffic; move to its own instance (with monitoring + the
+   `library.json` backup wired) before promoting widely.
+
+---
+
+## Phase 2 status (2026-08-04)
+
+- [x] **Release pipeline** — already in place: `.github/workflows/release.yml`
+  (tag → build Windows + Linux via `tauri-action` → sign with the updater key →
+  draft GitHub Release + `latest.json`), with Windows-cert plumbing ready. Gated on
+  the fresh updater key + secrets (Phase 0).
+- [x] **GitHub Releases as source of truth** — the updater endpoint in
+  `tauri.conf.json` already points at the releases `latest.json`.
+- [x] **Landing page** — `site/index.html` (self-contained, flat design): hero,
+  the three demos, feature grid, privacy strip, download + “try in browser” CTAs.
+  `deploy/site.sh` publishes it atomically once a domain + nginx site exist.
+- [x] **CHANGELOG.md** started.
+- [ ] **Buy the domain** and point nginx at `site/current` (then run `deploy/site.sh`).
+- [ ] **Package managers** (winget/Scoop/Choco; APT repo/AUR/Flathub) — post-v1.
+- [ ] **Infra hardening** — uptime monitoring on `/api/health`; move the gateway
+  off the shared box before the big launch.
 
 ## Suggested sequencing
 

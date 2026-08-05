@@ -1,0 +1,12 @@
+HarnessStation
+Copyright 2026 HarnessStation
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It includes and depends on third-party open-source software; see THIRD_PARTY.md
+for the primary components and their licenses, and package-lock.json /
+Cargo.lock for the complete set.
+
+HarnessStation ships no AI model weights and no API keys. Models you download or
+connect, and any content you generate, are governed by their own licenses and by
+the terms of whatever provider you configure.

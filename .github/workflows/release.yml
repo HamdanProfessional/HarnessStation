@@ -11,9 +11,10 @@ name: Release
 #   WINDOWS_CERTIFICATE                 base64 of the .pfx
 #   WINDOWS_CERTIFICATE_PASSWORD        its password
 #
-# NOTE: the repo currently ships a throwaway dev updater key (see docs/release.md).
-# Generate a fresh keypair and update `plugins.updater.pubkey` before the first
-# public release — anyone holding that key can push an update to every install.
+# NOTE: `plugins.updater.pubkey` is the placeholder REPLACE_WITH_UPDATER_PUBLIC_KEY
+# (the old dev key was compromised — see SECURITY.md). Generate a fresh keypair,
+# paste its PUBLIC key into tauri.conf.json, and add the private key + password as
+# the two TAURI_SIGNING_* secrets before the first signed release.
 
 on:
   push:
