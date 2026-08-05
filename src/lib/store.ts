@@ -831,7 +831,19 @@ export const useStore = create<AppState>((set, get) => ({
     const chat = get().chats.find((c) => c.id === id);
     if (!chat || get().streaming) return;
     const userMsg: Message = { role: "user", content: text };
-    if (attachments?.length) userMsg.attachments = attachments;
+    // @-references (@file:… / @https://…) pull content into the message. The
+    // cheap `@` guard keeps the common path (and its concurrency behaviour)
+    // untouched — nothing async happens unless a reference is actually present.
+    let refAttachments: import("./types").Attachment[] = [];
+    if (text.includes("@")) {
+      const { hasReferences, resolveReferences } = await import("./references");
+      if (hasReferences(text)) {
+        set({ activity: "Loading references…" });
+        refAttachments = await resolveReferences(text, chat.workingDir ?? "");
+      }
+    }
+    const merged = [...(attachments ?? []), ...refAttachments];
+    if (merged.length) userMsg.attachments = merged;
     const patch: Partial<Chat> = {
       messages: [...chat.messages, userMsg],
     };
@@ -1144,6 +1156,17 @@ async function executeSchedule(s: Schedule, get: Get, set: Set): Promise<void> {
   set({ schedules: get().schedules.map((x) => (x.id === s.id ? updated : x)) });
   if (error) toast.error(`Schedule "${s.name}" failed`);
   else toast.success(`Schedule "${s.name}" ran`);
+
+  // Fire the schedule-complete hook, and deliver the output to the schedule's
+  // own webhook/Slack destination if it has one.
+  void import("./hooks").then((h) => {
+    h.fireHook("schedule-complete", {
+      scheduleName: s.name,
+      error,
+      summary: error ? `Schedule “${s.name}” failed: ${error}` : `*${s.name}*\n${result.slice(0, 3500)}`,
+    });
+    if (!error) void h.deliverScheduleResult(s, result);
+  });
 
   if (s.saveToChat && !error) {
     const p = get().settings.providers.find((x) => x.id === s.providerId) ?? get().settings.providers[0];
@@ -1477,9 +1500,16 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
           '_Reached the tool-step limit for this turn — the task may be unfinished. Send "continue" to keep going._',
       });
     }
+    void import("./hooks").then((h) =>
+      h.fireHook("turn-complete", { chatId: chat.id, chatTitle: chat.title, summary: `Turn complete in “${chat.title}”` }),
+    );
   } catch (e) {
     if ((e as Error).name !== "AbortError") {
-      set({ error: (e as Error).message || String(e) });
+      const msg = (e as Error).message || String(e);
+      set({ error: msg });
+      void import("./hooks").then((h) =>
+        h.fireHook("error", { chatId: chat.id, chatTitle: chat.title, error: msg, summary: `Error in “${chat.title}”: ${msg}` }),
+      );
     }
     // drop the empty placeholder we appended for the reply that never arrived
     const cur = live();

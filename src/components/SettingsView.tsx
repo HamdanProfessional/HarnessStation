@@ -5,6 +5,7 @@ import * as storage from "../lib/storage";
 import { checkForUpdate, installUpdate, type UpdateInfo } from "../lib/updater";
 import { DevicesPanel } from "./DevicesPanel";
 import { SecretsPanel } from "./SecretsPanel";
+import { HooksPanel } from "./HooksPanel";
 import { WebLlmCard } from "./WebLlmCard";
 import { useStore } from "../lib/store";
 import { useModal } from "../lib/useModal";
@@ -78,6 +79,12 @@ const TABS = [
     label: "Secrets",
     blurb: "API keys the model uses but can't read",
     keywords: "secret api key token credential vault password cloudflare github stripe openai redact placeholder",
+  },
+  {
+    id: "hooks",
+    label: "Hooks & guardrails",
+    blurb: "Tool policies and event webhooks",
+    keywords: "guardrail confirm block deny allow tool policy webhook hook slack event turn error notify alert automation",
   },
   { id: "usage", label: "Usage", blurb: "Spend caps and totals", keywords: "cost spend budget cap daily monthly tokens price" },
   {
@@ -624,6 +631,10 @@ export function SettingsView() {
 
       <section hidden={tab !== "secrets"}>
         <SecretsPanel />
+      </section>
+
+      <section hidden={tab !== "hooks"}>
+        <HooksPanel />
       </section>
 
       <section hidden={tab !== "usage"}>
@@ -1621,6 +1632,51 @@ export function SettingsView() {
                 })
               }
             />
+            <details className="voice-tools">
+              <summary>Resilience — extra keys &amp; failover</summary>
+              <p className="hint" style={{ marginTop: 6 }}>
+                If a request is rate-limited, rejected, or the connection fails, the app retries with
+                the next spare key, then each backup provider — but only before any reply has started,
+                so answers are never duplicated.
+              </p>
+              <label className="field">
+                <span>Extra API keys (one per line, rotated on failure)</span>
+                <textarea
+                  rows={2}
+                  spellCheck={false}
+                  placeholder="sk-backup-1&#10;sk-backup-2"
+                  defaultValue={(p.apiKeys ?? []).join("\n")}
+                  onBlur={(e) =>
+                    patchProvider(p.id, {
+                      apiKeys: e.target.value.split("\n").map((k) => k.trim()).filter(Boolean),
+                    })
+                  }
+                />
+              </label>
+              <label className="field">
+                <span>Backup providers (tried in order)</span>
+                <div className="agent-check-grid">
+                  {draft.providers
+                    .filter((x) => x.id !== p.id)
+                    .map((x) => (
+                      <label key={x.id} className="agent-check">
+                        <input
+                          type="checkbox"
+                          checked={(p.fallbacks ?? []).includes(x.id)}
+                          onChange={() =>
+                            patchProvider(p.id, {
+                              fallbacks: (p.fallbacks ?? []).includes(x.id)
+                                ? (p.fallbacks ?? []).filter((id) => id !== x.id)
+                                : [...(p.fallbacks ?? []), x.id],
+                            })
+                          }
+                        />
+                        {x.name}
+                      </label>
+                    ))}
+                </div>
+              </label>
+            </details>
             <details className="voice-tools">
               <summary>Advanced — extra request fields</summary>
               <p className="hint" style={{ marginTop: 6 }}>

@@ -29,12 +29,98 @@ export interface ChatResult {
   usage?: Usage;
 }
 
-export async function streamChat(p: ChatParams): Promise<ChatResult> {
+/** A provider request that failed with an HTTP status, so failover can classify it. */
+export class ProviderError extends Error {
+  status?: number;
+  constructor(message: string, status?: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
+/** Errors worth trying another key / provider for: transient, rate, or auth. */
+export function isRetryableError(e: unknown): boolean {
+  if (e instanceof ProviderError && typeof e.status === "number") {
+    return e.status === 401 || e.status === 403 || e.status === 408 || e.status === 409 || e.status === 429 || e.status >= 500;
+  }
+  // A network-level throw (fetch failed, DNS, reset) — worth another endpoint.
+  if (e instanceof Error) return /network|fetch|timeout|ECONN|socket|Failed to fetch/i.test(e.message);
+  return false;
+}
+
+export interface Attempt {
+  provider: Provider;
+  /** Model to use for this attempt, or null to keep the caller's model. */
+  model: string | null;
+}
+
+/** One key per pool entry; a keyless (local) provider still gets one attempt. */
+function keysOf(p: Provider): string[] {
+  const keys = [p.apiKey, ...(p.apiKeys ?? [])].map((k) => (k ?? "").trim()).filter(Boolean);
+  return keys.length ? keys : [""];
+}
+
+/**
+ * The ordered list of (provider, key) attempts for a request: every key on the
+ * chosen provider first, then each fallback provider (with its own keys). Pure,
+ * so it's unit-tested.
+ */
+export function buildAttempts(provider: Provider, all: Provider[]): Attempt[] {
+  const out: Attempt[] = [];
+  for (const key of keysOf(provider)) out.push({ provider: { ...provider, apiKey: key }, model: null });
+  for (const id of provider.fallbacks ?? []) {
+    const fb = all.find((x) => x.id === id && x.id !== provider.id);
+    if (!fb) continue;
+    for (const key of keysOf(fb)) out.push({ provider: { ...fb, apiKey: key }, model: fb.models[0] ?? null });
+  }
+  return out;
+}
+
+/** Dispatch a single request to the right backend (no failover). */
+function streamOnce(p: ChatParams): Promise<ChatResult> {
   if (p.provider.kind === "anthropic") return streamAnthropic(p);
   // In-browser model (web build only). Lazily loaded so the WebGPU/WASM engine
   // is never pulled in unless a webllm provider is actually used.
-  if (p.provider.kind === "webllm") return (await import("./webllm")).streamWebLLM(p);
+  if (p.provider.kind === "webllm") return import("./webllm").then((m) => m.streamWebLLM(p));
   return streamOpenAI(p);
+}
+
+/**
+ * Send a chat request with resilience: rotate through the provider's keys and
+ * then its fallback providers if a request is rate-limited, rejected, or the
+ * connection fails — but only before any text has streamed, so a reply is never
+ * duplicated. Falls back to a single attempt when nothing is configured.
+ */
+export async function streamChat(p: ChatParams): Promise<ChatResult> {
+  let all: Provider[] = [];
+  try {
+    const { useStore } = await import("../store");
+    all = useStore.getState().settings.providers;
+  } catch {
+    /* store unavailable (tests / workflows) — just use the one provider */
+  }
+  const attempts = buildAttempts(p.provider, all);
+  let lastErr: unknown;
+  for (let i = 0; i < attempts.length; i++) {
+    const a = attempts[i];
+    let emitted = false;
+    const mark = <T>(fn?: (t: T) => void) => (fn ? (t: T) => { emitted = true; fn(t); } : undefined);
+    try {
+      return await streamOnce({
+        ...p,
+        provider: a.provider,
+        model: a.model ?? p.model,
+        onDelta: mark(p.onDelta)!,
+        onReasoning: mark(p.onReasoning),
+      });
+    } catch (e) {
+      lastErr = e;
+      // Once tokens have reached the user, or the error isn't transient, or
+      // there's nothing left to try — surface it.
+      if (emitted || !isRetryableError(e) || i === attempts.length - 1) throw e;
+    }
+  }
+  throw lastErr;
 }
 
 const THINK_OPEN = "<think>";
@@ -238,6 +324,10 @@ async function streamOpenAI(p: ChatParams): Promise<ChatResult> {
   if (!res.ok && p.noThinking && (res.status === 400 || res.status === 422)) {
     res = await send({});
   }
+  if (!res.ok) {
+    const detail = await res.text().catch(() => res.statusText);
+    throw new ProviderError(`${p.provider.name}: ${res.status} ${detail.slice(0, 300)}`, res.status);
+  }
 
   // accumulate streamed tool-call fragments by index
   const calls: { id: string; name: string; arguments: string }[] = [];
@@ -308,6 +398,12 @@ async function streamAnthropic(p: ChatParams): Promise<ChatResult> {
       }
       return { role: m.role as "user" | "assistant", content: textWithAttachments(m) };
     });
+  // Prompt caching: mark the system prompt as an ephemeral cache breakpoint so a
+  // tool loop (which resends the same system on every round) pays for it once and
+  // reads it back cheaply for ~5 minutes. Always on — it only ever saves money.
+  const system = p.system
+    ? [{ type: "text", text: p.system, cache_control: { type: "ephemeral" } }]
+    : undefined;
   const res = await fetch(`${base}/v1/messages`, {
     method: "POST",
     headers: {
@@ -317,14 +413,19 @@ async function streamAnthropic(p: ChatParams): Promise<ChatResult> {
     },
     body: JSON.stringify({
       model: p.model,
-      system: p.system || undefined,
+      system,
       messages,
       max_tokens: p.maxTokens > 0 ? p.maxTokens : 4096,
       temperature: p.temperature,
       stream: true,
+      ...(p.provider.extraBody ?? {}),
     }),
     signal: p.signal,
   });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => res.statusText);
+    throw new ProviderError(`${p.provider.name}: ${res.status} ${detail.slice(0, 300)}`, res.status);
+  }
   let promptTokens = 0;
   let completionTokens = 0;
   await readSSE(res, (data) => {

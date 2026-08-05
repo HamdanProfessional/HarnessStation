@@ -6,6 +6,10 @@ export interface Provider {
   kind: ProviderKind;
   baseUrl: string; // e.g. http://localhost:1234/v1 or https://api.anthropic.com
   apiKey: string;
+  /** Extra keys tried in turn when the main one is rate-limited or rejected. */
+  apiKeys?: string[];
+  /** Provider ids to fall back to, in order, if this one errors before replying. */
+  fallbacks?: string[];
   models: string[];
   /**
    * Extra top-level fields merged into every chat/completions request body.
@@ -81,6 +85,12 @@ export interface Settings {
   secrets?: VaultSecret[];
   /** Remembered author name for publishing to the community library. */
   communityAuthor?: string;
+  /** Fire a POST to a URL on lifecycle events (turn/tool/error/schedule). */
+  webhooks?: import("./hooks").Webhook[];
+  /** Tool ids that require a confirmation before the agent may run them. */
+  confirmTools?: string[];
+  /** Tool ids the agent is not allowed to run at all. */
+  blockTools?: string[];
 }
 
 /**
@@ -417,6 +427,9 @@ export interface Schedule {
   lastRun?: number;
   lastResult?: string;
   lastError?: string;
+  /** Optional webhook / Slack URL to POST the run's output to when it finishes. */
+  deliverUrl?: string;
+  deliverKind?: "json" | "slack";
 }
 
 export interface EvalCase {

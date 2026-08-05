@@ -200,6 +200,30 @@ export function SchedulesView() {
           <input type="checkbox" checked={s.saveToChat} onChange={(e) => set({ saveToChat: e.target.checked })} />
           Save each run's output as a new chat
         </label>
+
+        <section>
+          <h2>Deliver the result</h2>
+          <p className="hint">
+            Optionally POST each run's output to a webhook or Slack when it finishes — so a scheduled
+            job can land in a channel instead of only the app.
+          </p>
+          <div className="provider-row">
+            <input
+              className="grow"
+              type="url"
+              value={s.deliverUrl ?? ""}
+              placeholder="https://hooks.slack.com/services/…  (leave blank for none)"
+              onChange={(e) => set({ deliverUrl: e.target.value })}
+            />
+            <select
+              value={s.deliverKind ?? "json"}
+              onChange={(e) => set({ deliverKind: e.target.value as "json" | "slack" })}
+            >
+              <option value="json">JSON</option>
+              <option value="slack">Slack message</option>
+            </select>
+          </div>
+        </section>
       </main>
     );
   }

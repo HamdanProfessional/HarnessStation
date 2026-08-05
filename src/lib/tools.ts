@@ -648,6 +648,11 @@ export async function executeTool(
     const { listSecretsForModel } = await import("./secrets");
     return listSecretsForModel();
   }
+  // Guardrails: a tool may be blocked, or require confirmation, before it runs.
+  const { guardTool, fireHook } = await import("./hooks");
+  const gate = await guardTool(tool.id);
+  if (gate !== "allow") return gate;
+  fireHook("tool-call", { tool: tool.id });
   const { resolveSecretsInArgs, redactSecrets } = await import("./secrets");
   const resolvedArgs = await resolveSecretsInArgs(args);
   const out = await executeToolInner(tool, resolvedArgs, cwd, media, target, sessionId);
