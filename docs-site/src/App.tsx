@@ -77,6 +77,16 @@ export function App() {
 
   return (
     <div className="docs">
+      <div className="site-bg" aria-hidden="true">
+        <div className="aurora" />
+        <div className="blob b1" />
+        <div className="blob b2" />
+        <div className="blob b3" />
+        <div className="beam n1" />
+        <div className="beam n2" />
+        <div className="grid" />
+        <div className="noise" />
+      </div>
       <header className="docs-header">
         <button
           className="icon-btn menu-btn"
