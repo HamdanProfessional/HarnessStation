@@ -27,6 +27,15 @@ a{color:inherit}
 
 /* ---------- animated background ---------- */
 .bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.aurora{position:absolute;inset:-35% -15%;opacity:.4;filter:blur(70px);will-change:transform;
+  background:conic-gradient(from 0deg at 50% 50%,transparent 0deg,color-mix(in srgb,var(--accent) 26%,transparent) 60deg,transparent 130deg,color-mix(in srgb,var(--accent-3) 22%,transparent) 200deg,transparent 250deg,color-mix(in srgb,var(--accent-2) 20%,transparent) 320deg,transparent 360deg);
+  animation:spin 44s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.beam{position:absolute;top:-20%;width:2px;height:150%;opacity:.18;filter:blur(1px);will-change:transform,opacity}
+.beam.n1{left:24%;background:linear-gradient(var(--accent),transparent);animation:beam 10s ease-in-out infinite}
+.beam.n2{left:68%;background:linear-gradient(var(--accent-2),transparent);animation:beam 13s ease-in-out infinite 2.5s}
+.beam.n3{left:48%;background:linear-gradient(var(--accent-3),transparent);animation:beam 16s ease-in-out infinite 1s}
+@keyframes beam{0%,100%{opacity:.04;transform:translateY(-14px)}50%{opacity:.28;transform:translateY(14px)}}
 .blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;mix-blend-mode:screen;will-change:transform}
 .blob.b1{width:620px;height:620px;left:-160px;top:-180px;background:radial-gradient(circle at 30% 30%,var(--accent),transparent 65%);animation:drift1 26s ease-in-out infinite}
 .blob.b2{width:560px;height:560px;right:-140px;top:60px;background:radial-gradient(circle at 60% 40%,var(--accent-3),transparent 65%);animation:drift2 32s ease-in-out infinite}
@@ -35,10 +44,12 @@ a{color:inherit}
 @keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-70px,40px) scale(1.08)}}
 @keyframes drift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-60px,-50px) scale(1.1)}}
 .grid{position:absolute;inset:0;
-  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
   background-size:46px 46px;
   -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 40%,transparent 78%);
-  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 40%,transparent 78%)}
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 40%,transparent 78%);
+  animation:gridpan 30s linear infinite}
+@keyframes gridpan{to{background-position:46px 46px,46px 46px}}
 .noise{position:absolute;inset:0;opacity:.025;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
 /* ---------- buttons ---------- */
@@ -87,12 +98,14 @@ nav a.navlink:hover::after{right:0}
 .hero .note{margin-top:16px;font-size:13px;color:var(--dim)}
 @media(max-width:920px){.hero h1{font-size:44px}.hero p.lead{font-size:18px}}
 
-/* floating mock app window (acrylic) */
+/* floating mock app window (acrylic) — float on the wrapper, 3D tilt on the card */
+.mock-wrap{perspective:1100px;animation:float 7s ease-in-out infinite;will-change:transform}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
 .mock{position:relative;border-radius:18px;border:1px solid var(--glass-line);
   background:linear-gradient(180deg,rgba(28,31,40,.7),rgba(18,20,27,.7));backdrop-filter:blur(16px) saturate(130%);
   box-shadow:0 40px 90px -40px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.06);
-  overflow:hidden;animation:float 7s ease-in-out infinite;will-change:transform}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  overflow:hidden;transform-style:preserve-3d;
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s ease}
 .mock::after{content:"";position:absolute;inset:-2px;border-radius:20px;padding:1px;pointer-events:none;
   background:linear-gradient(120deg,color-mix(in srgb,var(--accent) 70%,transparent),transparent 40%,color-mix(in srgb,var(--accent-3) 60%,transparent));
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:.5}
@@ -116,18 +129,37 @@ h2{font-size:36px;letter-spacing:-.015em;margin:0 0 12px}
 .sub{color:var(--dim);font-size:17px;max-width:720px;margin:0 0 36px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 @media(max-width:880px){.grid3{grid-template-columns:1fr}}
-.card{position:relative;border:1px solid var(--glass-line);border-radius:16px;padding:26px;
+.card{--ic:var(--accent);position:relative;border:1px solid var(--glass-line);border-radius:16px;padding:26px;
   background:linear-gradient(180deg,rgba(28,31,40,.5),rgba(18,20,27,.45));backdrop-filter:blur(12px) saturate(120%);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
   transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
-.card:hover{transform:translateY(-5px);border-color:color-mix(in srgb,var(--accent) 55%,transparent);
-  box-shadow:0 24px 60px -30px var(--accent),inset 0 1px 0 rgba(255,255,255,.08)}
-.card h3{margin:0 0 8px;font-size:19px}
-.card p{margin:0;color:var(--dim);font-size:15px}
-.card .ico{width:38px;height:38px;color:var(--accent);margin-bottom:14px;transition:transform .25s ease,color .25s}
-.card:hover .ico{transform:scale(1.12) rotate(-4deg);color:var(--accent-2)}
+/* a soft per-card tint that blooms on hover */
+.card::before{content:"";position:absolute;inset:0;border-radius:16px;pointer-events:none;opacity:0;transition:opacity .25s;
+  background:radial-gradient(120% 80% at 50% -10%,color-mix(in srgb,var(--ic) 16%,transparent),transparent 70%)}
+.card:hover::before{opacity:1}
+.card:hover{transform:translateY(-5px);border-color:color-mix(in srgb,var(--ic) 55%,transparent);
+  box-shadow:0 24px 60px -30px var(--ic),inset 0 1px 0 rgba(255,255,255,.08)}
+.card h3{margin:0 0 8px;font-size:19px;position:relative}
+.card p{margin:0;color:var(--dim);font-size:15px;position:relative}
+.card .ico{width:38px;height:38px;color:var(--ic);margin-bottom:14px;position:relative;
+  transition:transform .25s ease,filter .25s;filter:drop-shadow(0 0 0 transparent)}
+.card:hover .ico{transform:scale(1.12) rotate(-4deg);filter:drop-shadow(0 0 12px color-mix(in srgb,var(--ic) 70%,transparent))}
 .demo .tag{display:inline-block;font-size:12px;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);
   background:color-mix(in srgb,var(--accent) 12%,transparent);padding:2px 10px;border-radius:999px;margin-bottom:12px}
+
+/* ---------- "works with" marquee ---------- */
+.marquee-sec{padding:46px 0;border-top:1px solid var(--border)}
+.works{text-align:center;color:var(--dim);font-size:13px;letter-spacing:.12em;text-transform:uppercase;margin:0 0 24px}
+.marquee{position:relative;overflow:hidden;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+  mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.track{display:flex;gap:14px;width:max-content;animation:scroll 30s linear infinite}
+.marquee:hover .track{animation-play-state:paused}
+@keyframes scroll{to{transform:translateX(-50%)}}
+.mchip{display:inline-flex;align-items:center;gap:9px;white-space:nowrap;padding:11px 20px;border:1px solid var(--glass-line);border-radius:999px;
+  background:var(--glass);backdrop-filter:blur(8px);font-weight:600;font-size:15px;color:var(--text);transition:border-color .18s,color .18s}
+.mchip:hover{border-color:color-mix(in srgb,var(--accent) 55%,transparent);color:#fff}
+.mchip i{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
 
 /* privacy strip */
 .privacy{background:linear-gradient(180deg,rgba(20,22,30,.6),rgba(12,13,18,.6))}
@@ -166,7 +198,9 @@ footer a:hover{color:var(--text)}
 <body>
 
 <div class="bg" aria-hidden="true">
+  <div class="aurora"></div>
   <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <div class="beam n1"></div><div class="beam n2"></div><div class="beam n3"></div>
   <div class="grid"></div><div class="noise"></div>
 </div>
 
@@ -200,15 +234,29 @@ footer a:hover{color:var(--text)}
     <div class="note">Free &amp; open source · Windows &amp; Linux · keys stay in your OS keychain</div>
   </div>
 
-  <div class="mock" data-reveal>
-    <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="t">HarnessStation — chat</span></div>
-    <div class="body">
-      <div class="bubble user">Read the README in this folder and tell me what it does.</div>
-      <div class="toolcard"><span class="k">read_file</span>(path: "README.md") <span class="ok">→ 4.2 kB</span></div>
-      <div class="bubble ai" style="margin-top:12px">It's a desktop app for running AI models as agents — tools, files, voice, a browser, and local models, all private by default.<span class="caret"></span></div>
+  <div class="mock-wrap" data-reveal>
+    <div class="mock" id="mock">
+      <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="t">HarnessStation — chat</span></div>
+      <div class="body">
+        <div class="bubble user">Read the README in this folder and tell me what it does.</div>
+        <div class="toolcard"><span class="k">read_file</span>(path: "README.md") <span class="ok">→ 4.2 kB</span></div>
+        <div class="bubble ai" style="margin-top:12px">It's a desktop app for running AI models as agents — tools, files, voice, a browser, and local models, all private by default.<span class="caret"></span></div>
+      </div>
     </div>
   </div>
 </div></div></header>
+
+<section class="marquee-sec">
+  <div class="wrap"><p class="works" data-reveal>Works with your model — local or cloud</p></div>
+  <div class="marquee"><div class="track" id="track">
+    <span class="mchip"><i></i>OpenAI</span><span class="mchip"><i></i>Anthropic</span><span class="mchip"><i></i>Ollama</span>
+    <span class="mchip"><i></i>LM Studio</span><span class="mchip"><i></i>Groq</span><span class="mchip"><i></i>OpenRouter</span>
+    <span class="mchip"><i></i>Google Gemini</span><span class="mchip"><i></i>Together</span><span class="mchip"><i></i>Cerebras</span>
+    <span class="mchip"><i></i>Mistral</span><span class="mchip"><i></i>DeepSeek</span><span class="mchip"><i></i>llama.cpp</span>
+    <span class="mchip"><i></i>WebGPU</span>
+    <!-- duplicated for a seamless loop (filled by JS if empty) -->
+  </div></div>
+</section>
 
 <section id="features"><div class="wrap">
   <span class="eyebrow" data-reveal>What you plug a model into</span>
@@ -216,12 +264,12 @@ footer a:hover{color:var(--text)}
   <p class="sub" data-reveal>You bring the model — free and local via Ollama, LM Studio or in-browser WebGPU, or
     a cloud model with your own key. HarnessStation gives it everything it needs to actually do work.</p>
   <div class="grid3">
-    <div class="card" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/></svg><h3>Tools &amp; files</h3><p>Read and write files, run commands, search the web, and drive a real browser — inside a working directory you control.</p></div>
-    <div class="card" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg><h3>Voice</h3><p>Talk to it. Local speech-to-text and neural voices, barge-in, and 3D avatars — no server required.</p></div>
-    <div class="card" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><h3>Automation</h3><p>Package roles as reusable agents, chain steps into workflows, and run them on a schedule while you're away.</p></div>
-    <div class="card" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7V3m6 4V3M7 7h10v4a5 5 0 0 1-10 0z"/><path d="M12 16v5"/></svg><h3>MCP &amp; knowledge</h3><p>Connect hundreds of MCP servers and ground answers in your own documents with local or cloud embeddings.</p></div>
-    <div class="card" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v8a2 2 0 0 1-1 1.7l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.7l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/></svg><h3>Local models</h3><p>Download a GGUF and run it with tuned llama.cpp flags, or run a small model on WebGPU right in the tab.</p></div>
-    <div class="card" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><h3>Community library</h3><p>Import skills, agents, workflows and schedules others have made — or publish your own, free.</p></div>
+    <div class="card" style="--ic:#6d7cff" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/></svg><h3>Tools &amp; files</h3><p>Read and write files, run commands, search the web, and drive a real browser — inside a working directory you control.</p></div>
+    <div class="card" style="--ic:#22d3ee" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg><h3>Voice</h3><p>Talk to it. Local speech-to-text and neural voices, barge-in, and 3D avatars — no server required.</p></div>
+    <div class="card" style="--ic:#a78bfa" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><h3>Automation</h3><p>Package roles as reusable agents, chain steps into workflows, and run them on a schedule while you're away.</p></div>
+    <div class="card" style="--ic:#3fb984" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7V3m6 4V3M7 7h10v4a5 5 0 0 1-10 0z"/><path d="M12 16v5"/></svg><h3>MCP &amp; knowledge</h3><p>Connect hundreds of MCP servers and ground answers in your own documents with local or cloud embeddings.</p></div>
+    <div class="card" style="--ic:#e0a44a" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v8a2 2 0 0 1-1 1.7l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.7l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/></svg><h3>Local models</h3><p>Download a GGUF and run it with tuned llama.cpp flags, or run a small model on WebGPU right in the tab.</p></div>
+    <div class="card" style="--ic:#f472b6" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><h3>Community library</h3><p>Import skills, agents, workflows and schedules others have made — or publish your own, free.</p></div>
   </div>
 </div></section>
 
@@ -291,14 +339,37 @@ footer a:hover{color:var(--text)}
   }), { threshold: 0.12 });
   document.querySelectorAll("[data-reveal]").forEach((el) => io.observe(el));
 
-  // Cursor spotlight in the hero (fine pointers only)
-  if (matchMedia("(pointer:fine)").matches) {
+  // Duplicate the marquee row so translateX(-50%) loops seamlessly.
+  const track = document.getElementById("track");
+  if (track) track.innerHTML += track.innerHTML;
+
+  const fine = matchMedia("(pointer:fine)").matches;
+  const calm = matchMedia("(prefers-reduced-motion:reduce)").matches;
+  if (fine && !calm) {
+    // Cursor spotlight in the hero
     const hero = document.querySelector(".hero");
     hero.addEventListener("pointermove", (e) => {
       const r = hero.getBoundingClientRect();
       hero.style.setProperty("--mx", (e.clientX - r.left) + "px");
       hero.style.setProperty("--my", (e.clientY - r.top) + "px");
     });
+
+    // 3D tilt on the mock window, toward the cursor.
+    const wrap = document.querySelector(".mock-wrap");
+    const mock = document.getElementById("mock");
+    if (wrap && mock) {
+      wrap.addEventListener("pointermove", (e) => {
+        const r = wrap.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width - 0.5;
+        const py = (e.clientY - r.top) / r.height - 0.5;
+        mock.style.setProperty("--ry", (px * 12).toFixed(2) + "deg");
+        mock.style.setProperty("--rx", (-py * 12).toFixed(2) + "deg");
+      });
+      wrap.addEventListener("pointerleave", () => {
+        mock.style.setProperty("--ry", "0deg");
+        mock.style.setProperty("--rx", "0deg");
+      });
+    }
   }
 </script>
 </body>
