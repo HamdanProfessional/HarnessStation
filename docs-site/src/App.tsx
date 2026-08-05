@@ -78,14 +78,10 @@ export function App() {
   return (
     <div className="docs">
       <div className="site-bg" aria-hidden="true">
-        <div className="aurora" />
-        <div className="blob b1" />
-        <div className="blob b2" />
-        <div className="blob b3" />
-        <div className="beam n1" />
-        <div className="beam n2" />
+        <div className="glow g1" />
+        <div className="glow g2" />
+        <div className="glow g3" />
         <div className="grid" />
-        <div className="noise" />
       </div>
       <header className="docs-header">
         <button
@@ -97,7 +93,6 @@ export function App() {
           ☰
         </button>
         <a className="brand" href={href("index")}>
-          <span className="brand-mark" aria-hidden="true" />
           HarnessStation
           <span className="brand-sub">docs</span>
         </a>
