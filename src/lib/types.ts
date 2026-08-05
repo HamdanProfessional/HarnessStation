@@ -91,6 +91,8 @@ export interface Settings {
   confirmTools?: string[];
   /** Tool ids the agent is not allowed to run at all. */
   blockTools?: string[];
+  /** Argument-matching guardrail rules, evaluated before the simple lists. */
+  guardrails?: import("./hooks").GuardrailRule[];
   /** Messaging channels (Telegram, Discord) that reach the agent from outside. */
   channels?: import("./channels").ChannelsSettings;
 }

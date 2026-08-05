@@ -698,9 +698,9 @@ export async function executeTool(
   // configured a tool policy or a webhook, so the common path stays cheap.
   const { useStore } = await import("./store");
   const gs = useStore.getState().settings;
-  if ((gs.blockTools?.length ?? 0) + (gs.confirmTools?.length ?? 0) > 0) {
+  if ((gs.blockTools?.length ?? 0) + (gs.confirmTools?.length ?? 0) + (gs.guardrails?.length ?? 0) > 0) {
     const { guardTool } = await import("./hooks");
-    const gate = await guardTool(tool.id);
+    const gate = await guardTool(tool.id, args);
     if (gate !== "allow") return gate;
   }
   if ((gs.webhooks?.length ?? 0) > 0) {
