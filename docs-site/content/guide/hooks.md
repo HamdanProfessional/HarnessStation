@@ -27,6 +27,30 @@ want to see every command before it executes.
 > which already limits *which files* a tool can reach. Guardrails limit *whether*
 > a tool runs at all.
 
+### Rules — match on the arguments
+
+For finer control, add a **rule** that inspects the tool's *arguments*, not just
+its name. A rule fires when:
+
+- the **tool** matches (an exact id, or `*` for any), and
+- if a **pattern** is given, the tool's JSON arguments match that regex
+  (case-insensitive).
+
+…and then it does one of **Allow / Ask / Deny**. Rules are checked in order and
+the **first match wins**, so an early **Allow** can whitelist a specific case a
+later broader **Deny** would otherwise block. A malformed regex simply never
+matches, so it can't accidentally block everything.
+
+One-click presets cover the common cases: **block destructive shell** (`rm -rf`,
+`mkfs`, `dd if=`, fork bombs…), **confirm every HTTP request**, and **confirm
+writes to `.env` / secret-looking paths**. Examples:
+
+| Tool | Pattern | Action |
+| --- | --- | --- |
+| `run_terminal` | `rm\s+-rf` | Deny |
+| `write_file` | `\.env\|credential` | Ask |
+| `*` | `password` | Deny |
+
 ## Webhooks
 
 Fire a `POST` to a URL when something happens, for logging, alerts, or piping
@@ -37,6 +61,10 @@ results into Slack. Add one under **Webhooks**, choosing:
 - **Format** — raw **JSON**, or a **Slack message** (`{ "text": … }`, so a Slack
   incoming-webhook URL just works).
 - **URL** — any endpoint.
+
+Add optional **custom headers** (for a private or authenticated endpoint — e.g.
+an `Authorization` token), a **label**, and use **Test** to fire a sample payload
+and confirm the endpoint answers.
 
 Webhooks are **best-effort**: a slow or dead endpoint never holds up the app, and
 the payload deliberately carries **no prompts and no keys** — just the event, a
