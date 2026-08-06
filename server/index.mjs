@@ -247,7 +247,7 @@ const LIBRARY_ADMIN_TOKEN = process.env.LIBRARY_ADMIN_TOKEN ?? "";
 // Publishes allowed per IP per hour, and reports that auto-hide an item pending review.
 const PUBLISH_LIMIT = Number(process.env.LIBRARY_PUBLISH_LIMIT ?? 10);
 const REPORT_THRESHOLD = Number(process.env.LIBRARY_REPORT_THRESHOLD ?? 4);
-const KINDS = new Set(["skill", "agent", "workflow", "schedule"]);
+const KINDS = new Set(["skill", "agent", "workflow", "schedule", "template"]);
 
 // ---------- cloud sync (opt-in, zero-knowledge accounts) ----------
 // Accounts exist only to back up an encrypted blob of a user's own data. The
@@ -354,6 +354,8 @@ function publicItem(item, requester) {
     downloads: item.downloads,
     likes: item.likes,
     liked: requester ? !!item.likedBy[requester] : false,
+    // Only present on templates; JSON drops it as undefined for other kinds.
+    subtype: item.subtype,
   };
 }
 
@@ -375,12 +377,28 @@ const visible = (i) => !i.hidden;
 /** Non-skill payloads must be a JSON object; skills are free-form markdown. */
 function payloadValid(type, payload) {
   if (type === "skill") return true;
+  let v;
   try {
-    const v = JSON.parse(payload);
-    return !!v && typeof v === "object" && !Array.isArray(v);
+    v = JSON.parse(payload);
   } catch {
     return false;
   }
+  if (!v || typeof v !== "object" || Array.isArray(v)) return false;
+  // Templates carry a subtype that decides their shape: "ui" is a code snippet,
+  // "setup" is a starter-kit (instructions / tools / a bundled agent or workflow).
+  if (type === "template") {
+    if (v.subtype === "ui") return typeof v.code === "string" && v.code.trim().length > 0;
+    if (v.subtype === "setup") {
+      return (
+        (typeof v.instructions === "string" && v.instructions.trim().length > 0) ||
+        (!!v.agent && typeof v.agent === "object") ||
+        (!!v.workflow && typeof v.workflow === "object") ||
+        (Array.isArray(v.toolIds) && v.toolIds.length > 0)
+      );
+    }
+    return false; // unknown/absent subtype
+  }
+  return true;
 }
 
 /** Bearer-token gate for moderation routes. Off entirely when no token is set. */
@@ -455,13 +473,18 @@ app.post("/api/library/publish", (req, res) => {
   if (description.length > 600) return res.status(400).json({ error: "description too long" });
   if (!payload || payload.length > 280_000) return res.status(400).json({ error: "payload missing or too large" });
   if (!payloadValid(type, payload)) return res.status(400).json({ error: `payload is not a valid ${type}` });
+  const subtype =
+    type === "template" ? (b.subtype === "ui" ? "ui" : b.subtype === "setup" ? "setup" : "") : undefined;
+  if (type === "template" && !subtype) {
+    return res.status(400).json({ error: "a template needs subtype 'setup' or 'ui'" });
+  }
   if (!publishAllowed(ipKey(req))) {
     return res.status(429).json({ error: `publish limit reached (${PUBLISH_LIMIT}/hour) — try again later` });
   }
 
   const item = {
     id: crypto.randomUUID(),
-    type, name, description, author, tags, payload,
+    type, name, description, author, tags, payload, subtype,
     createdAt: Date.now(),
     downloads: 0,
     likes: 0,

@@ -5,13 +5,16 @@ import {
   communityLike,
   communityList,
   communityReport,
+  fetchTemplate,
   type CommunityItem,
   type CommunityKind,
   type CommunitySort,
+  type TemplateSubtype,
 } from "../lib/community";
 import { toast } from "../lib/toast";
 import { promptDialog } from "../lib/dialog";
 import { CommunityAdmin } from "./CommunityAdmin";
+import { TemplatePublish } from "./TemplatePublish";
 import { EmptyState } from "./EmptyState";
 import { IconHeart, IconDownload, IconSearch, IconGrid } from "./icons";
 
@@ -21,6 +24,7 @@ const KINDS: { id: CommunityKind | "all"; label: string }[] = [
   { id: "agent", label: "Agents" },
   { id: "workflow", label: "Workflows" },
   { id: "schedule", label: "Schedules" },
+  { id: "template", label: "Templates" },
 ];
 
 const SORTS: { id: CommunitySort; label: string }[] = [
@@ -35,6 +39,7 @@ const KIND_LABEL: Record<CommunityKind, string> = {
   agent: "Agent",
   workflow: "Workflow",
   schedule: "Schedule",
+  template: "Template",
 };
 
 function relTime(ms: number): string {
@@ -56,6 +61,9 @@ export function CommunityView() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [moderating, setModerating] = useState(false);
+  const [subFilter, setSubFilter] = useState<TemplateSubtype | "all">("all");
+  const [showPublish, setShowPublish] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const available = useMemo(() => communityAvailable(), []);
 
@@ -84,7 +92,7 @@ export function CommunityView() {
     return () => {
       live = false;
     };
-  }, [available, kind, sort, q, tag]);
+  }, [available, kind, sort, q, tag, refreshKey]);
 
   const like = async (item: CommunityItem) => {
     // Optimistic — flip locally, reconcile with the server's count.
@@ -126,6 +134,42 @@ export function CommunityView() {
     }
   };
 
+  // UI templates aren't imported into the app — they're copied or exported as a
+  // .tsx for the user's own project. Fetching the code counts as a download.
+  const useUiTemplate = async (item: CommunityItem, action: "copy" | "export") => {
+    setBusy(item.id);
+    try {
+      const t = await fetchTemplate(item);
+      if (t.subtype !== "ui") throw new Error("Not a UI template.");
+      setItems((list) => list.map((i) => (i.id === item.id ? { ...i, downloads: i.downloads + 1 } : i)));
+      if (action === "copy") {
+        await navigator.clipboard.writeText(t.code);
+        toast.success("Code copied to clipboard.");
+      } else {
+        const slug =
+          item.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase().replace(/^-+|-+$/g, "") || "component";
+        const blob = new Blob([t.code], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${slug}.tsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast.success(`Exported ${slug}.tsx`);
+      }
+    } catch (e) {
+      toast.error(`Couldn't use that template: ${(e as Error).message}`);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  // Templates carry a subtype; the sub-filter narrows to setup vs ui client-side.
+  const shown =
+    kind === "template" && subFilter !== "all" ? items.filter((i) => i.subtype === subFilter) : items;
+
   if (!available) {
     return (
       <main className="settings-main">
@@ -147,7 +191,14 @@ export function CommunityView() {
     <main className="settings-main">
       <div className="settings-header">
         <h1>Community library</h1>
-        <span className="hint grow">Skills, agents, workflows and schedules shared by others — free to import.</span>
+        <span className="hint grow">
+          Skills, agents, workflows, schedules and templates shared by others — free to import.
+        </span>
+        {kind === "template" && (
+          <button className="btn small" onClick={() => setShowPublish(true)}>
+            Publish template
+          </button>
+        )}
         <button className="link-btn" title="Moderate published items (admin)" onClick={() => setModerating(true)}>
           Moderate
         </button>
@@ -181,6 +232,20 @@ export function CommunityView() {
         </div>
       </div>
 
+      {kind === "template" && (
+        <div className="seg" style={{ margin: "0 0 8px" }}>
+          {(["all", "setup", "ui"] as const).map((s) => (
+            <button
+              key={s}
+              className={`seg-btn ${subFilter === s ? "active" : ""}`}
+              onClick={() => setSubFilter(s)}
+            >
+              {s === "all" ? "All" : s === "setup" ? "Setup" : "UI"}
+            </button>
+          ))}
+        </div>
+      )}
+
       {tags.length > 0 && (
         <div className="tag-row">
           <button className={`tag-chip ${tag === null ? "active" : ""}`} onClick={() => setTag(null)}>
@@ -197,15 +262,21 @@ export function CommunityView() {
       {error && <div className="error-banner">{error}</div>}
       {loading ? (
         <p className="hint">Loading…</p>
-      ) : items.length === 0 ? (
+      ) : shown.length === 0 ? (
         <EmptyState
           icon={<IconGrid size={22} />}
           title="Nothing here yet"
-          hint={q || tag ? "No matches — try a broader search." : "Be the first to publish — open Skills, Agents, Workflows or Schedules and hit Publish."}
+          hint={
+            q || tag
+              ? "No matches — try a broader search."
+              : kind === "template"
+                ? "No templates yet — hit “Publish template” to add the first."
+                : "Be the first to publish — open Skills, Agents, Workflows or Schedules and hit Publish."
+          }
         />
       ) : (
         <div className="card-grid">
-          {items.map((item) => (
+          {shown.map((item) => (
             <div key={item.id} className="cloud-card">
               <div className="cloud-card-head">
                 <span className="cloud-logo">{item.name.slice(0, 1).toUpperCase()}</span>
@@ -215,7 +286,13 @@ export function CommunityView() {
                     by {item.author} · {relTime(item.createdAt)}
                   </div>
                 </div>
-                <span className="tool-tag">{KIND_LABEL[item.type]}</span>
+                <span className="tool-tag">
+                  {item.type === "template"
+                    ? item.subtype === "ui"
+                      ? "UI template"
+                      : "Setup template"
+                    : KIND_LABEL[item.type]}
+                </span>
               </div>
               <div className="cloud-blurb">{item.description || <span className="hint">No description.</span>}</div>
               {item.tags.length > 0 && (
@@ -243,13 +320,41 @@ export function CommunityView() {
                 <button className="link-btn report-link" title="Report this item" onClick={() => void report(item)}>
                   Report
                 </button>
-                <button className="btn primary small" disabled={busy === item.id} onClick={() => void importItem(item)}>
-                  {busy === item.id ? "Importing…" : "Import"}
-                </button>
+                {item.type === "template" && item.subtype === "ui" ? (
+                  <>
+                    <button
+                      className="btn small"
+                      disabled={busy === item.id}
+                      onClick={() => void useUiTemplate(item, "copy")}
+                    >
+                      Copy code
+                    </button>
+                    <button
+                      className="btn primary small"
+                      disabled={busy === item.id}
+                      onClick={() => void useUiTemplate(item, "export")}
+                    >
+                      Export
+                    </button>
+                  </>
+                ) : (
+                  <button className="btn primary small" disabled={busy === item.id} onClick={() => void importItem(item)}>
+                    {busy === item.id
+                      ? item.type === "template"
+                        ? "Using…"
+                        : "Importing…"
+                      : item.type === "template"
+                        ? "Use"
+                        : "Import"}
+                  </button>
+                )}
               </div>
             </div>
           ))}
         </div>
+      )}
+      {showPublish && (
+        <TemplatePublish onClose={() => setShowPublish(false)} onPublished={() => setRefreshKey((k) => k + 1)} />
       )}
     </main>
   );
