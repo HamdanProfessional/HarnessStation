@@ -147,6 +147,16 @@ const LLM_PROXY_HOSTS = new Set([
   "api.moonshot.ai",
   "dashscope-intl.aliyuncs.com",
   "generativelanguage.googleapis.com",
+  "api.novita.ai",
+  "llm.chutes.ai",
+  "api.perplexity.ai",
+  "api.cohere.ai",
+  "api.sambanova.ai",
+  "integrate.api.nvidia.com",
+  "api.hyperbolic.xyz",
+  "api.siliconflow.com",
+  "api.featherless.ai",
+  "api.lambda.ai",
 ]);
 
 app.all("/api/llm-proxy", async (req, res) => {

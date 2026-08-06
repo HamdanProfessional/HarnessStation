@@ -10,7 +10,12 @@ import { isWeb } from "../web";
 // gateway's /api/llm-proxy, which adds CORS and streams the reply back. On the
 // desktop app this import's `fetch` is Tauri's native HTTP (no CORS), so we never
 // proxy there.
-const NO_CORS_HOSTS = new Set(["ollama.com"]);
+const NO_CORS_HOSTS = new Set([
+  "ollama.com",
+  "api.sambanova.ai",
+  "integrate.api.nvidia.com",
+  "api.lambda.ai",
+]);
 
 function needsProxy(url: string): boolean {
   if (!isWeb()) return false;
