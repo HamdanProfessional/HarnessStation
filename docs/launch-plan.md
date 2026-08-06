@@ -35,12 +35,14 @@ These are release-gating. None are optional.
 > your machine, buy a cert, run the history rewrite + force-push, wire the cron
 > backup). The maintainer runbook for these is in [`../SECURITY.md`](../SECURITY.md).
 
-- [x] **Rotate the updater signing key** — *config done, key generation pending.*
-  `tauri.conf.json` → `plugins.updater.pubkey` is now the placeholder
-  `REPLACE_WITH_UPDATER_PUBLIC_KEY`, so a build **cannot ship with the compromised
-  dev key**. `release.md` now flags the old key as compromised. **You must** still
-  generate a fresh keypair on your machine and paste its public key before the
-  first signed release (SECURITY.md §1).
+- [x] **Rotate the updater signing key — DONE (2026-08-06).** A fresh minisign
+  keypair was generated; `tauri.conf.json` → `plugins.updater.pubkey` now holds the
+  **new public key**, and the private key + password are set as the
+  `TAURI_SIGNING_PRIVATE_KEY` / `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` GitHub Actions
+  secrets (the private material lives only in `~/.harnessx/`, never the repo). The
+  compromised dev key can no longer sign an update this build accepts. *(The
+  old key is still in git history — the Phase-0 history scrub below is still worth
+  doing before the repo goes public, but rotation is what actually protects you.)*
 - [ ] **Decide the repo's fate and scrub secrets from history.** *Runbook ready
   (SECURITY.md §3) — execution is a destructive force-push you run.* If the repo
   goes public, rewrite history to purge the leaked updater password + pubkey **and

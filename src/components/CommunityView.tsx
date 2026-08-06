@@ -11,6 +11,7 @@ import {
 } from "../lib/community";
 import { toast } from "../lib/toast";
 import { promptDialog } from "../lib/dialog";
+import { CommunityAdmin } from "./CommunityAdmin";
 import { EmptyState } from "./EmptyState";
 import { IconHeart, IconDownload, IconSearch, IconGrid } from "./icons";
 
@@ -54,6 +55,7 @@ export function CommunityView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [moderating, setModerating] = useState(false);
 
   const available = useMemo(() => communityAvailable(), []);
 
@@ -139,11 +141,16 @@ export function CommunityView() {
     );
   }
 
+  if (moderating) return <CommunityAdmin onClose={() => setModerating(false)} />;
+
   return (
     <main className="settings-main">
       <div className="settings-header">
         <h1>Community library</h1>
-        <span className="hint">Skills, agents, workflows and schedules shared by others — free to import.</span>
+        <span className="hint grow">Skills, agents, workflows and schedules shared by others — free to import.</span>
+        <button className="link-btn" title="Moderate published items (admin)" onClick={() => setModerating(true)}>
+          Moderate
+        </button>
       </div>
 
       <div className="community-controls">

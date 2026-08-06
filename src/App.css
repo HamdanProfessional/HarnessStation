@@ -4785,3 +4785,6 @@ textarea {
 
 .report-link { color: var(--text-dim); font-size: 12px; }
 .report-link:hover { color: var(--warn); }
+
+/* Hidden/removed items in the moderation list read dimmer. */
+.muted-card { opacity: 0.6; }

@@ -84,6 +84,39 @@ export async function communityReport(id: string, reason: string): Promise<void>
   await api(`/api/library/${id}/report`, { method: "POST", body: JSON.stringify({ reason }) });
 }
 
+// ---------- moderation (admin token required) ----------
+
+export interface AdminItem {
+  id: string;
+  type: CommunityKind;
+  name: string;
+  author: string;
+  createdAt: number;
+  downloads: number;
+  likes: number;
+  hidden: boolean;
+  reportCount: number;
+  reasons: string[];
+}
+
+/** Full listing incl. hidden items and report reasons. Needs the admin bearer token. */
+export async function communityAdminList(token: string): Promise<AdminItem[]> {
+  return api<AdminItem[]>(`/api/admin/library`, { headers: { Authorization: `Bearer ${token}` } });
+}
+
+/** Hide, restore, or permanently remove an item. */
+export async function communityAdminAct(
+  token: string,
+  id: string,
+  action: "hide" | "restore" | "remove",
+): Promise<void> {
+  await api(`/api/admin/library/${id}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ action }),
+  });
+}
+
 /** Fetch the payload (counts as a download) so it can be imported. */
 async function fetchPayload(id: string): Promise<string> {
   const { payload } = await api<{ payload: string }>(`/api/library/${id}/download`, { method: "POST" });
