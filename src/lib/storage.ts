@@ -725,6 +725,64 @@ export async function importBundle(b: Bundle): Promise<void> {
   for (const m of b.mcp ?? []) await saveMcpServer(m);
 }
 
+// ---------- cloud-sync snapshot ----------
+// A superset of Bundle used for cloud sync: adds skills/evals/projects and, on
+// the way out, strips API keys so they never leave the device. See src/lib/cloud.ts.
+
+export interface SyncSnapshot {
+  version: 2;
+  at: string;
+  bundle: Bundle; // bundle.settings has all API keys blanked
+  skills: { slug: string; markdown: string }[];
+  evals: import("./types").Eval[];
+  projects: import("./types").Project[];
+}
+
+/** Blank every API key and drop the cloud/session block — never synced. */
+export function stripSettingsForSync(s: Settings): Settings {
+  return {
+    ...s,
+    providers: s.providers.map((p) => ({ ...p, apiKey: "" })),
+    aaApiKey: "",
+    cloud: undefined,
+  };
+}
+
+/** Re-inject this device's own API keys onto incoming settings, so a restore never wipes them. */
+export function mergeDeviceKeys(incoming: Settings, device: Settings): Settings {
+  const keyById = new Map(device.providers.map((p) => [p.id, p.apiKey]));
+  return {
+    ...incoming,
+    providers: incoming.providers.map((p) => ({ ...p, apiKey: keyById.get(p.id) ?? "" })),
+    aaApiKey: device.aaApiKey ?? "",
+    cloud: device.cloud, // keep this device's account/session
+  };
+}
+
+/** Gather everything worth syncing, with keys stripped. */
+export async function gatherSyncSnapshot(): Promise<SyncSnapshot> {
+  const { listSkills, readSkillRaw } = await import("./skills");
+  const bundle = await exportBundle(new Date().toISOString());
+  bundle.settings = stripSettingsForSync(bundle.settings);
+  const skillList = await listSkills();
+  const [skills, evals, projects] = await Promise.all([
+    Promise.all(skillList.map(async (s) => ({ slug: s.slug, markdown: await readSkillRaw(s.slug) }))),
+    listEvals(),
+    listProjects(),
+  ]);
+  return { version: 2, at: bundle.exportedAt, bundle, skills, evals, projects };
+}
+
+/** Apply a pulled snapshot to local storage, preserving this device's keys. */
+export async function applySyncSnapshot(snap: SyncSnapshot): Promise<void> {
+  const { saveSkill } = await import("./skills");
+  const device = await loadSettings();
+  await importBundle({ ...snap.bundle, settings: mergeDeviceKeys(snap.bundle.settings, device) });
+  for (const sk of snap.skills ?? []) await saveSkill(sk.slug, sk.markdown);
+  for (const e of snap.evals ?? []) await saveEval(e);
+  for (const p of snap.projects ?? []) await saveProject(p);
+}
+
 /** Write a full backup to ~/.harnessx/exports and return its relative path. */
 export async function writeBackup(bundle: Bundle, stamp: string): Promise<string> {
   const dir = `${ROOT}/exports`;

@@ -19,6 +19,10 @@
 import express from "express";
 import fs from "node:fs";
 import crypto from "node:crypto";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 const PORT = process.env.PORT ?? 8787;
 const AA_API_KEY = process.env.AA_API_KEY ?? "";
@@ -83,19 +87,23 @@ function startRefreshLoop() {
 
 app.use((req, res, next) => {
   // The desktop app has an opaque/tauri origin, so a wildcard is the practical
-  // choice. GET routes are public reads; the community library also accepts POST
-  // (publish / like / download) — still no accounts, keyed only by a hashed IP.
+  // choice. GET/POST cover the public library; PUT/DELETE are for a signed-in
+  // account's own encrypted sync blob (Authorization: Bearer …).
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   if (req.method === "OPTIONS") return res.sendStatus(204);
-  if (req.method !== "GET" && req.method !== "POST") return res.sendStatus(405);
+  if (!["GET", "POST", "PUT", "DELETE"].includes(req.method)) return res.sendStatus(405);
   next();
 });
 
-// Parse JSON bodies for the library's POST routes. Cap the size so a payload
-// can't be used to exhaust memory.
-app.use(express.json({ limit: "300kb" }));
+// Parse JSON bodies. Most routes are tiny, so the default cap is small — but a
+// sync blob (a whole account's encrypted data) can be large, so the PUT /api/sync
+// route gets its own big parser instead.
+app.use((req, res, next) => {
+  if (req.method === "PUT" && req.path === "/api/sync") return next();
+  return express.json({ limit: "300kb" })(req, res, next);
+});
 
 const hits = new Map(); // ip -> { n, resetAt }
 app.use((req, res, next) => {
@@ -240,6 +248,73 @@ const LIBRARY_ADMIN_TOKEN = process.env.LIBRARY_ADMIN_TOKEN ?? "";
 const PUBLISH_LIMIT = Number(process.env.LIBRARY_PUBLISH_LIMIT ?? 10);
 const REPORT_THRESHOLD = Number(process.env.LIBRARY_REPORT_THRESHOLD ?? 4);
 const KINDS = new Set(["skill", "agent", "workflow", "schedule"]);
+
+// ---------- cloud sync (opt-in, zero-knowledge accounts) ----------
+// Accounts exist only to back up an encrypted blob of a user's own data. The
+// server NEVER sees plaintext or the encryption key — it stores a password
+// *verifier* hash and ciphertext, nothing more. Disabled unless SYNC_PEPPER is set.
+const USERS_FILE = process.env.USERS_FILE ? path.resolve(process.env.USERS_FILE) : path.join(HERE, "users.json");
+const SYNC_DIR = process.env.SYNC_DIR ? path.resolve(process.env.SYNC_DIR) : path.join(HERE, "sync");
+const SYNC_PEPPER = process.env.SYNC_PEPPER ?? "";
+const TOKEN_TTL = Number(process.env.SYNC_TOKEN_DAYS ?? 60) * 86_400_000;
+const cloudReady = () => !!SYNC_PEPPER;
+if (!cloudReady()) console.warn("[gateway] SYNC_PEPPER not set — cloud sync accounts are disabled.");
+try {
+  fs.mkdirSync(SYNC_DIR, { recursive: true });
+} catch { /* dir exists / not writable — handled per request */ }
+
+let users = [];
+try {
+  const rows = JSON.parse(fs.readFileSync(USERS_FILE, "utf8"));
+  if (Array.isArray(rows)) users = rows;
+} catch { /* no file yet */ }
+let usersTimer = null;
+function persistUsers() {
+  clearTimeout(usersTimer);
+  usersTimer = setTimeout(() => {
+    try {
+      fs.writeFileSync(USERS_FILE, JSON.stringify(users));
+    } catch (e) {
+      console.warn(`[gateway] could not write users.json: ${e}`);
+    }
+  }, 500);
+  usersTimer.unref?.();
+}
+
+const blobPath = (email) =>
+  path.join(SYNC_DIR, `${crypto.createHash("sha256").update(email).digest("hex")}.blob`);
+const newToken = () => crypto.randomBytes(32).toString("hex");
+// scrypt(verifier, per-user-salt + server pepper) — the pepper means a stolen
+// users.json alone can't be attacked offline without the server's secret too.
+const hashVerifier = (verifier, vsalt) =>
+  crypto.scryptSync(verifier, vsalt + SYNC_PEPPER, 32).toString("hex");
+function verifierOk(u, verifier) {
+  const a = Buffer.from(hashVerifier(verifier, u.vsalt), "hex");
+  const b = Buffer.from(u.vhash, "hex");
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+/** The user for a Bearer token, or null. */
+function sessionUser(req) {
+  const auth = req.get("authorization") ?? "";
+  if (!auth.startsWith("Bearer ")) return null;
+  const tok = auth.slice(7);
+  const u = users.find((x) => x.token && x.token === tok);
+  if (!u || (u.tokenExp && Date.now() > u.tokenExp)) return null;
+  return u;
+}
+// A stricter per-IP throttle for auth, to slow password guessing.
+const authHits = new Map();
+function authAllowed(ip) {
+  const now = Date.now();
+  const r = authHits.get(ip);
+  if (!r || now > r.resetAt) {
+    authHits.set(ip, { n: 1, resetAt: now + 600_000 });
+    return true;
+  }
+  if (r.n >= 25) return false;
+  r.n += 1;
+  return true;
+}
 
 let library = [];
 try {
@@ -470,6 +545,89 @@ app.post("/api/admin/library/:id", (req, res) => {
   res.json({ ok: true, action });
 });
 
+// ---------- cloud sync routes ----------
+
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+app.post("/api/account/signup", (req, res) => {
+  if (!cloudReady()) return res.status(503).json({ error: "cloud sync isn't enabled on this server" });
+  if (!authAllowed(req.ip)) return res.status(429).json({ error: "too many attempts, try again later" });
+  const email = String(req.body?.email ?? "").trim().toLowerCase();
+  const verifier = String(req.body?.authVerifier ?? "");
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: "enter a valid email" });
+  if (verifier.length < 32) return res.status(400).json({ error: "bad verifier" });
+  if (users.some((u) => u.email === email)) return res.status(409).json({ error: "an account with that email already exists" });
+  const vsalt = crypto.randomBytes(16).toString("hex");
+  const token = newToken();
+  users.push({ email, vsalt, vhash: hashVerifier(verifier, vsalt), token, tokenExp: Date.now() + TOKEN_TTL, updatedAt: 0, version: 0 });
+  persistUsers();
+  res.json({ token });
+});
+
+app.post("/api/account/login", (req, res) => {
+  if (!cloudReady()) return res.status(503).json({ error: "cloud sync isn't enabled on this server" });
+  if (!authAllowed(req.ip)) return res.status(429).json({ error: "too many attempts, try again later" });
+  const email = String(req.body?.email ?? "").trim().toLowerCase();
+  const verifier = String(req.body?.authVerifier ?? "");
+  const u = users.find((x) => x.email === email);
+  if (!u || !verifierOk(u, verifier)) return res.status(401).json({ error: "wrong email or password" });
+  u.token = newToken();
+  u.tokenExp = Date.now() + TOKEN_TTL;
+  persistUsers();
+  res.json({ token: u.token, hasBlob: u.updatedAt > 0, updatedAt: u.updatedAt });
+});
+
+app.post("/api/account/logout", (req, res) => {
+  const u = sessionUser(req);
+  if (u) {
+    u.token = undefined;
+    u.tokenExp = 0;
+    persistUsers();
+  }
+  res.json({ ok: true });
+});
+
+app.get("/api/sync", (req, res) => {
+  const u = sessionUser(req);
+  if (!u) return res.status(401).json({ error: "unauthorized" });
+  if (!u.updatedAt) return res.sendStatus(204);
+  let blob;
+  try {
+    blob = fs.readFileSync(blobPath(u.email), "utf8");
+  } catch {
+    return res.sendStatus(204);
+  }
+  res.json({ blob, updatedAt: u.updatedAt, version: u.version });
+});
+
+app.put("/api/sync", express.json({ limit: "25mb" }), (req, res) => {
+  const u = sessionUser(req);
+  if (!u) return res.status(401).json({ error: "unauthorized" });
+  const blob = String(req.body?.blob ?? "");
+  if (!blob || blob.length > 30_000_000) return res.status(400).json({ error: "blob missing or too large" });
+  try {
+    fs.mkdirSync(SYNC_DIR, { recursive: true }); // self-heal if the dir is missing
+    fs.writeFileSync(blobPath(u.email), blob);
+  } catch (e) {
+    return res.status(500).json({ error: `could not store blob: ${e}` });
+  }
+  u.updatedAt = Date.now();
+  u.version = (u.version ?? 0) + 1;
+  persistUsers();
+  res.json({ updatedAt: u.updatedAt, version: u.version });
+});
+
+app.delete("/api/account", (req, res) => {
+  const u = sessionUser(req);
+  if (!u) return res.status(401).json({ error: "unauthorized" });
+  try {
+    fs.unlinkSync(blobPath(u.email));
+  } catch { /* no blob */ }
+  users = users.filter((x) => x !== u);
+  persistUsers();
+  res.json({ ok: true });
+});
+
 app.get("/api/health", (_req, res) => {
   const feeds = {};
   for (const name of Object.keys(FEEDS)) {
@@ -488,6 +646,8 @@ app.get("/api/health", (_req, res) => {
     library: library.filter((i) => !i.hidden).length,
     hidden: library.filter((i) => i.hidden).length,
     moderation: LIBRARY_ADMIN_TOKEN ? "on" : "off",
+    cloud: cloudReady() ? "on" : "off",
+    accounts: users.length,
   });
 });
 

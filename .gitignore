@@ -45,3 +45,7 @@ web/dist
 
 # Community library data (lives only on the box, like .env)
 server/library.json
+
+# Cloud-sync user data (lives only on the box, like .env)
+server/users.json
+server/sync/

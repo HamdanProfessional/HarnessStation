@@ -95,6 +95,16 @@ export interface Settings {
   guardrails?: import("./hooks").GuardrailRule[];
   /** Messaging channels (Telegram, Discord) that reach the agent from outside. */
   channels?: import("./channels").ChannelsSettings;
+  /** Opt-in cloud sync account/session (end-to-end encrypted; keys stay local). */
+  cloud?: {
+    enabled: boolean;
+    email?: string;
+    /** Session bearer token (not the password). */
+    token?: string;
+    autoSync?: boolean;
+    lastSyncedAt?: number;
+    version?: number;
+  };
 }
 
 /**

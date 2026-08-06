@@ -7,6 +7,7 @@ import { DevicesPanel } from "./DevicesPanel";
 import { SecretsPanel } from "./SecretsPanel";
 import { HooksPanel } from "./HooksPanel";
 import { ChannelsPanel } from "./ChannelsPanel";
+import { CloudSyncPanel } from "./CloudSyncPanel";
 import { WebLlmCard } from "./WebLlmCard";
 import { useStore } from "../lib/store";
 import { useModal } from "../lib/useModal";
@@ -92,6 +93,12 @@ const TABS = [
     label: "Channels",
     blurb: "Reach your agent from Telegram & Discord",
     keywords: "telegram discord channel bot message chat gateway messaging platform reach mobile",
+  },
+  {
+    id: "cloud",
+    label: "Cloud sync",
+    blurb: "Optional encrypted backup & sync",
+    keywords: "cloud sync account backup restore login sign in encrypted end-to-end conversations chats multi-device password",
   },
   { id: "usage", label: "Usage", blurb: "Spend caps and totals", keywords: "cost spend budget cap daily monthly tokens price" },
   {
@@ -646,6 +653,10 @@ export function SettingsView() {
 
       <section hidden={tab !== "channels"}>
         <ChannelsPanel />
+      </section>
+
+      <section hidden={tab !== "cloud"}>
+        <CloudSyncPanel />
       </section>
 
       <section hidden={tab !== "usage"}>
