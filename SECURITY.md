@@ -76,18 +76,27 @@ git filter-repo --replace-text /tmp/replacements.txt
 git log -p | grep -i harnessdev || echo clean
 ```
 
-### 4. Back up the community library
+### 4. Back up the gateway's data
 
-`library.json` on the gateway is the only copy of everything users publish. Wire
-up the nightly backup:
+The gateway persists three files that are the only copy of that data:
+`library.json` (community library), `users.json` (cloud-sync accounts), and
+`sync/` (per-account end-to-end-encrypted blobs). Wire up the nightly backup:
 
 ```
 # on the gateway host, in crontab:
-0 4 * * *  /var/www/hs-gateway/deploy/library-backup.sh >> /var/log/hs-library-backup.log 2>&1
+0 4 * * *  /var/www/hs-gateway/deploy/library-backup.sh >> /var/log/hs-gateway-backup.log 2>&1
 ```
+
+`deploy/gateway.md` is the full runbook — note especially the `ReadWritePaths`
+requirement, without which the gateway can't write any of this and loses it on
+restart.
 
 ### 5. Confirm file permissions on the box
 
+`users.json` holds session tokens, so lock it down alongside the other secrets:
+
 ```
-chmod 600 /var/www/hs-gateway/.env /var/www/hs-gateway/trials.json /var/www/hs-gateway/library.json 2>/dev/null || true
+chmod 600 /var/www/hs-gateway/.env /var/www/hs-gateway/trials.json \
+          /var/www/hs-gateway/library.json /var/www/hs-gateway/users.json 2>/dev/null || true
+chmod -R go-rwx /var/www/hs-gateway/sync 2>/dev/null || true
 ```

@@ -1,0 +1,44 @@
+# HarnessStation gateway — systemd unit (single source of truth).
+#
+# Install on the box, one time (full runbook: deploy/gateway.md):
+#   scp deploy/hs-gateway.service USER@HOST:/tmp/
+#   sudo mv /tmp/hs-gateway.service /etc/systemd/system/hs-gateway.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now hs-gateway
+#
+# The User= and paths below match this project's box (and gateway.sh's defaults).
+# Change User=, WorkingDirectory=, EnvironmentFile= and ExecStart= if you host it
+# somewhere else.
+#
+# WHY ReadWritePaths MATTERS — do not remove it. ProtectSystem=strict makes the
+# whole filesystem read-only except a short allowlist. The gateway PERSISTS data
+# under its working directory: library.json (community library), users.json and
+# sync/ (cloud-sync accounts + E2E-encrypted blobs). Without
+# ReadWritePaths=/var/www/hs-gateway every write fails with EROFS and that data
+# is silently lost on the next restart. This unit folds that in directly so there
+# is no separate drop-in to forget on a rebuild.
+
+[Unit]
+Description=HarnessStation gateway (benchmarks / shared feeds)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=n00bi2761
+WorkingDirectory=/var/www/hs-gateway
+EnvironmentFile=/var/www/hs-gateway/.env
+ExecStart=/usr/bin/node /var/www/hs-gateway/index.mjs
+Restart=on-failure
+RestartSec=3
+
+# Hardening. Everything is read-only except the app's own data directory, which
+# it MUST be able to write (see the header note above).
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/hs-gateway
+
+[Install]
+WantedBy=multi-user.target

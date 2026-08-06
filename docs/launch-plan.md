@@ -63,9 +63,10 @@ These are release-gating. None are optional.
   without the token. **The admin token was handed to the maintainer out-of-band;
   store it in a password manager.**
 - [x] **Backups & secrets** — *script added; cron + chmod are box-side.*
-  `deploy/library-backup.sh` snapshots `library.json` nightly (wire it into cron
-  per SECURITY.md §4). `.env`/`trials.json`/`library.json` are already excluded
-  from deploys; `chmod 600` step is in SECURITY.md §5.
+  `deploy/library-backup.sh` snapshots `library.json`, `users.json` and `sync/`
+  nightly (wire it into cron per SECURITY.md §4). `.env`/`trials.json`/`library.json`/
+  `users.json`/`sync` are already excluded from deploys; `chmod 600` step is in
+  SECURITY.md §5. Full gateway runbook: `deploy/gateway.md`.
 
 ---
 

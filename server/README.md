@@ -65,11 +65,38 @@ and served from memory, so:
 - if the upstream goes down, the last good data keeps being served rather than
   the app showing an error
 
+## State &amp; files
+
+The shared feeds are just an in-memory cache. But three things **persist to disk**
+in the working directory and are the only copy of that data:
+
+- `library.json` — everything published to the community library
+- `users.json` — cloud-sync accounts (verifier hashes + session tokens)
+- `sync/` — one end-to-end-encrypted blob per account (ciphertext only; the
+  server can't read it)
+
+So, when self-hosting:
+
+- The process **must be able to write its working directory.** Under `systemd`
+  with `ProtectSystem=strict` that means `ReadWritePaths=` — omit it and every
+  write fails with `EROFS` and the data is silently lost on the next restart. The
+  checked-in unit [`../deploy/hs-gateway.service`](../deploy/hs-gateway.service)
+  sets it; the full story is in [`../deploy/gateway.md`](../deploy/gateway.md).
+- **Back these files up** — `deploy/library-backup.sh` snapshots all three; run it
+  from cron.
+- Because of this state, run a **single instance** against the files (or move them
+  to a shared store first).
+
 ## Deploying
 
-Any Node host works — Railway, Fly, Render, a VPS behind nginx. It's stateless
-apart from the in-memory cache, so restarts are free and you can run more than
-one instance. Set `AA_API_KEY` in the host's environment, never in the repo.
+A VPS behind nginx with **systemd** — see [`../deploy/gateway.md`](../deploy/gateway.md)
+for the runbook and [`../deploy/hs-gateway.service`](../deploy/hs-gateway.service)
+for the unit. From the repo, `./deploy/gateway.sh` uploads the code, installs
+production deps and restarts the service; the `.env` on the box is never touched.
+
+Set every key in the host's environment (`.env`), never in the repo: `AA_API_KEY`,
+and — if you run the community library and cloud sync — `LIBRARY_SALT`,
+`LIBRARY_ADMIN_TOKEN`, `SYNC_PEPPER`. See `.env.example`.
 
 `trust proxy` is on, so the per-IP rate limit sees the real client address behind
 a reverse proxy.
