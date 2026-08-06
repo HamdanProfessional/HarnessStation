@@ -146,6 +146,8 @@ export interface McpDirEntry {
   args?: string[];
   url?: string;
   needsAuth?: boolean;
+  /** For a stdio server: the env var its API key should be written into. */
+  authEnv?: string;
 }
 
 const npx = (pkg: string, extra: string[] = []): { transport: "stdio"; command: string; args: string[] } => ({

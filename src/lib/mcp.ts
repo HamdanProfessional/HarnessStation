@@ -11,6 +11,8 @@ export interface McpServerConfig {
   url?: string;
   token?: string;
   autoConnect?: boolean;
+  /** stdio: the env var this server's API key goes into (carried from the directory). */
+  authEnv?: string;
 }
 
 export interface McpToolInfo {

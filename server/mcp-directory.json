@@ -80,7 +80,7 @@
   {
     "name": "GitHub",
     "category": "Dev",
-    "description": "GitHub official remote MCP \u2014 repos, issues, PRs, code search.",
+    "description": "GitHub official remote MCP — repos, issues, PRs, code search.",
     "transport": "http",
     "url": "https://api.githubcopilot.com/mcp/",
     "needsAuth": true
@@ -95,7 +95,8 @@
       "-y",
       "@modelcontextprotocol/server-gitlab"
     ],
-    "needsAuth": true
+    "needsAuth": true,
+    "authEnv": "GITLAB_PERSONAL_ACCESS_TOKEN"
   },
   {
     "name": "Sentry",
@@ -137,7 +138,8 @@
       "-y",
       "@e2b/mcp-server"
     ],
-    "needsAuth": true
+    "needsAuth": true,
+    "authEnv": "E2B_API_KEY"
   },
   {
     "name": "Context7",
@@ -156,7 +158,8 @@
       "-y",
       "@modelcontextprotocol/server-brave-search"
     ],
-    "needsAuth": true
+    "needsAuth": true,
+    "authEnv": "BRAVE_API_KEY"
   },
   {
     "name": "Tavily",
@@ -168,7 +171,8 @@
       "-y",
       "tavily-mcp"
     ],
-    "needsAuth": true
+    "needsAuth": true,
+    "authEnv": "TAVILY_API_KEY"
   },
   {
     "name": "Exa",
@@ -180,7 +184,8 @@
       "-y",
       "exa-mcp-server"
     ],
-    "needsAuth": true
+    "needsAuth": true,
+    "authEnv": "EXA_API_KEY"
   },
   {
     "name": "Perplexity",
@@ -192,7 +197,8 @@
       "-y",
       "server-perplexity-ask"
     ],
-    "needsAuth": true
+    "needsAuth": true,
+    "authEnv": "PERPLEXITY_API_KEY"
   },
   {
     "name": "Firecrawl",
@@ -204,7 +210,8 @@
       "-y",
       "firecrawl-mcp"
     ],
-    "needsAuth": true
+    "needsAuth": true,
+    "authEnv": "FIRECRAWL_API_KEY"
   },
   {
     "name": "Hugging Face",
@@ -277,7 +284,8 @@
       "-y",
       "airtable-mcp-server"
     ],
-    "needsAuth": true
+    "needsAuth": true,
+    "authEnv": "AIRTABLE_API_KEY"
   },
   {
     "name": "Google Drive",
@@ -301,7 +309,8 @@
       "-y",
       "@modelcontextprotocol/server-slack"
     ],
-    "needsAuth": true
+    "needsAuth": true,
+    "authEnv": "SLACK_BOT_TOKEN"
   },
   {
     "name": "Linear",
@@ -314,7 +323,7 @@
   {
     "name": "Atlassian",
     "category": "Productivity",
-    "description": "Jira and Confluence \u2014 issues, pages, search.",
+    "description": "Jira and Confluence — issues, pages, search.",
     "transport": "http",
     "url": "https://mcp.atlassian.com/v1/sse",
     "needsAuth": true
@@ -337,7 +346,8 @@
       "-y",
       "@modelcontextprotocol/server-google-maps"
     ],
-    "needsAuth": true
+    "needsAuth": true,
+    "authEnv": "GOOGLE_MAPS_API_KEY"
   },
   {
     "name": "Cloudflare",

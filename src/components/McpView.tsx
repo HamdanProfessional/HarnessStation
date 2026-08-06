@@ -87,6 +87,7 @@ export function McpView() {
       args: e.args,
       url: e.url,
       token: "",
+      authEnv: e.authEnv,
     };
     await saveServer(cfg);
   };
@@ -270,6 +271,19 @@ export function McpView() {
                   >
                     {busy === `oauth-${s.id}` ? "Waiting..." : "Sign in"}
                   </button>
+                </div>
+              )}
+              {s.transport === "stdio" && s.authEnv && (
+                <div className="provider-row">
+                  <input
+                    className="grow"
+                    type="password"
+                    value={s.env?.[s.authEnv] ?? ""}
+                    placeholder={`${s.authEnv} — paste API key`}
+                    onChange={(e) =>
+                      void saveServer({ ...s, env: { ...(s.env ?? {}), [s.authEnv!]: e.target.value } })
+                    }
+                  />
                 </div>
               )}
               <label className="hint" style={{ display: "flex", alignItems: "center", gap: 7 }}>

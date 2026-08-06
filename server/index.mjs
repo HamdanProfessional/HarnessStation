@@ -91,7 +91,10 @@ app.use((req, res, next) => {
   // choice. GET/POST cover the public library; PUT/DELETE are for a signed-in
   // account's own encrypted sync blob (Authorization: Bearer …).
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Upstream-Url");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Upstream-Url, x-api-key, anthropic-version, anthropic-beta",
+  );
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   if (req.method === "OPTIONS") return res.sendStatus(204);
   if (!["GET", "POST", "PUT", "DELETE"].includes(req.method)) return res.sendStatus(405);
@@ -110,9 +113,21 @@ app.use((req, res, next) => {
 });
 
 const hits = new Map(); // ip -> { n, resetAt }
+const proxyHits = new Map(); // ip -> { n, resetAt } — separate budget for the LLM proxy
+const PROXY_RATE_LIMIT = Number(process.env.PROXY_RATE_LIMIT) || 300; // per minute per IP
 app.use((req, res, next) => {
   const ip = req.ip ?? "unknown";
   const now = Date.now();
+  // The LLM proxy gets its own, more generous per-IP budget: one chat turn with a
+  // tool loop can fire many requests, and it's the user's own key and cost — the
+  // 60/min feed limiter would cut a heavy conversation off mid-stream.
+  if (req.path === "/api/llm-proxy") {
+    const rec = proxyHits.get(ip);
+    if (!rec || now > rec.resetAt) proxyHits.set(ip, { n: 1, resetAt: now + 60_000 });
+    else if (++rec.n > PROXY_RATE_LIMIT) return res.status(429).json({ error: "too many requests" });
+    if (proxyHits.size > 10_000) for (const [k, v] of proxyHits) if (now > v.resetAt) proxyHits.delete(k);
+    return next();
+  }
   const rec = hits.get(ip);
   if (!rec || now > rec.resetAt) hits.set(ip, { n: 1, resetAt: now + 60_000 });
   else if (++rec.n > RATE_LIMIT) return res.status(429).json({ error: "too many requests" });
@@ -164,6 +179,7 @@ const LLM_PROXY_HOSTS = new Set([
   "api.aimlapi.com",
   "api.inference.net",
   "inference.api.nscale.com",
+  "api.anthropic.com",
 ]);
 
 app.all("/api/llm-proxy", async (req, res) => {
@@ -178,9 +194,13 @@ app.all("/api/llm-proxy", async (req, res) => {
   }
 
   // Forward only what the upstream needs — never Host, Origin, cookies, etc.
+  // Covers both auth schemes: Bearer (most providers) and Anthropic's
+  // x-api-key + anthropic-version headers.
   const headers = { "Content-Type": req.get("content-type") || "application/json" };
-  const auth = req.get("authorization");
-  if (auth) headers.Authorization = auth;
+  for (const h of ["authorization", "x-api-key", "anthropic-version", "anthropic-beta"]) {
+    const v = req.get(h);
+    if (v) headers[h] = v;
+  }
 
   const ac = new AbortController();
   res.on("close", () => ac.abort());

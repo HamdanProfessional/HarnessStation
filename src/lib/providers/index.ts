@@ -17,6 +17,7 @@ const NO_CORS_HOSTS = new Set([
   "api.lambda.ai",
   "models.github.ai",
   "api.avian.io",
+  "api.anthropic.com",
 ]);
 
 function needsProxy(url: string): boolean {
@@ -439,7 +440,7 @@ async function streamAnthropic(p: ChatParams): Promise<ChatResult> {
   const system = p.system
     ? [{ type: "text", text: p.system, cache_control: { type: "ephemeral" } }]
     : undefined;
-  const res = await fetch(`${base}/v1/messages`, {
+  const res = await llmFetch(`${base}/v1/messages`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
