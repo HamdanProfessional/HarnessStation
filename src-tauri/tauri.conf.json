@@ -55,7 +55,7 @@
         "https://github.com/najma-lp/harnessstation/releases/latest/download/latest.json"
       ],
       "dialog": false,
-      "pubkey": "REPLACE_WITH_UPDATER_PUBLIC_KEY"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUzN0JGOUM3Q0JBM0M0NDgKUldSSXhLUEx4L2w3NDZmVmYrNVBoMXFWV1RZRnNOenNiaVVCMGRML1QyNG5KRFNtTUxid1hhYWcK"
     }
   }
 }
