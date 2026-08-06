@@ -51,12 +51,15 @@ These are release-gating. None are optional.
     it immediately; OV builds reputation over time). ~$100–400/yr. Until then the
     install docs (course E02) show the "More info → Run anyway" path.
   - *Linux*: GPG-sign the `.deb` and publish the public key.
-- [x] **Community-library moderation** — **done & deployed.** Added a public
-  **report** endpoint (distinct reports auto-hide an item pending review), **admin
-  hide/restore/remove** routes behind a `LIBRARY_ADMIN_TOKEN` bearer, a **per-IP
-  publish limit** (default 10/hour, on top of the global 60/min), **payload
-  validation** (non-skill payloads must be JSON objects; control chars stripped),
-  and a **Report** button in the app. `LIBRARY_SALT` now warns on the dev default.
+- [x] **Community-library moderation** — **done, deployed, and wired
+  (2026-08-06).** Public **report** endpoint (distinct reports auto-hide an item
+  pending review), **admin hide/restore/remove** routes behind a
+  `LIBRARY_ADMIN_TOKEN` bearer, a **per-IP publish limit** (10/hour on top of the
+  global 60/min), **payload validation**, and a **Report** button in the app. A
+  private `LIBRARY_SALT` and an `LIBRARY_ADMIN_TOKEN` are now set on the gateway —
+  `/api/health` reports `moderation: "on"`, and the admin routes return 403
+  without the token. **The admin token was handed to the maintainer out-of-band;
+  store it in a password manager.**
 - [x] **Backups & secrets** — *script added; cron + chmod are box-side.*
   `deploy/library-backup.sh` snapshots `library.json` nightly (wire it into cron
   per SECURITY.md §4). `.env`/`trials.json`/`library.json` are already excluded
@@ -150,6 +153,38 @@ These are release-gating. None are optional.
   (not yet), "why the SmartScreen warning?" (until the cert lands).
 
 ---
+
+## Cutting the first release — the exact steps
+
+Everything below runs on a maintainer's machine (the key can't live in the repo).
+The CI in `.github/workflows/release.yml` does the building; you provide the key.
+
+1. **Generate a fresh updater keypair** (once):
+   ```
+   npm run tauri signer generate -- -w %USERPROFILE%\.harnessx\updater.key
+   ```
+   Copy the printed **public key** into `src-tauri/tauri.conf.json` →
+   `plugins.updater.pubkey` (replacing `REPLACE_WITH_UPDATER_PUBLIC_KEY`). Commit that.
+2. **Add the GitHub repo secrets** (Settings → Secrets → Actions):
+   - `TAURI_SIGNING_PRIVATE_KEY` = the contents of `updater.key`
+   - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` = its password
+   - *(optional, for Windows Authenticode)* `WINDOWS_CERTIFICATE` (base64 .pfx) +
+     `WINDOWS_CERTIFICATE_PASSWORD`
+3. **Pick the version.** For a first public release either keep `0.1.0` (signals
+   "early") or bump to `1.0.0`. Set it in **three** files that must match:
+   `package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`. Update
+   `CHANGELOG.md`.
+4. **Tag and push:**
+   ```
+   git tag v0.1.0 && git push origin v0.1.0
+   ```
+   CI builds Windows + Linux, signs them, and opens a **draft** GitHub Release with
+   the artifacts and `latest.json`.
+5. **Verify, then publish.** Download the draft's installers and smoke-test a fresh
+   install on Windows and Linux. Confirm auto-update from an older build, and that
+   a **tampered/bad-signature** update is refused. Then hit **Publish**.
+6. **Flip the landing page** (`deploy/site.sh` once the domain exists) and post the
+   [launch drafts](launch-posts.md).
 
 ## Phase 4 — Launch day
 
