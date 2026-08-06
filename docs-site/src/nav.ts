@@ -104,6 +104,7 @@ export const NAV: NavSection[] = [
     title: "Advanced",
     items: [
       { slug: "advanced/web", label: "The web version" },
+      { slug: "advanced/cloud-sync", label: "Cloud sync" },
       { slug: "advanced/devices", label: "Device mesh" },
       { slug: "advanced/data", label: "Where your data lives" },
       { slug: "advanced/privacy", label: "Privacy & security" },
