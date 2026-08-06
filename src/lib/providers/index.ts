@@ -15,6 +15,8 @@ const NO_CORS_HOSTS = new Set([
   "api.sambanova.ai",
   "integrate.api.nvidia.com",
   "api.lambda.ai",
+  "models.github.ai",
+  "api.avian.io",
 ]);
 
 function needsProxy(url: string): boolean {

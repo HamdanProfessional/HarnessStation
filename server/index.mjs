@@ -157,6 +157,13 @@ const LLM_PROXY_HOSTS = new Set([
   "api.siliconflow.com",
   "api.featherless.ai",
   "api.lambda.ai",
+  "models.github.ai",
+  "api.avian.io",
+  "api.upstage.ai",
+  "api.scaleway.ai",
+  "api.aimlapi.com",
+  "api.inference.net",
+  "inference.api.nscale.com",
 ]);
 
 app.all("/api/llm-proxy", async (req, res) => {
