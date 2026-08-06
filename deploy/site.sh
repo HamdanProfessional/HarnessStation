@@ -13,7 +13,7 @@ set -euo pipefail
 
 HOST="${HOST:-n00bi2761@ssh.testservers.online}"
 BASE="${BASE:-/var/www/hssite}"
-SITE="${SITE:-}"
+SITE="${SITE:-https://harnessstation.retris.io}"
 KEEP="${KEEP:-3}"
 
 cd "$(dirname "$0")/.."
