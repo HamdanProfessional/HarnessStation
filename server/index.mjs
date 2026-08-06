@@ -21,6 +21,7 @@ import fs from "node:fs";
 import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { Readable } from "node:stream";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -90,7 +91,7 @@ app.use((req, res, next) => {
   // choice. GET/POST cover the public library; PUT/DELETE are for a signed-in
   // account's own encrypted sync blob (Authorization: Bearer …).
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Upstream-Url");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   if (req.method === "OPTIONS") return res.sendStatus(204);
   if (!["GET", "POST", "PUT", "DELETE"].includes(req.method)) return res.sendStatus(405);
@@ -102,6 +103,9 @@ app.use((req, res, next) => {
 // route gets its own big parser instead.
 app.use((req, res, next) => {
   if (req.method === "PUT" && req.path === "/api/sync") return next();
+  // The LLM proxy streams a raw request/response through untouched — don't buffer
+  // or size-cap it (a chat with images easily exceeds 300kb).
+  if (req.path === "/api/llm-proxy") return next();
   return express.json({ limit: "300kb" })(req, res, next);
 });
 
@@ -117,6 +121,72 @@ app.use((req, res, next) => {
 });
 
 // ---------- routes ----------
+
+// LLM proxy (for the web build). Some providers' HTTPS APIs send no CORS headers,
+// so a browser can't call them directly — Ollama Cloud, notably. The web app
+// routes those here: we forward the request to the upstream named in the
+// X-Upstream-Url header and stream the reply back with the permissive CORS this
+// middleware already sets. The client's own Authorization is passed straight
+// through — never read, stored, or logged. Restricted to a fixed allowlist of
+// real provider hosts so this can't be turned into a general-purpose web proxy.
+const LLM_PROXY_HOSTS = new Set([
+  "ollama.com",
+  "api.openai.com",
+  "api.groq.com",
+  "openrouter.ai",
+  "api.minimax.io",
+  "api.mistral.ai",
+  "api.deepseek.com",
+  "api.x.ai",
+  "api.together.xyz",
+  "api.fireworks.ai",
+  "api.deepinfra.com",
+  "api.studio.nebius.com",
+  "api.cerebras.ai",
+  "api.z.ai",
+  "api.moonshot.ai",
+  "dashscope-intl.aliyuncs.com",
+  "generativelanguage.googleapis.com",
+]);
+
+app.all("/api/llm-proxy", async (req, res) => {
+  let url;
+  try {
+    url = new URL(req.get("x-upstream-url") || "");
+  } catch {
+    return res.status(400).json({ error: "missing or invalid X-Upstream-Url" });
+  }
+  if (url.protocol !== "https:" || !LLM_PROXY_HOSTS.has(url.hostname.toLowerCase())) {
+    return res.status(403).json({ error: `upstream host not allowed: ${url.hostname}` });
+  }
+
+  // Forward only what the upstream needs — never Host, Origin, cookies, etc.
+  const headers = { "Content-Type": req.get("content-type") || "application/json" };
+  const auth = req.get("authorization");
+  if (auth) headers.Authorization = auth;
+
+  const ac = new AbortController();
+  res.on("close", () => ac.abort());
+  let upstream;
+  try {
+    upstream = await fetch(url, {
+      method: req.method,
+      headers,
+      body: req.method === "GET" || req.method === "HEAD" ? undefined : Readable.toWeb(req),
+      duplex: "half",
+      signal: ac.signal,
+    });
+  } catch (e) {
+    if (ac.signal.aborted) return; // client hung up
+    return res.status(502).json({ error: `upstream fetch failed: ${String(e?.message || e)}` });
+  }
+
+  res.status(upstream.status);
+  const ct = upstream.headers.get("content-type");
+  if (ct) res.setHeader("Content-Type", ct);
+  if (!upstream.body) return res.end();
+  Readable.fromWeb(upstream.body).pipe(res);
+});
 
 app.get("/api/benchmarks", (_req, res) => {
   const hit = warm.get("benchmarks");

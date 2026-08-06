@@ -2,6 +2,34 @@ import { fetch } from "@tauri-apps/plugin-http";
 import type { Message, Provider, Tool, ToolCall } from "../types";
 import { toOpenAITools } from "../tools";
 import { readSSE } from "./sse";
+import { gatewayUrl } from "../gateway";
+import { isWeb } from "../web";
+
+// Some providers' HTTPS APIs send no CORS headers, so a browser can't call them
+// directly (Ollama Cloud, notably). On the web build we route those through the
+// gateway's /api/llm-proxy, which adds CORS and streams the reply back. On the
+// desktop app this import's `fetch` is Tauri's native HTTP (no CORS), so we never
+// proxy there.
+const NO_CORS_HOSTS = new Set(["ollama.com"]);
+
+function needsProxy(url: string): boolean {
+  if (!isWeb()) return false;
+  try {
+    return NO_CORS_HOSTS.has(new URL(url).hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
+/** fetch a provider endpoint, transparently proxying no-CORS hosts on the web. */
+function llmFetch(url: string, init: Parameters<typeof fetch>[1]): ReturnType<typeof fetch> {
+  const g = gatewayUrl();
+  if (g && needsProxy(url)) {
+    const headers = { ...((init?.headers as Record<string, string>) ?? {}), "X-Upstream-Url": url };
+    return fetch(`${g.replace(/\/+$/, "")}/api/llm-proxy`, { ...init, headers });
+  }
+  return fetch(url, init);
+}
 
 export interface ChatParams {
   provider: Provider;
@@ -313,7 +341,7 @@ async function streamOpenAI(p: ChatParams): Promise<ChatResult> {
   const extraBody = p.provider.extraBody ?? {};
 
   const send = (extra: Record<string, unknown>) =>
-    fetch(`${base}/chat/completions`, {
+    llmFetch(`${base}/chat/completions`, {
       method: "POST",
       headers,
       body: JSON.stringify({ ...body, ...extra, ...extraBody }),
@@ -475,7 +503,7 @@ export async function listModels(provider: Provider): Promise<string[]> {
   const base = provider.baseUrl.replace(/\/+$/, "");
   const headers: Record<string, string> = {};
   if (provider.apiKey) headers.Authorization = `Bearer ${provider.apiKey}`;
-  const res = await fetch(`${base}/models`, { headers });
+  const res = await llmFetch(`${base}/models`, { headers });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   return (json.data ?? []).map((m: { id: string }) => m.id).sort();
