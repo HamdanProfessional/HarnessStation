@@ -34,6 +34,12 @@ things. Anthropic is supported natively.
 Press **Fetch models** to list what the endpoint offers, or type a model name if
 it doesn't support listing.
 
+That table is a handful of common ones to fill in by hand. **Library › Discover**
+has around three dozen cloud providers pre-configured with base URL and model
+list — free/fast options, frontier APIs (OpenAI, Anthropic, xAI, …), flat-rate
+coding plans, and aggregators — so you usually just paste a key rather than
+typing any of the above.
+
 ## Where keys are stored
 
 In your operating system's credential store — Windows Credential Manager, or

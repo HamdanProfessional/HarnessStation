@@ -28,6 +28,10 @@ flow and stores the token in your system credential store.
 
 You supply the credentials in both cases. The app ships none and proxies nothing.
 
+Directory entries that need one (Tavily, Exa, Firecrawl, Brave, GitLab, Slack,
+Google Maps, E2B, Airtable, Perplexity, …) show a password field for the API key
+right there instead of making you edit `env` by hand.
+
 ## Progressive disclosure
 
 This is the part worth understanding, because it's unusual.
