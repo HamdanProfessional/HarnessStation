@@ -76,6 +76,26 @@ The panel on the right of a conversation applies to that chat only:
 Save a combination you use often as a preset, or as an [agent](agents) if it
 should also carry tools and knowledge.
 
+## Multiple agents in one chat
+
+The bar at the top of a chat switches it between **Single**, **Battle**, and
+**Collaborate**. In Battle or Collaborate you add participants — each a model (or
+agent) with a name and, for Collaborate, a short role.
+
+- **Battle** sends the *same* prompt to every participant independently and shows
+  their answers **side by side**. Each one sees only your turns and its own prior
+  replies — never a rival's — so it's an honest head-to-head. Good for "which
+  model does this better?"
+- **Collaborate** gives all participants **one shared transcript**. Each sees your
+  prompts and every participant's *written output*, tagged with who wrote it, and
+  they answer **in parallel** on their own role — e.g. one on the frontend, one on
+  the backend. Crucially, a participant **never sees another's private thinking**,
+  only what they actually wrote.
+
+All participants answer at once, each streaming into its own reply. This first
+version is text and reasoning only — participants don't run tools yet (a single
+agent still does); per-participant tools are coming next.
+
 ## Where they're stored
 
 One JSON file per chat under `~/.harnessx/conversations/`, plus an index for the

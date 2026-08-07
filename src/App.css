@@ -4788,3 +4788,48 @@ textarea {
 
 /* Hidden/removed items in the moderation list read dimmer. */
 .muted-card { opacity: 0.6; }
+
+/* ---- Multi-agent chats (battle / collaborate) ---- */
+.multiagent-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-2);
+}
+.multiagent-note { margin-left: 8px; font-size: 12px; }
+.participant-list { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.participant-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-3);
+}
+.participant-chip .p-label { width: 84px; }
+.participant-chip .p-role { width: 170px; }
+.participant-chip input,
+.participant-chip select {
+  font-size: 12px;
+  padding: 3px 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+}
+
+/* Battle: user turns full width, participant answers laid out side by side. */
+.messages.battle { display: flex; flex-wrap: wrap; gap: 12px; align-content: flex-start; }
+.messages.battle > * { flex: 1 1 100%; }
+.messages.battle > .battle-col {
+  flex: 1 1 calc(50% - 8px);
+  min-width: 240px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+  padding: 10px 12px;
+}
+.battle-col .msg-role { color: var(--accent); }

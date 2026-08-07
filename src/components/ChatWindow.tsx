@@ -10,6 +10,7 @@ import { useStore } from "../lib/store";
 import { ensureWhisper, transcribePath } from "../lib/whisper";
 import { LogoMark } from "./icons";
 import { InlineBrowser } from "./InlineBrowser";
+import { MultiAgentBar } from "./MultiAgentBar";
 
 const STARTER_PROMPTS = [
   "Summarize the latest news on a topic I choose, with sources.",
@@ -240,7 +241,8 @@ export function ChatWindow() {
 
   return (
     <main className="chat-main">
-      <div className="messages" ref={scrollRef}>
+      <MultiAgentBar />
+      <div className={`messages ${chat.mode === "battle" ? "battle" : ""}`} ref={scrollRef}>
         {chat.messages.length === 0 && (() => {
           const provider = settings.providers.find((p) => p.id === chat.providerId);
           const isLocal = provider ? /localhost|127\.0\.0\.1/.test(provider.baseUrl) : false;
@@ -331,9 +333,12 @@ export function ChatWindow() {
               );
             }
             return (
-              <div key={i} className={`msg ${m.role}`}>
+              <div
+                key={i}
+                className={`msg ${m.role} ${m.author && chat.mode === "battle" ? "battle-col" : ""}`}
+              >
                 <div className="msg-role">
-                  {m.role === "user" ? "You" : agentName ?? "Assistant"}
+                  {m.role === "user" ? "You" : m.author ?? agentName ?? "Assistant"}
                   {!streaming && (
                     <span className="msg-hover-actions">
                       {m.role === "user" && (

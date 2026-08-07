@@ -254,6 +254,23 @@ export interface Message {
   toolCallId?: string;
   promptTokens?: number;
   completionTokens?: number;
+  /** Multi-agent chats: which participant produced this message (their label). Absent = single-agent or user. */
+  author?: string;
+  /** Transient id used to target a specific message while streaming concurrently (multi-agent). */
+  id?: string;
+}
+
+/** A model or agent taking part in a multi-agent (battle / collaborate) chat. */
+export interface Participant {
+  id: string;
+  /** Display name / role, e.g. "Frontend" or "Model A". */
+  label: string;
+  providerId: string;
+  model: string;
+  /** Role brief added to this participant's system prompt (collaborate mode). */
+  instructions?: string;
+  /** If this participant is based on a saved agent. */
+  agentId?: string;
 }
 
 /**
@@ -301,6 +318,10 @@ export interface Chat {
   knowledgeBaseIds?: string[]; // knowledge bases to retrieve relevant chunks from
   workingDir?: string; // absolute path for file/terminal tools (empty = home)
   agentId?: string; // the agent applied to this chat, if any
+  /** Multi-agent mode: 'battle' = same prompt, independent answers; 'collab' = shared transcript. Default single. */
+  mode?: "single" | "battle" | "collab";
+  /** Extra models/agents taking part alongside the chat's own model (battle/collab). */
+  participants?: Participant[];
   summary?: string; // rolling summary of messages before summaryUpto
   summaryUpto?: number; // messages[0..summaryUpto) are covered by summary
   messages: Message[];

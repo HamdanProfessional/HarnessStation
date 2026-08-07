@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { streamChat } from "./providers";
 import * as storage from "./storage";
 import { composeSystemPrompt } from "./styles";
+import { buildParticipantContext } from "./multiAgent";
 import { BUILTIN_TOOLS, executeTool } from "./tools";
 import { runAgent, syntheticTools } from "./agents";
 import { runWorkflow } from "./workflow";
@@ -857,7 +858,12 @@ export const useStore = create<AppState>((set, get) => ({
       patch.title = text.length > 42 ? `${text.slice(0, 42)}...` : text;
     }
     get().updateChat(patch);
-    await runCompletion(set, get);
+    const cur = get().chats.find((c) => c.id === id);
+    if (cur && (cur.mode === "battle" || cur.mode === "collab") && (cur.participants?.length ?? 0) >= 2) {
+      await runMultiCompletion(set, get);
+    } else {
+      await runCompletion(set, get);
+    }
   },
 
   regenerate: async () => {
@@ -1534,6 +1540,115 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
   void maybeAutoTitle(get, provider, chat.model, chat.id);
   // passive memory: harvest durable facts in the background, no tool call needed
   void maybeHarvestMemory(get, provider, chat.model, chat.id);
+}
+
+/**
+ * Multi-agent turn: fan the user's prompt out to every participant at once, each
+ * streaming into its own author-tagged message. In `battle` mode each sees only
+ * the user's turns and its own answers (independent columns); in `collab` mode
+ * each sees the shared transcript (peers' output tagged, reasoning never shared)
+ * plus its role brief. v1 is text/reasoning only — tools run in single-agent
+ * chats, and per-participant tools are the planned next step.
+ */
+async function runMultiCompletion(set: Set, get: Get): Promise<void> {
+  const { settings } = get();
+  const chat = get().chats.find((c) => c.id === get().currentId);
+  if (!chat) return;
+  const mode: "battle" | "collab" = chat.mode === "battle" ? "battle" : "collab";
+  const participants = (chat.participants ?? []).filter((p) => p.providerId && p.model && p.label);
+  if (participants.length < 2) return runCompletion(set, get); // not enough — fall back to single
+
+  const capped = capExceeded(settings.dailyCapUsd, settings.monthlyCapUsd);
+  if (capped) {
+    set({ error: capped });
+    return;
+  }
+
+  abortController = new AbortController();
+  set({
+    streaming: true,
+    error: null,
+    activity: mode === "battle" ? "Running models…" : "Agents collaborating…",
+  });
+
+  const live = () => get().chats.find((c) => c.id === chat.id);
+  const patch = (p: Partial<Chat>) => get().updateChatById(chat.id, p);
+  const patchById = (mid: string, fn: (m: Message) => Message) => {
+    const cur = live();
+    if (cur) patch({ messages: cur.messages.map((m) => (m.id === mid ? fn(m) : m)) });
+  };
+
+  // Snapshot the transcript before adding placeholders — that's what each
+  // participant reasons over (buildParticipantContext excludes reasoning).
+  const baseMessages = live()?.messages ?? chat.messages;
+  const placeholders = participants.map((p) => ({
+    p,
+    mid: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+  }));
+  patch({
+    messages: [
+      ...baseMessages,
+      ...placeholders.map(({ p, mid }) => ({
+        role: "assistant" as const,
+        content: "",
+        author: p.label,
+        id: mid,
+      })),
+    ],
+  });
+
+  try {
+    await Promise.all(
+      placeholders.map(async ({ p, mid }) => {
+        const provider = settings.providers.find((x) => x.id === p.providerId);
+        if (!provider) {
+          patchById(mid, (m) => ({ ...m, content: `_No provider "${p.providerId}" is configured._` }));
+          return;
+        }
+        const others = participants.filter((x) => x.id !== p.id);
+        const built = buildParticipantContext(baseMessages, p, mode, others);
+        const system = [composeSystemPrompt(settings, chat), built.systemAddition]
+          .filter(Boolean)
+          .join("\n\n");
+        try {
+          const result = await streamChat({
+            provider,
+            model: p.model,
+            system,
+            messages: built.messages,
+            temperature: chat.temperature,
+            maxTokens: chat.maxTokens,
+            tools: [],
+            signal: abortController!.signal,
+            onDelta: (d) => patchById(mid, (m) => ({ ...m, content: m.content + d })),
+            onReasoning: (d) => patchById(mid, (m) => ({ ...m, reasoning: (m.reasoning ?? "") + d })),
+          });
+          if (result.usage) {
+            recordUsage(provider.id, p.model, result.usage.promptTokens, result.usage.completionTokens);
+            const { promptTokens, completionTokens } = result.usage;
+            patchById(mid, (m) => ({ ...m, promptTokens, completionTokens }));
+          }
+        } catch (e) {
+          if ((e as Error).name !== "AbortError") {
+            patchById(mid, (m) => ({
+              ...m,
+              content: m.content || `_Error: ${(e as Error).message || String(e)}_`,
+            }));
+          }
+        }
+      }),
+    );
+    void syncTray();
+  } finally {
+    abortController = null;
+    set({ streaming: false, activity: null });
+    await storage.flushChatSaves();
+  }
+
+  // Title from the first participant's model once the chat has a reply.
+  const first = participants[0];
+  const fp = settings.providers.find((x) => x.id === first.providerId);
+  if (fp) void maybeAutoTitle(get, fp, first.model, chat.id);
 }
 
 /**
