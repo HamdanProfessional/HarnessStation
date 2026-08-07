@@ -10,11 +10,19 @@ export function estimateTokens(text: string): number {
   return Math.ceil((text?.length ?? 0) / 4);
 }
 
-/** Estimated tokens a set of messages contributes to the model's context. */
+/**
+ * Estimated tokens a set of messages contributes to the model's context.
+ *
+ * Counts only what's actually sent to the model on later turns — message
+ * content, tool call name+arguments, and inlined text attachments. Reasoning
+ * (thinking) is deliberately excluded: it's captured for display only and is
+ * never resent, so it costs no prompt tokens. Counting it here would make the
+ * "freed ~N tokens" feedback promise a saving that deleting it can't deliver.
+ */
 export function estimateContextTokens(messages: Message[]): number {
   let chars = 0;
   for (const m of messages) {
-    chars += (m.content?.length ?? 0) + (m.reasoning?.length ?? 0);
+    chars += m.content?.length ?? 0;
     for (const c of m.toolCalls ?? []) {
       chars += (c.name?.length ?? 0) + (c.arguments?.length ?? 0);
     }

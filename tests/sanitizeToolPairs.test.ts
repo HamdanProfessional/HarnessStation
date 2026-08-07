@@ -94,14 +94,17 @@ describe("sanitizeToolPairs", () => {
 });
 
 describe("estimateContextTokens", () => {
-  it("counts content, reasoning and tool calls, and drops with deletion", () => {
+  it("counts what's sent (content) but not reasoning, which is display-only", () => {
     const full: Message[] = [
       { role: "user", content: "x".repeat(40) },
       { role: "assistant", content: "y".repeat(40), reasoning: "z".repeat(40) },
     ];
-    const trimmed: Message[] = [full[0], { ...full[1], reasoning: undefined }];
-    expect(estimateContextTokens(full)).toBeGreaterThan(estimateContextTokens(trimmed));
-    // ~4 chars/token: 40 reasoning chars ≈ 10 tokens freed.
-    expect(estimateContextTokens(full) - estimateContextTokens(trimmed)).toBe(10);
+    // Reasoning is never sent to the model, so removing it frees nothing.
+    const noReasoning: Message[] = [full[0], { ...full[1], reasoning: undefined }];
+    expect(estimateContextTokens(noReasoning)).toBe(estimateContextTokens(full));
+
+    // Content IS sent, so removing it reduces the estimate (~4 chars/token: 40 ≈ 10).
+    const noContent: Message[] = [full[0], { ...full[1], content: "" }];
+    expect(estimateContextTokens(full) - estimateContextTokens(noContent)).toBe(10);
   });
 });

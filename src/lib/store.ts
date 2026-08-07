@@ -779,8 +779,14 @@ export const useStore = create<AppState>((set, get) => ({
       await storage.saveChat(nowChat);
     }
 
-    const freed = Math.max(0, before - estimateContextTokens(msgs));
-    toast.success(`Deleted — freed ~${freed} token${freed === 1 ? "" : "s"} of context`);
+    if (part === "reasoning") {
+      // Thinking is shown for you only — the model never receives it on later
+      // turns, so removing it tidies the transcript but frees no prompt tokens.
+      toast.success("Removed thinking — it's display-only, so token cost is unchanged.");
+    } else {
+      const freed = Math.max(0, before - estimateContextTokens(msgs));
+      toast.success(`Deleted — freed ~${freed} token${freed === 1 ? "" : "s"} of context`);
+    }
   },
 
   rewindTo: async (index) => {
