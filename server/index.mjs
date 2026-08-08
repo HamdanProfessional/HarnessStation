@@ -354,7 +354,9 @@ const LIBRARY_ADMIN_TOKEN = process.env.LIBRARY_ADMIN_TOKEN ?? "";
 // Publishes allowed per IP per hour, and reports that auto-hide an item pending review.
 const PUBLISH_LIMIT = Number(process.env.LIBRARY_PUBLISH_LIMIT ?? 10);
 const REPORT_THRESHOLD = Number(process.env.LIBRARY_REPORT_THRESHOLD ?? 4);
-const KINDS = new Set(["skill", "agent", "workflow", "schedule", "template"]);
+const KINDS = new Set(["skill", "agent", "workflow", "schedule", "template", "bundle"]);
+// Kinds that can live inside a bundle (a bundle can't nest another bundle).
+const BUNDLEABLE = new Set(["skill", "agent", "workflow", "schedule", "template"]);
 
 // ---------- cloud sync (opt-in, zero-knowledge accounts) ----------
 // Accounts exist only to back up an encrypted blob of a user's own data. The
@@ -491,6 +493,23 @@ function payloadValid(type, payload) {
     return false;
   }
   if (!v || typeof v !== "object" || Array.isArray(v)) return false;
+  // A bundle is a versioned list of other items, each carrying its own kind and
+  // an already-clean payload. Validate every entry with the same rules.
+  if (type === "bundle") {
+    if (!Array.isArray(v.items) || v.items.length < 1 || v.items.length > 50) return false;
+    return v.items.every(
+      (it) =>
+        it &&
+        typeof it === "object" &&
+        BUNDLEABLE.has(it.kind) &&
+        typeof it.name === "string" &&
+        it.name.trim().length > 0 &&
+        typeof it.payload === "string" &&
+        it.payload.length > 0 &&
+        it.payload.length < 200_000 &&
+        payloadValid(it.kind, it.payload),
+    );
+  }
   // Templates carry a subtype that decides their shape: "ui" is a code snippet,
   // "setup" is a starter-kit (instructions / tools / a bundled agent or workflow).
   if (type === "template") {

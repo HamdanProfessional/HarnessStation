@@ -81,6 +81,9 @@ export function HooksPanel() {
     (await testWebhook(w)) ? toast.success("Webhook responded OK.") : toast.error("Webhook failed (no 2xx).");
   };
 
+  const sandbox = settings.toolSandbox ?? "full-access";
+  const approval = settings.toolApproval ?? "full-auto";
+
   return (
     <>
       <datalist id="hook-tools">
@@ -89,7 +92,72 @@ export function HooksPanel() {
         ))}
       </datalist>
 
-      <h2>Guardrails</h2>
+      <h2>Agent permissions</h2>
+      <p className="hint">
+        A quick way to set how much the agent may do on its own, without listing tools one by one. These
+        presets apply everywhere; the finer guardrails below still layer on top.
+      </p>
+      <div className="provider-card">
+        <div className="provider-row" style={{ alignItems: "center" }}>
+          <span className="grow">
+            <b>Sandbox</b> — what tools may do
+            <br />
+            <span className="hint">
+              {sandbox === "read-only"
+                ? "Read-only: no file writes, deletes or terminal — only reading, search and network."
+                : sandbox === "workspace-write"
+                  ? "Workspace-write: writes and commands allowed, confined to the working directory."
+                  : "Full access: every tool is allowed."}
+            </span>
+          </span>
+          <div className="seg">
+            {(["read-only", "workspace-write", "full-access"] as const).map((m) => (
+              <button
+                key={m}
+                className={`seg-btn ${sandbox === m ? "active" : ""}`}
+                onClick={() => save({ toolSandbox: m })}
+              >
+                {m === "read-only" ? "Read-only" : m === "workspace-write" ? "Workspace" : "Full"}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="provider-row" style={{ alignItems: "center" }}>
+          <span className="grow">
+            <b>Approval</b> — when to ask first
+            <br />
+            <span className="hint">
+              {approval === "suggest"
+                ? "Suggest: confirm before every file write, delete or command."
+                : approval === "auto-edit"
+                  ? "Auto-edit: edits run freely; confirm only terminal or delete actions."
+                  : "Full-auto: never ask (tools run unattended)."}
+            </span>
+          </span>
+          <div className="seg">
+            {(["suggest", "auto-edit", "full-auto"] as const).map((m) => (
+              <button
+                key={m}
+                className={`seg-btn ${approval === m ? "active" : ""}`}
+                onClick={() => save({ toolApproval: m })}
+              >
+                {m === "suggest" ? "Suggest" : m === "auto-edit" ? "Auto-edit" : "Full-auto"}
+              </button>
+            ))}
+          </div>
+        </div>
+        <label className="agent-check" style={{ marginTop: 4 }}>
+          <input
+            type="checkbox"
+            checked={settings.agentsFile !== false}
+            onChange={(e) => save({ agentsFile: e.target.checked })}
+          />
+          Read <code>AGENTS.md</code> (or <code>AGENT.md</code> / <code>CLAUDE.md</code>) from the working
+          directory into the prompt <span className="hint">— desktop only</span>
+        </label>
+      </div>
+
+      <h2 style={{ marginTop: 28 }}>Guardrails</h2>
       <p className="hint">
         Decide what the agent may do on its own. <b>Ask</b> confirms before the tool runs; <b>Deny</b>{" "}
         blocks it. Applies to every chat, agent and schedule.

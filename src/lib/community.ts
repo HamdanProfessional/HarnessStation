@@ -11,8 +11,24 @@ import { gatewayUrl } from "./gateway";
 import { useStore } from "./store";
 import type { Agent, Schedule, Workflow } from "./types";
 
-export type CommunityKind = "skill" | "agent" | "workflow" | "schedule" | "template";
+export type CommunityKind = "skill" | "agent" | "workflow" | "schedule" | "template" | "bundle";
+/** Kinds that can be packaged inside a bundle (a bundle can't nest a bundle). */
+export type BundleableKind = Exclude<CommunityKind, "bundle">;
 export type CommunitySort = "trending" | "recommended" | "downloaded" | "newest";
+
+/** One member of a bundle: its kind, a label, and an already share-clean payload. */
+export interface BundleItem {
+  kind: BundleableKind;
+  name: string;
+  description?: string;
+  subtype?: TemplateSubtype;
+  payload: string;
+}
+/** A versioned collection of items installed together. */
+export interface BundlePayload {
+  version?: string;
+  items: BundleItem[];
+}
 
 /** Templates come in two shapes: a runnable starter-kit, or a UI code snippet. */
 export type TemplateSubtype = "setup" | "ui";
@@ -216,7 +232,13 @@ export function buildPayload(kind: CommunityKind, entity: unknown): string {
   if (kind === "agent") return JSON.stringify(cleanAgentForPublish(entity as Agent));
   if (kind === "workflow") return JSON.stringify(cleanWorkflowForPublish(entity as Workflow));
   if (kind === "schedule") return JSON.stringify(cleanScheduleForPublish(entity as Schedule));
+  if (kind === "bundle") return JSON.stringify(entity); // items are pre-cleaned
   return JSON.stringify(cleanTemplateForPublish(entity as TemplatePayload));
+}
+
+/** Assemble a bundle payload from already-cleaned member items. */
+export function buildBundlePayload(items: BundleItem[]): string {
+  return JSON.stringify({ version: "1", items } satisfies BundlePayload);
 }
 
 export async function communityPublish(input: {
@@ -244,32 +266,39 @@ export async function communityPublish(input: {
 
 // ---------- importing ----------
 
-/** Download an item and add it to the user's local collection. Returns a label. */
-export async function communityImport(item: CommunityItem): Promise<string> {
-  const payload = await fetchPayload(item.id);
+/**
+ * Install one item (of any bundleable kind) from its raw payload into the local
+ * collection. Shared by single-item import and by the bundle loop. Returns a
+ * short label; throws for things that can't be installed (e.g. UI templates).
+ */
+async function installOne(
+  kind: BundleableKind,
+  name: string,
+  description: string,
+  payload: string,
+): Promise<string> {
   const store = useStore.getState();
 
-  if (item.type === "skill") {
+  if (kind === "skill") {
     const { saveSkill, slugify, listSkills } = await import("./skills");
-    const slug = slugify(item.name);
-    await saveSkill(slug, payload);
+    await saveSkill(slugify(name), payload);
     useStore.setState({ skills: await listSkills() });
-    return `Imported skill “${item.name}”.`;
+    return `Imported skill “${name}”.`;
   }
 
-  if (item.type === "agent") {
+  if (kind === "agent") {
     const a = JSON.parse(payload) as Agent;
     await store.saveAgent({ ...a, id: uid("agent"), providerId: a.providerId || "", model: a.model || "" });
-    return `Imported agent “${item.name}”. Set its model in Agents if needed.`;
+    return `Imported agent “${name}”. Set its model in Agents if needed.`;
   }
 
-  if (item.type === "workflow") {
+  if (kind === "workflow") {
     const w = JSON.parse(payload) as Workflow;
     await store.saveWorkflow({ ...w, id: uid("wf") });
-    return `Imported workflow “${item.name}”.`;
+    return `Imported workflow “${name}”.`;
   }
 
-  if (item.type === "template") {
+  if (kind === "template") {
     const t = JSON.parse(payload) as TemplatePayload;
     if (t.subtype !== "setup") {
       // UI templates aren't imported into the app; the card offers copy/export.
@@ -284,8 +313,6 @@ export async function communityImport(item: CommunityItem): Promise<string> {
       await store.saveWorkflow({ ...t.workflow, id: uid("wf") });
       bundled.push("a workflow");
     }
-    // The project ties it together (instructions + default tools). Starter
-    // prompts, if any, are appended so the model sees suggested openers.
     const starters = (t.starters ?? []).filter(Boolean);
     const instructions = `${(t.instructions ?? "").trim()}${
       starters.length ? `\n\n## Starter prompts\n${starters.map((p) => `- ${p}`).join("\n")}` : ""
@@ -293,20 +320,43 @@ export async function communityImport(item: CommunityItem): Promise<string> {
     const now = new Date().toISOString();
     await store.saveProject({
       id: uid("proj"),
-      name: item.name,
-      description: item.description || "",
+      name,
+      description: description || "",
       instructions,
       defaultToolIds: t.toolIds ?? [],
       createdAt: now,
       updatedAt: now,
     });
     const extra = bundled.length ? ` plus ${bundled.join(" and ")}` : "";
-    return `Imported template “${item.name}” as a project${extra}. Open Projects to use it.`;
+    return `Imported template “${name}” as a project${extra}.`;
   }
 
   const s = JSON.parse(payload) as Schedule;
   await store.saveSchedule({ ...s, id: uid("sched"), enabled: false, nextRun: 0 });
-  return `Imported schedule “${item.name}” (disabled — pick a target and model, then enable it).`;
+  return `Imported schedule “${name}” (disabled — pick a target and model, then enable it).`;
+}
+
+/** Download an item and add it to the user's local collection. Returns a label. */
+export async function communityImport(item: CommunityItem): Promise<string> {
+  const payload = await fetchPayload(item.id);
+
+  if (item.type === "bundle") {
+    const b = JSON.parse(payload) as BundlePayload;
+    const members = b.items ?? [];
+    const results: string[] = [];
+    for (const it of members) {
+      try {
+        results.push(await installOne(it.kind, it.name, it.description ?? "", it.payload));
+      } catch (e) {
+        results.push(`Skipped “${it.name}”: ${(e as Error).message}`);
+      }
+    }
+    return `Imported bundle “${item.name}” (${members.length} item${members.length === 1 ? "" : "s"}):\n${results
+      .map((r) => `• ${r}`)
+      .join("\n")}`;
+  }
+
+  return installOne(item.type, item.name, item.description, payload);
 }
 
 /** Fetch a UI template's code (counts as a download) so the UI can copy/export it. */

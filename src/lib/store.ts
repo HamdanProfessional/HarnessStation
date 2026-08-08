@@ -10,6 +10,7 @@ import { computeNextRun } from "./schedule";
 import { retrieveMultiContext } from "./rag";
 import { mediaConfigFromSettings, dataUrlToAttachment } from "./media";
 import { skillIndexPrompt } from "./skills";
+import { loadAgentsMd } from "./agentsMd";
 import { capExceeded, recordUsage, syncTray } from "./budget";
 import { toast } from "./toast";
 import type {
@@ -1317,6 +1318,11 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
         .join("\n")
     : "";
 
+  // AGENTS.md in the working directory steers the model with repo conventions,
+  // read automatically so the user doesn't restate them each chat (desktop only).
+  const agentsNote =
+    settings.agentsFile !== false ? await loadAgentsMd(chat.workingDir) : "";
+
   const agentName = chat.agentId
     ? get().agents.find((a) => a.id === chat.agentId)?.name
     : undefined;
@@ -1372,6 +1378,7 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
         system: [
           composeSystemPrompt(settings, base),
           projectNote,
+          agentsNote,
           skillIndex,
           memoryBlock,
           ragContext,

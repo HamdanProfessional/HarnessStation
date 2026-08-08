@@ -91,6 +91,22 @@ export interface Settings {
   confirmTools?: string[];
   /** Tool ids the agent is not allowed to run at all. */
   blockTools?: string[];
+  /** Load AGENTS.md / AGENT.md / CLAUDE.md from the working directory into the prompt. Default on. */
+  agentsFile?: boolean;
+  /**
+   * Sandbox preset — which tool categories may run at all:
+   *   read-only       — no file writes, deletes or terminal (search/read/network still work)
+   *   workspace-write — writes and commands allowed (confined to the working directory)
+   *   full-access     — everything (default when unset)
+   */
+  toolSandbox?: "read-only" | "workspace-write" | "full-access";
+  /**
+   * Approval preset — when to ask before a mutating tool runs:
+   *   suggest   — confirm every file write, delete or command
+   *   auto-edit — auto-allow edits, confirm only terminal/deletes
+   *   full-auto — never ask (default when unset)
+   */
+  toolApproval?: "suggest" | "auto-edit" | "full-auto";
   /** Argument-matching guardrail rules, evaluated before the simple lists. */
   guardrails?: import("./hooks").GuardrailRule[];
   /** Messaging channels (Telegram, Discord) that reach the agent from outside. */

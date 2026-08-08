@@ -104,9 +104,46 @@ function argJson(args: unknown): string {
  * to return in place of running it. Rules are evaluated first (with argument
  * matching), then the simple per-tool allow/ask/deny lists.
  */
+/** Coarse category used by the sandbox/approval presets. */
+const EXEC_TOOLS = new Set(["run_terminal"]);
+const WRITE_TOOLS = new Set(["write_file", "edit_file", "delete_path", "make_dir", "make_folder"]);
+export function toolClass(id: string): "read" | "write" | "exec" {
+  if (EXEC_TOOLS.has(id) || /terminal|shell|exec|bash|powershell|process|spawn/i.test(id)) return "exec";
+  if (
+    WRITE_TOOLS.has(id) ||
+    /write|edit|delete|remove|create|update|modify|save|mkdir|move|rename|append|patch|commit|push|upload/i.test(id)
+  )
+    return "write";
+  return "read";
+}
+
 export async function guardTool(toolId: string, args?: unknown): Promise<"allow" | string> {
   const s = useStore.getState().settings;
   const argsStr = argJson(args);
+
+  // Sandbox / approval presets (Settings › Agent permissions). Explicit guardrails
+  // and per-tool lists below still layer on top of these.
+  const sandbox = s.toolSandbox ?? "full-access";
+  const approval = s.toolApproval ?? "full-auto";
+  if (sandbox !== "full-access" || approval !== "full-auto") {
+    const cls = toolClass(toolId);
+    const mutating = cls !== "read";
+    const dangerous = cls === "exec" || /delete|remove|\brm\b|drop|destroy/i.test(toolId);
+    if (sandbox === "read-only" && mutating) {
+      return `Blocked by the read-only sandbox: "${toolId}" would change files or run a command. Switch to workspace-write in Settings › Agent permissions to allow it.`;
+    }
+    if (approval === "suggest" && mutating) {
+      const ok = await confirmDialog(`Allow the agent to run "${toolId}"?`, {
+        message: "Approval mode is “suggest” — confirm before any change.",
+      });
+      if (!ok) return `Cancelled: you declined the "${toolId}" tool.`;
+    } else if (approval === "auto-edit" && dangerous) {
+      const ok = await confirmDialog(`Allow the agent to run "${toolId}"?`, {
+        message: "Approval mode is “auto-edit” — confirm before terminal or delete actions.",
+      });
+      if (!ok) return `Cancelled: you declined the "${toolId}" tool.`;
+    }
+  }
 
   for (const r of s.guardrails ?? []) {
     if (r.tool !== "*" && r.tool !== toolId) continue;

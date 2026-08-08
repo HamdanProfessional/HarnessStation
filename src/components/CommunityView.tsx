@@ -15,6 +15,7 @@ import { toast } from "../lib/toast";
 import { promptDialog } from "../lib/dialog";
 import { CommunityAdmin } from "./CommunityAdmin";
 import { TemplatePublish } from "./TemplatePublish";
+import { BundlePublish } from "./BundlePublish";
 import { EmptyState } from "./EmptyState";
 import { IconHeart, IconDownload, IconSearch, IconGrid } from "./icons";
 
@@ -25,6 +26,7 @@ const KINDS: { id: CommunityKind | "all"; label: string }[] = [
   { id: "workflow", label: "Workflows" },
   { id: "schedule", label: "Schedules" },
   { id: "template", label: "Templates" },
+  { id: "bundle", label: "Bundles" },
 ];
 
 const SORTS: { id: CommunitySort; label: string }[] = [
@@ -40,6 +42,7 @@ const KIND_LABEL: Record<CommunityKind, string> = {
   workflow: "Workflow",
   schedule: "Schedule",
   template: "Template",
+  bundle: "Bundle",
 };
 
 function relTime(ms: number): string {
@@ -63,6 +66,7 @@ export function CommunityView() {
   const [moderating, setModerating] = useState(false);
   const [subFilter, setSubFilter] = useState<TemplateSubtype | "all">("all");
   const [showPublish, setShowPublish] = useState(false);
+  const [showBundle, setShowBundle] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const available = useMemo(() => communityAvailable(), []);
@@ -197,6 +201,11 @@ export function CommunityView() {
         {kind === "template" && (
           <button className="btn small" onClick={() => setShowPublish(true)}>
             Publish template
+          </button>
+        )}
+        {kind === "bundle" && (
+          <button className="btn small" onClick={() => setShowBundle(true)}>
+            Publish bundle
           </button>
         )}
         <button className="link-btn" title="Moderate published items (admin)" onClick={() => setModerating(true)}>
@@ -355,6 +364,9 @@ export function CommunityView() {
       )}
       {showPublish && (
         <TemplatePublish onClose={() => setShowPublish(false)} onPublished={() => setRefreshKey((k) => k + 1)} />
+      )}
+      {showBundle && (
+        <BundlePublish onClose={() => setShowBundle(false)} onPublished={() => setRefreshKey((k) => k + 1)} />
       )}
     </main>
   );

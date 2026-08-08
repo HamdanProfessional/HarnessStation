@@ -4834,6 +4834,27 @@ textarea {
   color: var(--text);
 }
 
+/* Bundle publish: scrollable list of the user's items with checkboxes. */
+.bundle-picker {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  padding: 4px;
+}
+.bundle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.bundle-row:hover { background: var(--bg-3); }
+.bundle-row input { width: auto; }
+.bundle-row .grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* Battle: user turns full width, participant answers laid out side by side. */
 .messages.battle { display: flex; flex-wrap: wrap; gap: 12px; align-content: flex-start; }
 .messages.battle > * { flex: 1 1 100%; }
