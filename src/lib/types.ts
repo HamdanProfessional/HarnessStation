@@ -271,6 +271,10 @@ export interface Participant {
   instructions?: string;
   /** If this participant is based on a saved agent. */
   agentId?: string;
+  /** Turn off this participant's reasoning/thinking — faster, cheaper replies. */
+  noThinking?: boolean;
+  /** Reasoning effort for this participant, when its model supports it. Absent = provider default. */
+  effort?: "low" | "medium" | "high";
 }
 
 /**

@@ -1619,6 +1619,8 @@ async function runMultiCompletion(set: Set, get: Get): Promise<void> {
             temperature: chat.temperature,
             maxTokens: chat.maxTokens,
             tools: [],
+            noThinking: p.noThinking,
+            effort: p.effort,
             signal: abortController!.signal,
             onDelta: (d) => patchById(mid, (m) => ({ ...m, content: m.content + d })),
             onReasoning: (d) => patchById(mid, (m) => ({ ...m, reasoning: (m.reasoning ?? "") + d })),

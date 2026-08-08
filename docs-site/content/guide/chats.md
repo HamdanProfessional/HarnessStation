@@ -79,8 +79,15 @@ should also carry tools and knowledge.
 ## Multiple agents in one chat
 
 The bar at the top of a chat switches it between **Single**, **Battle**, and
-**Collaborate**. In Battle or Collaborate you add participants — each a model (or
-agent) with a name and, for Collaborate, a short role.
+**Collaborate**. In Battle or Collaborate you add up to **five** participants —
+each a model (or [saved agent](agents)) with a name and, for Collaborate, a short
+role. Pick an agent from a participant's dropdown to adopt its model and
+instructions in one go.
+
+Each participant also has its own **effort** (reasoning: auto / low / medium /
+high, on models that support it) and a **no think** toggle that switches thinking
+off entirely for that one participant — handy for pairing a fast responder with a
+slow, careful one in the same chat.
 
 - **Battle** sends the *same* prompt to every participant independently and shows
   their answers **side by side**. Each one sees only your turns and its own prior
@@ -92,9 +99,10 @@ agent) with a name and, for Collaborate, a short role.
   the backend. Crucially, a participant **never sees another's private thinking**,
   only what they actually wrote.
 
-All participants answer at once, each streaming into its own reply. This first
-version is text and reasoning only — participants don't run tools yet (a single
-agent still does); per-participant tools are coming next.
+All participants answer at once, each streaming into its own reply — one prompt
+from you fans out to every participant. This version is text and reasoning only —
+participants don't run tools yet (a single agent still does); per-participant tools
+are coming next.
 
 ## Where they're stored
 

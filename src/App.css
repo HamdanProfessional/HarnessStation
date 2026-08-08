@@ -4809,8 +4809,21 @@ textarea {
   border-radius: var(--radius-sm);
   background: var(--bg-3);
 }
+.participant-chip { flex-wrap: wrap; }
 .participant-chip .p-label { width: 84px; }
 .participant-chip .p-role { width: 170px; }
+.participant-chip .p-agent { max-width: 120px; }
+.participant-chip .p-effort { max-width: 100px; }
+.participant-chip .p-think {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--text-2);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.participant-chip .p-think input { width: auto; }
 .participant-chip input,
 .participant-chip select {
   font-size: 12px;

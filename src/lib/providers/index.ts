@@ -50,6 +50,8 @@ export interface ChatParams {
   jsonSchema?: string;
   /** Ask the model not to produce reasoning tokens (voice wants speed, not thought). */
   noThinking?: boolean;
+  /** Reasoning-effort hint (openai-style `reasoning_effort`); ignored when `noThinking`. */
+  effort?: "low" | "medium" | "high";
   signal: AbortSignal;
   onDelta: (text: string) => void;
   onReasoning?: (text: string) => void;
@@ -342,7 +344,10 @@ async function streamOpenAI(p: ChatParams): Promise<ChatResult> {
         chat_template_kwargs: { enable_thinking: false },
         reasoning_effort: "none",
       }
-    : {};
+    : p.effort
+      ? // A chosen effort level: send the two common spellings; unknown servers ignore them.
+        { reasoning_effort: p.effort, reasoning: { effort: p.effort } }
+      : {};
 
   // Provider-level escape hatch: whatever the user put in extraBody wins over
   // everything we computed, so an odd backend can always be satisfied.
@@ -357,7 +362,7 @@ async function streamOpenAI(p: ChatParams): Promise<ChatResult> {
     });
 
   let res = await send(thinkOff);
-  if (!res.ok && p.noThinking && (res.status === 400 || res.status === 422)) {
+  if (!res.ok && (p.noThinking || p.effort) && (res.status === 400 || res.status === 422)) {
     res = await send({});
   }
   if (!res.ok) {

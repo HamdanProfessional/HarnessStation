@@ -3,7 +3,8 @@ import type { Participant } from "../lib/types";
 import { IconPlus, IconX } from "./icons";
 
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-const LABELS = ["Model A", "Model B", "Model C", "Model D"];
+const LABELS = ["Model A", "Model B", "Model C", "Model D", "Model E"];
+const MAX_PARTICIPANTS = 5;
 
 /**
  * The multi-agent control at the top of a chat: pick Single / Battle /
@@ -12,7 +13,7 @@ const LABELS = ["Model A", "Model B", "Model C", "Model D"];
  * transcript (peers' output visible, thinking private) with per-role briefs.
  */
 export function MultiAgentBar() {
-  const { chats, currentId, settings, updateChat } = useStore();
+  const { chats, currentId, settings, agents, updateChat } = useStore();
   const chat = chats.find((c) => c.id === currentId);
   if (!chat) return null;
   const providers = settings.providers;
@@ -43,6 +44,19 @@ export function MultiAgentBar() {
 
   const updateP = (id: string, patch: Partial<Participant>) =>
     updateChat({ participants: participants.map((p) => (p.id === id ? { ...p, ...patch } : p)) });
+  // Back a participant with a saved agent: adopt its name, model and role brief.
+  const pickAgent = (p: Participant, agentId: string) => {
+    if (!agentId) return updateP(p.id, { agentId: undefined });
+    const a = agents.find((x) => x.id === agentId);
+    if (!a) return;
+    updateP(p.id, {
+      agentId,
+      label: a.name.slice(0, 24) || p.label,
+      providerId: a.providerId || p.providerId,
+      model: a.model || p.model,
+      instructions: a.instructions?.trim() || p.instructions,
+    });
+  };
   const removeP = (id: string) => updateChat({ participants: participants.filter((p) => p.id !== id) });
   const addP = () => {
     const pr = providers[0];
@@ -85,6 +99,21 @@ export function MultiAgentBar() {
                   placeholder="Name"
                   onChange={(e) => updateP(p.id, { label: e.target.value })}
                 />
+                {agents.length > 0 && (
+                  <select
+                    className="p-agent"
+                    title="Base this participant on a saved agent"
+                    value={p.agentId ?? ""}
+                    onChange={(e) => pickAgent(p, e.target.value)}
+                  >
+                    <option value="">— model —</option>
+                    {agents.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <select
                   value={p.providerId}
                   onChange={(e) => {
@@ -106,6 +135,28 @@ export function MultiAgentBar() {
                   ))}
                   {p.model && !models.includes(p.model) && <option value={p.model}>{p.model}</option>}
                 </select>
+                <select
+                  className="p-effort"
+                  title="Reasoning effort (models that support it)"
+                  disabled={p.noThinking}
+                  value={p.effort ?? ""}
+                  onChange={(e) =>
+                    updateP(p.id, { effort: (e.target.value || undefined) as Participant["effort"] })
+                  }
+                >
+                  <option value="">effort: auto</option>
+                  <option value="low">low</option>
+                  <option value="medium">medium</option>
+                  <option value="high">high</option>
+                </select>
+                <label className="p-think" title="Turn off this participant's thinking">
+                  <input
+                    type="checkbox"
+                    checked={!!p.noThinking}
+                    onChange={(e) => updateP(p.id, { noThinking: e.target.checked })}
+                  />
+                  no&nbsp;think
+                </label>
                 {mode === "collab" && (
                   <input
                     className="p-role"
@@ -122,7 +173,7 @@ export function MultiAgentBar() {
               </div>
             );
           })}
-          {participants.length < 4 && (
+          {participants.length < MAX_PARTICIPANTS && (
             <button className="btn small" onClick={addP}>
               <IconPlus size={12} /> Add
             </button>
