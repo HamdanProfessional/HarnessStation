@@ -196,6 +196,24 @@ export default function App() {
     };
   }, []);
 
+  // Local OpenAI-compatible API server, if the user turned it on (desktop only).
+  // Reacts to the toggle and port so changing either restarts the server.
+  useEffect(() => {
+    const cfg = settings.localApi;
+    if (!cfg?.enabled) return;
+    let stopped = false;
+    void import("./lib/localApi").then(({ startLocalApi, DEFAULT_LOCAL_API_PORT }) => {
+      if (stopped) return;
+      void startLocalApi(cfg.port ?? DEFAULT_LOCAL_API_PORT).catch((e) =>
+        console.warn("Local API server couldn't start:", e),
+      );
+    });
+    return () => {
+      stopped = true;
+      void import("./lib/localApi").then(({ stopLocalApi }) => void stopLocalApi().catch(() => {}));
+    };
+  }, [settings.localApi?.enabled, settings.localApi?.port]);
+
   useEffect(() => {
     const theme =
       settings.theme === "system"

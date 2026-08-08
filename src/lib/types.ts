@@ -109,6 +109,8 @@ export interface Settings {
   toolApproval?: "suggest" | "auto-edit" | "full-auto";
   /** Argument-matching guardrail rules, evaluated before the simple lists. */
   guardrails?: import("./hooks").GuardrailRule[];
+  /** Local OpenAI-compatible API server (desktop only): expose configured models/agents on loopback. */
+  localApi?: { enabled: boolean; port?: number };
   /** Messaging channels (Telegram, Discord) that reach the agent from outside. */
   channels?: import("./channels").ChannelsSettings;
   /** Opt-in cloud sync account/session (end-to-end encrypted; keys stay local). */

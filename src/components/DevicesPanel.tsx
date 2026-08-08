@@ -19,6 +19,8 @@ import {
   type MeshStatus,
 } from "../lib/mesh";
 import { saveMeshPeers, startMesh, stopMesh } from "../lib/meshRuntime";
+import { DEFAULT_LOCAL_API_PORT, localApiStatus } from "../lib/localApi";
+import { useStore } from "../lib/store";
 import { Spinner } from "./Loading";
 import { isWeb } from "../lib/web";
 import { GetDesktopApp } from "./GetDesktopApp";
@@ -412,6 +414,78 @@ export function DevicesPanel() {
           Remember address
         </button>
       </div>
+
+      <LocalApiCard />
+    </>
+  );
+}
+
+/**
+ * Local API server — expose the configured models and agents on loopback as an
+ * OpenAI-compatible endpoint, so any tool on this machine that speaks the OpenAI
+ * API (an editor, a script, an SDK) can drive them. Loopback only: sharing
+ * across devices is the mesh's job, with its own pairing.
+ */
+function LocalApiCard() {
+  const { settings, saveSettings } = useStore();
+  const cfg = settings.localApi;
+  const [port, setPort] = useState(String(cfg?.port ?? DEFAULT_LOCAL_API_PORT));
+  // Actual bound port from Rust, polled — the source of truth for "is it up?".
+  const [running, setRunning] = useState<number | null>(null);
+
+  // Poll the real server state while the panel is open. Start/stop itself is
+  // driven by the App-level effect that watches settings.localApi.
+  useEffect(() => {
+    let live = true;
+    const tick = () => void localApiStatus().then((p) => live && setRunning(p));
+    tick();
+    const t = window.setInterval(tick, 1500);
+    return () => {
+      live = false;
+      clearInterval(t);
+    };
+  }, []);
+
+  const save = (patch: Partial<NonNullable<typeof cfg>>) =>
+    saveSettings({ ...settings, localApi: { enabled: false, ...cfg, ...patch } });
+
+  const clampPort = (v: string) => Math.min(65535, Math.max(1, Number(v) || DEFAULT_LOCAL_API_PORT));
+
+  return (
+    <>
+      <h2 style={{ marginTop: 28 }}>Local API server</h2>
+      <p className="hint">
+        Serve the models and agents you've set up here as an OpenAI-compatible endpoint on this
+        machine, so other apps — an editor, a script, anything that speaks the OpenAI API — can call
+        them. Loopback only (<code>127.0.0.1</code>); nothing is exposed to the network.
+      </p>
+
+      <div className="provider-row">
+        <label className="check" style={{ margin: 0 }}>
+          <input
+            type="checkbox"
+            checked={!!cfg?.enabled}
+            onChange={(e) => save({ enabled: e.target.checked, port: clampPort(port) })}
+          />
+          {running ? "Running" : cfg?.enabled ? "Starting…" : "Off"}
+        </label>
+        <input
+          value={port}
+          aria-label="Local API port"
+          placeholder={String(DEFAULT_LOCAL_API_PORT)}
+          style={{ width: 96 }}
+          onChange={(e) => setPort(e.target.value.replace(/[^0-9]/g, ""))}
+          onBlur={() => save({ port: clampPort(port) })}
+        />
+      </div>
+
+      {running && (
+        <p className="hint ok-note">
+          Point a client's base URL at <code>http://127.0.0.1:{running}/v1</code> (any API key). Use
+          a model id like <code>openai/gpt-5</code> or an agent as <code>agent/&lt;name&gt;</code>.
+          <code> GET /v1/models</code> lists them.
+        </p>
+      )}
     </>
   );
 }
