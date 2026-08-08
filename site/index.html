@@ -4,157 +4,11 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>HarnessStation — run any AI model as a private, local agent</title>
-<meta name="description" content="A desktop app for running AI models as agents. Bring your own model — local or your own cloud key — with tools, files, knowledge, voice and a browser. No account, no telemetry, private by default." />
+<meta name="description" content="A desktop app for running AI models as agents. Bring your own model — local or your own cloud key — with tools, files, knowledge, voice and a browser. No account by default, no telemetry, private by design." />
 <meta property="og:title" content="HarnessStation" />
-<meta property="og:description" content="Run any AI model as a private, local agent. No account, no telemetry, bring your own key." />
+<meta property="og:description" content="Run any AI model as a private, local agent. No account by default, no telemetry, bring your own key." />
 <meta property="og:type" content="website" />
-<style>
-:root{
-  --bg:#0b0c10; --panel:#16181f; --border:#262a35;
-  --text:#e9ebf0; --dim:#9aa0ad; --accent:#6d7cff; --accent-2:#22d3ee; --accent-3:#a78bfa; --ok:#3fb984;
-  --glass:rgba(24,26,34,.66); --line:rgba(255,255,255,.08);
-  --font:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
-  --mono:"JetBrains Mono","Cascadia Code",ui-monospace,monospace;
-}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.55;overflow-x:hidden}
-a{color:inherit}
-.wrap{max-width:1120px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
-.muted{color:var(--dim)}
-.eyebrow{color:var(--accent);font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:13px}
-
-/* ---------- background: cheap radial glows (no blur filter, no blend) ---------- */
-.bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-.glow{position:absolute;border-radius:50%;opacity:.5;transform:translateZ(0)}
-.glow.g1{width:640px;height:640px;left:-180px;top:-200px;background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--accent) 55%,transparent),transparent 62%);animation:d1 30s ease-in-out infinite}
-.glow.g2{width:560px;height:560px;right:-160px;top:40px;background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--accent-3) 45%,transparent),transparent 62%);animation:d2 36s ease-in-out infinite}
-.glow.g3{width:520px;height:520px;left:42%;bottom:-240px;background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--accent-2) 40%,transparent),transparent 62%);opacity:.35;animation:d3 40s ease-in-out infinite}
-@keyframes d1{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(70px,50px,0)}}
-@keyframes d2{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(-60px,40px,0)}}
-@keyframes d3{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(-50px,-40px,0)}}
-.grid{position:absolute;inset:0;
-  background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
-  background-size:48px 48px;
-  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 40%,transparent 78%);
-  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 40%,transparent 78%)}
-
-/* ---------- buttons ---------- */
-.btn{position:relative;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);
-  background:var(--glass);color:var(--text);padding:12px 22px;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px;cursor:pointer;
-  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;overflow:hidden}
-.btn:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 60%,transparent);box-shadow:0 10px 30px -14px var(--accent)}
-.btn.primary{background:linear-gradient(120deg,var(--accent),var(--accent-3));border-color:transparent;color:#fff;box-shadow:0 8px 26px -14px var(--accent)}
-.btn.primary::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.32) 50%,transparent 70%);transform:translateX(-120%);transition:transform .6s ease}
-.btn.primary:hover::after{transform:translateX(120%)}
-
-/* ---------- nav ---------- */
-nav{position:sticky;top:0;z-index:20;background:rgba(11,12,16,.72);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-nav .wrap{display:flex;align-items:center;gap:16px;height:64px}
-.brand{font-weight:700;font-size:19px;letter-spacing:-.01em;text-decoration:none}
-.brand b{color:var(--accent);font-weight:700}
-nav .grow{flex:1}
-nav a.navlink{position:relative;color:var(--dim);text-decoration:none;font-size:14px;margin:0 10px;transition:color .16s}
-nav a.navlink::after{content:"";position:absolute;left:0;right:100%;bottom:-6px;height:2px;background:var(--accent);border-radius:2px;transition:right .2s ease}
-nav a.navlink:hover{color:var(--text)}
-nav a.navlink:hover::after{right:0}
-@media(max-width:760px){nav a.navlink{display:none}}
-
-/* ---------- hero ---------- */
-.hero{position:relative;padding:104px 0 82px}
-.hero .grid2{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
-@media(max-width:920px){.hero .grid2{grid-template-columns:1fr;gap:44px}.hero{padding:76px 0 56px}}
-.hero h1{font-size:58px;line-height:1.04;letter-spacing:-.025em;margin:18px 0 20px;font-weight:800}
-.hero h1 .g{background:linear-gradient(100deg,var(--accent),var(--accent-2) 55%,var(--accent-3));-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% auto;animation:shimmer 9s linear infinite}
-@keyframes shimmer{to{background-position:200% center}}
-.hero p.lead{font-size:20px;color:var(--dim);max-width:560px;margin:0 0 30px}
-.cta{display:flex;gap:14px;flex-wrap:wrap}
-.hero .note{margin-top:16px;font-size:13px;color:var(--dim)}
-@media(max-width:920px){.hero h1{font-size:44px}.hero p.lead{font-size:18px}}
-
-/* mock window — float on wrapper, cheap 3D tilt on card */
-.mock-wrap{perspective:1100px;animation:float 8s ease-in-out infinite;will-change:transform}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-.mock{position:relative;border-radius:18px;border:1px solid var(--line);
-  background:linear-gradient(180deg,rgba(30,33,43,.92),rgba(18,20,27,.92));
-  box-shadow:0 40px 80px -40px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.06);
-  overflow:hidden;transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s ease}
-.mock .bar{display:flex;align-items:center;gap:7px;padding:12px 14px;border-bottom:1px solid var(--line)}
-.mock .dot{width:11px;height:11px;border-radius:50%}
-.mock .dot.r{background:#ff5f57}.mock .dot.y{background:#febc2e}.mock .dot.g{background:#28c840}
-.mock .bar .t{margin-left:8px;font-size:12px;color:var(--dim);font-family:var(--mono)}
-.mock .body{padding:18px}
-.bubble{border-radius:12px;padding:11px 14px;font-size:14px;margin-bottom:12px;max-width:88%}
-.bubble.user{background:color-mix(in srgb,var(--accent) 22%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);margin-left:auto}
-.bubble.ai{background:rgba(255,255,255,.04);border:1px solid var(--line)}
-.toolcard{border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.25);padding:10px 12px;font-family:var(--mono);font-size:12px;color:#cdd3ff}
-.toolcard .k{color:var(--accent-2)}.toolcard .ok{color:var(--ok)}
-.caret{display:inline-block;width:8px;height:15px;background:var(--accent);vertical-align:-2px;margin-left:2px;animation:blink 1.1s step-end infinite}
-@keyframes blink{50%{opacity:0}}
-
-/* ---------- sections & cards ---------- */
-section{position:relative;padding:70px 0;border-top:1px solid var(--border)}
-h2{font-size:36px;letter-spacing:-.015em;margin:0 0 12px}
-.sub{color:var(--dim);font-size:17px;max-width:720px;margin:0 0 36px}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-@media(max-width:880px){.grid3{grid-template-columns:1fr}}
-.card{--ic:var(--accent);position:relative;border:1px solid var(--line);border-radius:16px;padding:26px;
-  background:linear-gradient(180deg,rgba(26,29,38,.72),rgba(18,20,27,.72));box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
-  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
-.card::before{content:"";position:absolute;inset:0;border-radius:16px;pointer-events:none;opacity:0;transition:opacity .22s;
-  background:radial-gradient(120% 80% at 50% -10%,color-mix(in srgb,var(--ic) 15%,transparent),transparent 70%)}
-.card:hover::before{opacity:1}
-.card:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--ic) 55%,transparent);box-shadow:0 22px 50px -34px var(--ic),inset 0 1px 0 rgba(255,255,255,.08)}
-.card h3{margin:0 0 8px;font-size:19px;position:relative}
-.card p{margin:0;color:var(--dim);font-size:15px;position:relative}
-.card .ico{width:38px;height:38px;color:var(--ic);margin-bottom:14px;position:relative;transition:transform .22s ease,filter .22s}
-.card:hover .ico{transform:scale(1.1) rotate(-4deg);filter:drop-shadow(0 0 10px color-mix(in srgb,var(--ic) 65%,transparent))}
-.demo .tag{display:inline-block;font-size:12px;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);background:color-mix(in srgb,var(--accent) 12%,transparent);padding:2px 10px;border-radius:999px;margin-bottom:12px}
-
-/* ---------- "works with" marquee ---------- */
-.marquee-sec{padding:44px 0;border-top:1px solid var(--border)}
-.works{text-align:center;color:var(--dim);font-size:13px;letter-spacing:.12em;text-transform:uppercase;margin:0 0 24px}
-.marquee{position:relative;overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
-.track{display:flex;gap:14px;width:max-content;animation:scroll 34s linear infinite;will-change:transform}
-.marquee:hover .track{animation-play-state:paused}
-@keyframes scroll{to{transform:translateX(-50%)}}
-.mchip{display:inline-flex;align-items:center;gap:9px;white-space:nowrap;padding:11px 20px;border:1px solid var(--line);border-radius:999px;background:var(--glass);font-weight:600;font-size:15px;color:var(--text);transition:border-color .16s,color .16s}
-.mchip:hover{border-color:color-mix(in srgb,var(--accent) 55%,transparent);color:#fff}
-.mchip i{width:8px;height:8px;border-radius:50%;background:var(--accent)}
-
-/* privacy strip */
-.privacy{background:linear-gradient(180deg,rgba(18,20,28,.6),rgba(11,12,17,.6))}
-.row{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}
-.pill{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:999px;padding:9px 17px;font-size:14px;background:var(--glass);transition:transform .16s,border-color .16s}
-.pill:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--ok) 50%,transparent)}
-.pill .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
-.pill code{font-family:var(--mono)}
-
-/* download */
-.dl{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:24px}
-@media(max-width:720px){.dl{grid-template-columns:1fr}}
-.dl .card{display:flex;flex-direction:column;gap:12px}
-.dl code{font-family:var(--mono);font-size:13px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:8px;padding:2px 8px;color:#cdd3ff}
-
-footer{position:relative;border-top:1px solid var(--border);padding:44px 0 64px;color:var(--dim);font-size:14px}
-footer .brand{font-size:18px;display:inline-block;margin-bottom:14px}
-footer a{color:var(--dim);text-decoration:none;margin-right:18px;transition:color .16s}
-footer a:hover{color:var(--text)}
-
-/* scroll reveal — hidden only when JS can reveal it (fail-safe) */
-html.js [data-reveal]{opacity:0;transform:translateY(20px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .6s cubic-bezier(.2,.7,.2,1)}
-html.js [data-reveal].in{opacity:1;transform:none}
-.grid3 [data-reveal].in:nth-child(2){transition-delay:.05s}
-.grid3 [data-reveal].in:nth-child(3){transition-delay:.1s}
-.grid3 [data-reveal].in:nth-child(4){transition-delay:.15s}
-.grid3 [data-reveal].in:nth-child(5){transition-delay:.2s}
-.grid3 [data-reveal].in:nth-child(6){transition-delay:.25s}
-
-@media(prefers-reduced-motion:reduce){
-  *{animation:none!important;transition:none!important}
-  html.js [data-reveal]{opacity:1;transform:none}
-}
-</style>
+<link rel="stylesheet" href="/style.css" />
 </head>
 <body>
 
@@ -164,13 +18,13 @@ html.js [data-reveal].in{opacity:1;transform:none}
 </div>
 
 <nav><div class="wrap">
-  <a class="brand" href="#top">Harness<b>Station</b></a>
+  <a class="brand" href="/">Harness<b>Station</b></a>
   <div class="grow"></div>
-  <a class="navlink" href="#features">Features</a>
+  <a class="navlink" href="/features.html">Features</a>
   <a class="navlink" href="#demos">See it</a>
-  <a class="navlink" href="#privacy">Privacy</a>
+  <a class="navlink" href="/privacy.html">Privacy</a>
   <a class="navlink" href="https://hsdocs.retris.io">Docs</a>
-  <a class="btn primary" href="#download">Download</a>
+  <a class="btn primary" href="/download.html">Download</a>
 </div></nav>
 
 <header class="hero" id="top"><div class="wrap"><div class="grid2">
@@ -178,10 +32,10 @@ html.js [data-reveal].in{opacity:1;transform:none}
     <span class="eyebrow">Local-first · bring your own model</span>
     <h1>Run any AI model<br/>as a <span class="g">private, local agent</span></h1>
     <p class="lead">Give a model real tools — your files, a terminal, the web, a browser, voice,
-      knowledge and memory. Local or your own cloud key. No account, no telemetry.</p>
+      knowledge and memory. Local or your own cloud key. No account by default, no telemetry.</p>
     <div class="cta">
       <a class="btn primary" href="https://hsapp.retris.io">Try it in your browser →</a>
-      <a class="btn" href="#download">Download for desktop</a>
+      <a class="btn" href="/download.html">Download for desktop</a>
     </div>
     <div class="note">Free &amp; open source · Windows &amp; Linux · keys stay in your OS keychain</div>
   </div>
@@ -220,8 +74,9 @@ html.js [data-reveal].in{opacity:1;transform:none}
     <div class="card" style="--ic:#a78bfa" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><h3>Automation</h3><p>Package roles as reusable agents, chain steps into workflows, and run them on a schedule while you're away.</p></div>
     <div class="card" style="--ic:#3fb984" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7V3m6 4V3M7 7h10v4a5 5 0 0 1-10 0z"/><path d="M12 16v5"/></svg><h3>MCP &amp; knowledge</h3><p>Connect hundreds of MCP servers and ground answers in your own documents with local or cloud embeddings.</p></div>
     <div class="card" style="--ic:#e0a44a" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v8a2 2 0 0 1-1 1.7l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.7l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/></svg><h3>Local models</h3><p>Download a GGUF and run it with tuned llama.cpp flags, or run a small model on WebGPU right in the tab.</p></div>
-    <div class="card" style="--ic:#f472b6" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><h3>Community library</h3><p>Import skills, agents, workflows and schedules others have made — or publish your own, free.</p></div>
+    <div class="card" style="--ic:#f472b6" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11"/></svg><h3>Multi-agent chats</h3><p>Put up to five models in one conversation — compare them side by side, or have them collaborate on parts of a task.</p></div>
   </div>
+  <p style="margin-top:28px" data-reveal><a class="btn" href="/features.html">See everything it does →</a></p>
 </div></section>
 
 <section id="demos"><div class="wrap">
@@ -237,83 +92,45 @@ html.js [data-reveal].in{opacity:1;transform:none}
 
 <section id="privacy" class="privacy"><div class="wrap">
   <span class="eyebrow" data-reveal>Private by design</span>
-  <h2 data-reveal>Your keys and data never leave your machine</h2>
-  <p class="sub" data-reveal>This isn't a marketing line — it's how the app is built. There's nothing to log into and
-    nothing phoning home. The only shared bits (benchmarks, the community library) go through a gateway
-    that never sees your prompts or keys.</p>
+  <h2 data-reveal>Your keys and data stay on your machine</h2>
+  <p class="sub" data-reveal>This isn't a marketing line — it's how the app is built. By default there's nothing to log into and
+    nothing phoning home. Backup to the cloud is entirely opt-in and end-to-end encrypted, so even then the
+    server only ever holds ciphertext it can't read.</p>
   <div class="row" data-reveal>
-    <span class="pill"><span class="dot"></span> No account, no sign-up</span>
-    <span class="pill"><span class="dot"></span> No telemetry</span>
-    <span class="pill"><span class="dot"></span> No cloud sync</span>
+    <span class="pill"><span class="dot"></span> No account by default</span>
+    <span class="pill"><span class="dot"></span> No telemetry, ever</span>
+    <span class="pill"><span class="dot"></span> Opt-in end-to-end encrypted sync</span>
     <span class="pill"><span class="dot"></span> Keys in the OS keychain</span>
     <span class="pill"><span class="dot"></span> Data in <code>~/.harnessx</code></span>
     <span class="pill"><span class="dot"></span> Open source (Apache-2.0)</span>
   </div>
+  <p style="margin-top:26px" data-reveal><a class="btn" href="/privacy.html">Read the privacy policy →</a></p>
 </div></section>
 
 <section id="download"><div class="wrap">
   <span class="eyebrow" data-reveal>Get it</span>
   <h2 data-reveal>Download HarnessStation</h2>
   <p class="sub" data-reveal>Free, for Windows and Linux. Or skip the install and try the full app in your browser.</p>
-  <div class="dl">
-    <div class="card" data-reveal>
-      <h3>Windows</h3>
-      <p class="muted">Windows 10/11. The installer isn't code-signed yet, so click <b>More info → Run anyway</b> at the SmartScreen prompt.</p>
-      <a class="btn primary" href="https://github.com/najma-lp/harnessstation/releases/latest">Download for Windows</a>
-    </div>
-    <div class="card" data-reveal>
-      <h3>Linux</h3>
-      <p class="muted">AppImage or .deb. If the AppImage won't start: <code>sudo apt install libwebkit2gtk-4.1-0</code>.</p>
-      <a class="btn primary" href="https://github.com/najma-lp/harnessstation/releases/latest">Download for Linux</a>
-    </div>
+  <div class="cta" data-reveal>
+    <a class="btn primary" href="/download.html">See download options →</a>
+    <a class="btn" href="https://hsapp.retris.io">Run it in your browser</a>
   </div>
-  <p class="note muted" style="margin-top:20px">Prefer not to install? <a href="https://hsapp.retris.io" style="color:var(--accent)">Run the full app in your browser →</a></p>
 </div></section>
 
 <footer><div class="wrap">
-  <a class="brand" href="#top">Harness<b>Station</b></a>
+  <a class="brand" href="/">Harness<b>Station</b></a>
   <div>
+    <a href="/features.html">Features</a>
+    <a href="/download.html">Download</a>
     <a href="https://hsdocs.retris.io">Docs</a>
     <a href="https://hsapp.retris.io">Web app</a>
     <a href="https://github.com/najma-lp/harnessstation">Source</a>
-    <a href="https://hsdocs.retris.io">Privacy</a>
-    <a href="https://hsdocs.retris.io">Terms</a>
+    <a href="/privacy.html">Privacy</a>
+    <a href="/terms.html">Terms</a>
   </div>
   <div style="margin-top:16px">© 2026 HarnessStation · Apache-2.0 · Bring your own model.</div>
 </div></footer>
 
-<script>
-  document.documentElement.classList.add("js");
-  const reveal = (el) => el.classList.add("in");
-  const all = () => document.querySelectorAll("[data-reveal]").forEach(reveal);
-  if ("IntersectionObserver" in window) {
-    const io = new IntersectionObserver((es) => es.forEach((e) => {
-      if (e.isIntersecting) { reveal(e.target); io.unobserve(e.target); }
-    }), { threshold: 0.12, rootMargin: "0px 0px -5% 0px" });
-    document.querySelectorAll("[data-reveal]").forEach((el) => io.observe(el));
-    window.addEventListener("load", () => setTimeout(all, 1600));
-  } else { all(); }
-
-  // Seamless marquee loop.
-  const track = document.getElementById("track");
-  if (track) track.innerHTML += track.innerHTML;
-
-  // Cheap 3D tilt on the mock (GPU transform only), fine pointers, motion allowed.
-  if (matchMedia("(pointer:fine)").matches && !matchMedia("(prefers-reduced-motion:reduce)").matches) {
-    const wrap = document.querySelector(".mock-wrap"), mock = document.getElementById("mock");
-    let raf = 0;
-    wrap.addEventListener("pointermove", (e) => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        const r = wrap.getBoundingClientRect();
-        const px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5;
-        mock.style.setProperty("--ry", (px * 10).toFixed(2) + "deg");
-        mock.style.setProperty("--rx", (-py * 10).toFixed(2) + "deg");
-      });
-    });
-    wrap.addEventListener("pointerleave", () => { mock.style.setProperty("--ry", "0deg"); mock.style.setProperty("--rx", "0deg"); });
-  }
-</script>
+<script src="/site.js"></script>
 </body>
 </html>

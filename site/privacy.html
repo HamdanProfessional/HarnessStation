@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Privacy — HarnessStation</title>
+<meta name="description" content="HarnessStation's privacy policy: local-first by default, no telemetry, no account required, and opt-in end-to-end encrypted sync. Your keys and prompts stay on your device." />
+<meta property="og:title" content="HarnessStation — Privacy" />
+<meta property="og:description" content="Local-first, no telemetry, no account required, opt-in end-to-end encrypted sync." />
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <div class="glow g1"></div><div class="glow g2"></div><div class="glow g3"></div>
+  <div class="grid"></div>
+</div>
+
+<nav><div class="wrap">
+  <a class="brand" href="/">Harness<b>Station</b></a>
+  <div class="grow"></div>
+  <a class="navlink" href="/features.html">Features</a>
+  <a class="navlink active" href="/privacy.html">Privacy</a>
+  <a class="navlink" href="https://hsdocs.retris.io">Docs</a>
+  <a class="btn primary" href="/download.html">Download</a>
+</div></nav>
+
+<header class="page-head"><div class="wrap narrow">
+  <span class="eyebrow">Privacy</span>
+  <h1>Privacy policy</h1>
+  <p class="lead">The short version: HarnessStation runs on your machine, needs no account, and sends us
+    nothing about what you do with it.</p>
+</div></header>
+
+<div class="prose"><div class="wrap narrow">
+
+  <p class="updated">Last updated: 8 August 2026</p>
+
+  <div class="callout"><p><strong>Plain-language summary.</strong> There is no account and no telemetry.
+    Your chats, files, settings and API keys live on your device. The only time any of your data leaves
+    your machine is (1) when your chosen model provider processes your prompt — under <em>their</em> policy,
+    with <em>your</em> key — or (2) if you deliberately turn on cloud sync, in which case it is encrypted on
+    your device first and we only ever store unreadable ciphertext.</p></div>
+
+  <h2>Who this covers</h2>
+  <p>This policy applies to the HarnessStation desktop app, the browser version at
+    <a href="https://hsapp.retris.io">hsapp.retris.io</a>, and the small hosted gateway
+    (<code>hsapi.retris.io</code>) that powers shared, non-personal features. It does not cover the
+    third-party model providers or MCP servers you choose to connect — those have their own policies.</p>
+
+  <h2>What stays on your device</h2>
+  <ul>
+    <li><strong>Conversations, agents, workflows, skills and knowledge bases</strong> — stored as plain
+      files under <code>~/.harnessx</code> on desktop, or in your browser's local storage on the web.</li>
+    <li><strong>API keys and vault secrets</strong> — held in your operating system keychain on desktop
+      (browser local storage on the web), never transmitted to us.</li>
+    <li><strong>Your prompts and the model's replies</strong> — never sent to us. They go only to the model
+      provider you selected, using the key you provided.</li>
+  </ul>
+
+  <h2>What we do not collect</h2>
+  <ul>
+    <li>No account, sign-up or email is required to use the app.</li>
+    <li>No analytics, telemetry, crash reporting or usage tracking.</li>
+    <li>No advertising, and no selling or sharing of data — we don't have your data to sell.</li>
+  </ul>
+
+  <h2>The hosted gateway</h2>
+  <p>A few features rely on a small shared server so they work without you hosting anything. It handles:</p>
+  <ul>
+    <li><strong>Public catalogs</strong> — the model benchmark feed and the MCP server directory. These are
+      the same for everyone and contain none of your data.</li>
+    <li><strong>The community library</strong> — when you choose to publish or import a skill, agent, workflow,
+      template or schedule. Anything you publish is public by design; anything you import is your choice.</li>
+    <li><strong>A CORS proxy</strong> for the browser build, so it can reach model providers that don't send
+      the headers a browser needs. The proxy forwards your request to the provider you chose and streams the
+      reply back. It is a relay: requests are not logged with your prompt contents, and your key is used only
+      to complete that single request.</li>
+    <li><strong>Optional cloud sync</strong> — see below.</li>
+  </ul>
+  <p>Standard, short-lived web-server logs (IP address, timestamp, requested path) may exist transiently for
+    security and abuse prevention, as with any server. They are not used to build a profile of you.</p>
+
+  <h2>Cloud sync (opt-in, end-to-end encrypted)</h2>
+  <p>Cloud sync is <strong>off by default</strong>. If you turn it on to back up or move your data between
+    devices:</p>
+  <ul>
+    <li>An account is identified by an email address and password. From your password, your device derives a
+      verifier (used to sign in) and a separate encryption key that <strong>never leaves your device</strong>.</li>
+    <li>Your data is encrypted on your device with that key <em>before</em> it is uploaded. The server stores
+      only the resulting ciphertext and cannot read it. This is <strong>zero-knowledge</strong>: we could not
+      hand over your readable data even if compelled, because we never have it.</li>
+    <li><strong>API keys and vault secrets are excluded from sync entirely</strong> — you re-enter them once
+      per device.</li>
+    <li>Because only you hold the key, <strong>a forgotten password means the encrypted backup cannot be
+      recovered</strong> — by you or by us. That is the intended trade-off for true end-to-end encryption.</li>
+    <li>You can sign out, stop syncing, or delete your account and its stored ciphertext at any time from the
+      app.</li>
+  </ul>
+
+  <h2>Third-party model providers and MCP servers</h2>
+  <p>When you send a prompt to a cloud model, or connect an MCP server or an external tool, your request is
+    processed by that third party under their terms and privacy policy, using the credentials you supplied.
+    Choose providers you trust; local models keep even that on your own hardware.</p>
+
+  <h2>Children</h2>
+  <p>HarnessStation is a general-purpose developer tool and is not directed at children under 13.</p>
+
+  <h2>Changes</h2>
+  <p>If this policy changes, we'll update this page and the "last updated" date above. Material changes to how
+    optional features like cloud sync work will be reflected here.</p>
+
+  <h2>Contact</h2>
+  <p>Questions or requests? Open an issue on
+    <a href="https://github.com/najma-lp/harnessstation">GitHub</a>.</p>
+
+</div></div>
+
+<footer><div class="wrap">
+  <a class="brand" href="/">Harness<b>Station</b></a>
+  <div>
+    <a href="/features.html">Features</a>
+    <a href="/download.html">Download</a>
+    <a href="https://hsdocs.retris.io">Docs</a>
+    <a href="https://hsapp.retris.io">Web app</a>
+    <a href="https://github.com/najma-lp/harnessstation">Source</a>
+    <a href="/privacy.html">Privacy</a>
+    <a href="/terms.html">Terms</a>
+  </div>
+  <div style="margin-top:16px">© 2026 HarnessStation · Apache-2.0 · Bring your own model.</div>
+</div></footer>
+
+<script src="/site.js"></script>
+</body>
+</html>

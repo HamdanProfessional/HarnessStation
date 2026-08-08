@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Features — HarnessStation</title>
+<meta name="description" content="Everything HarnessStation gives a model: tools and files, a real browser, voice and avatars, agents, workflows and schedules, MCP and knowledge, local models, multi-agent chats, a community library, and opt-in encrypted sync." />
+<meta property="og:title" content="HarnessStation — Features" />
+<meta property="og:description" content="Tools, files, browser, voice, agents, workflows, MCP, knowledge, local models, multi-agent chats and encrypted sync." />
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <div class="glow g1"></div><div class="glow g2"></div><div class="glow g3"></div>
+  <div class="grid"></div>
+</div>
+
+<nav><div class="wrap">
+  <a class="brand" href="/">Harness<b>Station</b></a>
+  <div class="grow"></div>
+  <a class="navlink active" href="/features.html">Features</a>
+  <a class="navlink" href="/privacy.html">Privacy</a>
+  <a class="navlink" href="https://hsdocs.retris.io">Docs</a>
+  <a class="btn primary" href="/download.html">Download</a>
+</div></nav>
+
+<header class="page-head"><div class="wrap">
+  <span class="eyebrow">Features</span>
+  <h1>Everything you plug a model into</h1>
+  <p class="lead">You bring the model — local via Ollama, LM Studio or in-browser WebGPU, or a cloud model
+    with your own key. HarnessStation gives it the tools, context and automation to actually do work.</p>
+</div></header>
+
+<section style="border-top:none;padding-top:20px"><div class="wrap">
+  <h2 data-reveal>Do real work</h2>
+  <p class="sub" data-reveal>A chat becomes an agent the moment it can act on the world outside the text box.</p>
+  <div class="grid3">
+    <div class="card" style="--ic:#6d7cff" data-reveal>
+      <h3>Tools &amp; files</h3>
+      <p>Read and write files, run terminal commands, search the web and fetch pages — all confined to a working directory you choose.</p>
+      <p>Every tool call is shown as an inspectable card: what was called, with which arguments, and what came back.</p>
+      <a class="more" href="https://hsdocs.retris.io/#/guide/tools">Tools &amp; the working directory →</a>
+    </div>
+    <div class="card" style="--ic:#22d3ee" data-reveal>
+      <h3>A real browser</h3>
+      <p>Give the model a browser it can navigate, read and click through — for research, forms and scraping that a plain fetch can't handle.</p>
+      <p>And the showstopper: a full Linux kernel boots client-side via WebAssembly, sharing a filesystem with the model's tools.</p>
+      <a class="more" href="https://hsdocs.retris.io/#/guide/browser">Browser &amp; sandbox →</a>
+    </div>
+    <div class="card" style="--ic:#3fb984" data-reveal>
+      <h3>MCP servers</h3>
+      <p>Connect hundreds of Model Context Protocol servers — local (stdio) or remote — to add tools for GitHub, databases, search and more.</p>
+      <p>Browse a built-in directory, and drop in an API key with a single field where a server needs one.</p>
+      <a class="more" href="https://hsdocs.retris.io/#/guide/mcp">Connecting MCP →</a>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2 data-reveal>Ground it in what matters</h2>
+  <p class="sub" data-reveal>Give the model your knowledge and your memory, without handing your data to anyone.</p>
+  <div class="grid3">
+    <div class="card" style="--ic:#a78bfa" data-reveal>
+      <h3>Knowledge bases</h3>
+      <p>Point it at your documents and it retrieves the relevant passages at answer time, with local or cloud embeddings — grounded answers, no fine-tuning.</p>
+      <a class="more" href="https://hsdocs.retris.io/#/guide/knowledge">Knowledge bases →</a>
+    </div>
+    <div class="card" style="--ic:#e0a44a" data-reveal>
+      <h3>Memory</h3>
+      <p>Durable facts carried across every chat — remembered automatically or on request, and stored as plain files you can read and edit.</p>
+      <a class="more" href="https://hsdocs.retris.io/#/guide/memory">How memory works →</a>
+    </div>
+    <div class="card" style="--ic:#f472b6" data-reveal>
+      <h3>Secrets vault</h3>
+      <p>Store API keys and tokens the model can <em>use</em> but never <em>see</em>: it types a placeholder, the app swaps in the real value at run time and scrubs it back out.</p>
+      <a class="more" href="https://hsdocs.retris.io/#/guide/secrets">The secrets vault →</a>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2 data-reveal>Talk to it, and let it run</h2>
+  <p class="sub" data-reveal>Voice in and out with no server, plus automation that keeps working while you're away.</p>
+  <div class="grid3">
+    <div class="card" style="--ic:#22d3ee" data-reveal>
+      <h3>Voice &amp; avatars</h3>
+      <p>Local speech-to-text and neural voices, barge-in so you can interrupt, wake words, and optional 3D VRM avatars — all on-device.</p>
+      <a class="more" href="https://hsdocs.retris.io/#/voice/talking">Talking to it →</a>
+    </div>
+    <div class="card" style="--ic:#a78bfa" data-reveal>
+      <h3>Agents &amp; workflows</h3>
+      <p>Package instructions, tools and knowledge into a reusable agent, then chain agents and prompts into multi-step workflows with branching.</p>
+      <a class="more" href="https://hsdocs.retris.io/#/guide/agents">Agents →</a>
+    </div>
+    <div class="card" style="--ic:#6d7cff" data-reveal>
+      <h3>Schedules &amp; channels</h3>
+      <p>Run an agent or workflow on a schedule and have it deliver the result to a chat, a webhook or Slack. Reach it from Telegram or Discord too.</p>
+      <a class="more" href="https://hsdocs.retris.io/#/guide/schedules">Schedules →</a>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2 data-reveal>More models, more ways</h2>
+  <p class="sub" data-reveal>Run models locally, in the browser, or through three dozen cloud providers with your own key — and put several in one room.</p>
+  <div class="grid3">
+    <div class="card" style="--ic:#e0a44a" data-reveal>
+      <h3>Local &amp; in-browser models</h3>
+      <p>Download a GGUF and run it through tuned llama.cpp flags, connect Ollama or LM Studio, or run a small model on WebGPU right in the tab — no install at all.</p>
+      <a class="more" href="https://hsdocs.retris.io/#/models/local">Running local models →</a>
+    </div>
+    <div class="card" style="--ic:#f472b6" data-reveal>
+      <h3>Multi-agent chats</h3>
+      <p>Put up to <strong>five</strong> models in a single conversation. <strong>Battle</strong> sends one prompt to each independently and shows the answers side by side; <strong>Collaborate</strong> gives them a shared transcript so they build on each other.</p>
+      <p>Each participant has its own reasoning effort and a thinking on/off switch, and can be backed by a saved agent.</p>
+      <a class="more" href="https://hsdocs.retris.io/#/guide/chats">Multi-agent chats →</a>
+    </div>
+    <div class="card" style="--ic:#3fb984" data-reveal>
+      <h3>Community library</h3>
+      <p>Import skills, agents, workflows, schedules and templates others have shared — or publish your own, free. Everything is just JSON you can inspect first.</p>
+      <a class="more" href="https://hsdocs.retris.io/#/guide/community">The community library →</a>
+    </div>
+  </div>
+</div></section>
+
+<section class="privacy"><div class="wrap">
+  <h2 data-reveal>Private by default, synced only if you ask</h2>
+  <p class="sub" data-reveal>The whole app runs on your machine. If you want your chats and setup on another device, opt in to
+    cloud sync: your data is encrypted with a key derived from your password <em>before</em> it leaves the
+    device, so the server only ever stores ciphertext — and your API keys never sync at all.</p>
+  <div class="row" data-reveal>
+    <span class="pill"><span class="dot"></span> Zero-knowledge encryption</span>
+    <span class="pill"><span class="dot"></span> API keys stay device-local</span>
+    <span class="pill"><span class="dot"></span> Opt-in, off by default</span>
+  </div>
+  <p style="margin-top:26px" data-reveal><a class="btn" href="https://hsdocs.retris.io/#/advanced/cloud-sync">How cloud sync works →</a></p>
+</div></section>
+
+<section><div class="wrap" style="text-align:center">
+  <h2 data-reveal>Ready to try it?</h2>
+  <p class="sub" data-reveal style="margin-left:auto;margin-right:auto">Open the full app in your browser, or install it for desktop.</p>
+  <div class="cta" data-reveal style="justify-content:center">
+    <a class="btn primary" href="https://hsapp.retris.io">Try it in your browser →</a>
+    <a class="btn" href="/download.html">Download for desktop</a>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="brand" href="/">Harness<b>Station</b></a>
+  <div>
+    <a href="/features.html">Features</a>
+    <a href="/download.html">Download</a>
+    <a href="https://hsdocs.retris.io">Docs</a>
+    <a href="https://hsapp.retris.io">Web app</a>
+    <a href="https://github.com/najma-lp/harnessstation">Source</a>
+    <a href="/privacy.html">Privacy</a>
+    <a href="/terms.html">Terms</a>
+  </div>
+  <div style="margin-top:16px">© 2026 HarnessStation · Apache-2.0 · Bring your own model.</div>
+</div></footer>
+
+<script src="/site.js"></script>
+</body>
+</html>
