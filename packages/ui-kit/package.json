@@ -1,0 +1,20 @@
+{
+  "name": "@harnessstation/ui-kit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HarnessStation design system — reusable UI primitives.",
+  "type": "module",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "rehype-highlight": "^7.0.2",
+    "highlight.js": "^11.11.1"
+  }
+}

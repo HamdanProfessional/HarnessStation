@@ -49,3 +49,8 @@ server/library.json
 # Cloud-sync user data (lives only on the box, like .env)
 server/users.json
 server/sync/
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
