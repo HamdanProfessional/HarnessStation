@@ -11,6 +11,7 @@ import { ensureWhisper, transcribePath } from "../lib/whisper";
 import { LogoMark } from "./icons";
 import { InlineBrowser } from "./InlineBrowser";
 import { MultiAgentBar } from "./MultiAgentBar";
+import { TrajectoryView } from "./TrajectoryView";
 
 const STARTER_PROMPTS = [
   "Summarize the latest news on a topic I choose, with sources.",
@@ -174,6 +175,7 @@ export function ChatWindow() {
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
   const [compacting, setCompacting] = useState(false);
+  const [showTrace, setShowTrace] = useState(false);
   const chat = chats.find((c) => c.id === currentId);
   const [draft, setDraft] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -242,6 +244,17 @@ export function ChatWindow() {
   return (
     <main className="chat-main">
       <MultiAgentBar />
+      {chat.messages.length > 0 && (
+        <button
+          className="traj-open-btn"
+          title="Trajectory — trace every step of this run"
+          aria-label="Open trajectory view"
+          onClick={() => setShowTrace(true)}
+        >
+          ⤳ Trace
+        </button>
+      )}
+      {showTrace && <TrajectoryView chat={chat} onClose={() => setShowTrace(false)} />}
       <div className={`messages ${chat.mode === "battle" ? "battle" : ""}`} ref={scrollRef}>
         {chat.messages.length === 0 && (() => {
           const provider = settings.providers.find((p) => p.id === chat.providerId);

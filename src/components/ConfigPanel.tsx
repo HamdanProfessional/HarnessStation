@@ -1,4 +1,4 @@
-import { IconChevron } from "./icons";
+import { IconChevron, IconPanelRight } from "./icons";
 import { useEffect, useState } from "react";
 import { promptDialog } from "../lib/dialog";
 import { prettyName } from "../lib/format";
@@ -34,6 +34,7 @@ export function ConfigPanel() {
     activity,
     streaming,
     setView,
+    setConfigOpen,
   } = useStore();
 
   // Knowledge bases load on demand — this picker is one of the triggers.
@@ -62,6 +63,11 @@ export function ConfigPanel() {
     }
   };
   if (!chat) return null;
+
+  // In Battle/Collaborate the models are chosen per participant in the bar at the
+  // top of the chat — this single provider/model picker doesn't drive them, so we
+  // show a pointer instead of a control that looks like it should but can't.
+  const isMulti = chat.mode === "battle" || chat.mode === "collab";
 
   const provider = settings.providers.find((p) => p.id === chat.providerId);
 
@@ -92,6 +98,16 @@ export function ConfigPanel() {
 
   return (
     <aside className="config-panel">
+      <div className="config-head">
+        <button
+          className="icon-btn config-collapse"
+          title="Hide panel"
+          aria-label="Hide panel"
+          onClick={() => setConfigOpen(false)}
+        >
+          <IconPanelRight size={15} />
+        </button>
+      </div>
       {streaming && (
         <div className="activity-bar">
           <span className="activity-dot" />
@@ -133,52 +149,65 @@ export function ConfigPanel() {
         )}
       </label>
 
-      <label className="field">
-        <span>Provider</span>
-        <select
-          value={chat.providerId}
-          onChange={(e) => {
-            const p = settings.providers.find((x) => x.id === e.target.value);
-            updateChat({ providerId: e.target.value, model: p?.models[0] ?? "" });
-          }}
-        >
-          {settings.providers.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      {isMulti ? (
+        <div className="field multi-model-note">
+          <span>Models</span>
+          <p className="hint">
+            {chat.mode === "battle" ? "Battle" : "Collaborate"} uses one model per participant.
+            Set each model in the <strong>Model A / B / C…</strong> bar at the top of the chat —
+            this panel's model picker doesn't apply here.
+          </p>
+        </div>
+      ) : (
+        <>
+          <label className="field">
+            <span>Provider</span>
+            <select
+              value={chat.providerId}
+              onChange={(e) => {
+                const p = settings.providers.find((x) => x.id === e.target.value);
+                updateChat({ providerId: e.target.value, model: p?.models[0] ?? "" });
+              }}
+            >
+              {settings.providers.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
 
-      <label className="field">
-        <span>
-          Model{" "}
-          {provider?.kind === "openai-compatible" && (
-            <button className="link-btn" onClick={() => void refreshModels()} disabled={loadingModels}>
-              {loadingModels ? "loading…" : "refresh"}
-            </button>
-          )}
-        </span>
-        {provider && provider.models.length > 0 ? (
-          <select value={chat.model} onChange={(e) => updateChat({ model: e.target.value })}>
-            {!provider.models.includes(chat.model) && chat.model && (
-              <option value={chat.model}>{chat.model}</option>
+          <label className="field">
+            <span>
+              Model{" "}
+              {provider?.kind === "openai-compatible" && (
+                <button className="link-btn" onClick={() => void refreshModels()} disabled={loadingModels}>
+                  {loadingModels ? "loading…" : "refresh"}
+                </button>
+              )}
+            </span>
+            {provider && provider.models.length > 0 ? (
+              <select value={chat.model} onChange={(e) => updateChat({ model: e.target.value })}>
+                {!provider.models.includes(chat.model) && chat.model && (
+                  <option value={chat.model}>{chat.model}</option>
+                )}
+                {provider.models.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                value={chat.model}
+                placeholder="model name"
+                onChange={(e) => updateChat({ model: e.target.value })}
+              />
             )}
-            {provider.models.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <input
-            value={chat.model}
-            placeholder="model name"
-            onChange={(e) => updateChat({ model: e.target.value })}
-          />
-        )}
-        {modelError && <small className="field-error">{modelError}</small>}
-      </label>
+            {modelError && <small className="field-error">{modelError}</small>}
+          </label>
+        </>
+      )}
 
       <label className="field">
         <span>

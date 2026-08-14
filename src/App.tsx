@@ -1,60 +1,38 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { ChatWindow } from "./components/ChatWindow";
 import { ConfigPanel } from "./components/ConfigPanel";
 import { Sidebar } from "./components/Sidebar";
 import { SidePanel } from "./components/SidePanel";
-
-// Only the chat view is needed to paint the first frame; the other 14 views (and
-// the heavy libraries they pull in) load the first time you open them.
-const DiscoverView = lazy(() => import("./components/DiscoverView").then((m) => ({ default: m.DiscoverView })));
-const ModelsView = lazy(() => import("./components/ModelsView").then((m) => ({ default: m.ModelsView })));
-const SettingsView = lazy(() => import("./components/SettingsView").then((m) => ({ default: m.SettingsView })));
-const ToolsView = lazy(() => import("./components/ToolsView").then((m) => ({ default: m.ToolsView })));
-const WorkflowsView = lazy(() => import("./components/WorkflowsView").then((m) => ({ default: m.WorkflowsView })));
-const AgentsView = lazy(() => import("./components/AgentsView").then((m) => ({ default: m.AgentsView })));
-const SchedulesView = lazy(() => import("./components/SchedulesView").then((m) => ({ default: m.SchedulesView })));
-const CompareView = lazy(() => import("./components/CompareView").then((m) => ({ default: m.CompareView })));
-const KnowledgeView = lazy(() => import("./components/KnowledgeView").then((m) => ({ default: m.KnowledgeView })));
-const SkillsView = lazy(() => import("./components/SkillsView").then((m) => ({ default: m.SkillsView })));
-const EvalsView = lazy(() => import("./components/EvalsView").then((m) => ({ default: m.EvalsView })));
-const BenchmarksView = lazy(() => import("./components/BenchmarksView").then((m) => ({ default: m.BenchmarksView })));
-const McpView = lazy(() => import("./components/McpView").then((m) => ({ default: m.McpView })));
-const CommunityView = lazy(() => import("./components/CommunityView").then((m) => ({ default: m.CommunityView })));
-const BrowserView = lazy(() => import("./components/BrowserView").then((m) => ({ default: m.BrowserView })));
-const VoiceView = lazy(() => import("./components/VoiceView").then((m) => ({ default: m.VoiceView })));
+// Only the chat view is needed to paint the first frame; every other view (and
+// the heavy libraries they pull in) lazy-loads on first open, registered in
+// lib/views. App renders whichever view id is active from that one registry.
+import { VIEW_BY_ID } from "./lib/views";
 import { DialogHost } from "./components/Dialog";
 import { ContextMenu } from "./components/ContextMenu";
 import { Toaster } from "./components/Toaster";
 import { CommandPalette } from "./components/CommandPalette";
 import { Onboarding, hasOnboarded } from "./components/Onboarding";
 import { hasDeepLink } from "./lib/deeplink";
+import { IconPanelLeft, IconPanelRight } from "./components/icons";
 import { ClosingOverlay, Splash, ViewLoading } from "./components/Loading";
 import { useStore } from "./lib/store";
 import { flushChatSaves } from "./lib/storage";
 import "./App.css";
 
-/** Named so a view switch says what's arriving, not just "Loading…". */
-const VIEW_LABEL: Partial<Record<string, string>> = {
-  voice: "Opening the voice avatar…",
-  settings: "Opening settings…",
-  models: "Loading your models…",
-  discover: "Opening Discover…",
-  tools: "Loading tools…",
-  workflows: "Loading workflows…",
-  agents: "Loading agents…",
-  schedules: "Loading schedules…",
-  benchmarks: "Loading benchmarks…",
-  compare: "Opening Compare…",
-  evals: "Loading evals…",
-  knowledge: "Loading knowledge bases…",
-  skills: "Loading skills…",
-  mcp: "Loading MCP servers…",
-  community: "Opening the community library…",
-  browser: "Opening browser control…",
-};
-
 export default function App() {
-  const { ready, view, settings, init, tickSchedules, autoConnectMcp, bootStatus } = useStore();
+  const {
+    ready,
+    view,
+    settings,
+    init,
+    tickSchedules,
+    autoConnectMcp,
+    bootStatus,
+    sidebarOpen,
+    setSidebarOpen,
+    configOpen,
+    setConfigOpen,
+  } = useStore();
   const [, setForce] = useState(0);
   const [closing, setClosing] = useState(false);
 
@@ -231,48 +209,46 @@ export default function App() {
   const showOnboard = !hasOnboarded() && !hasDeepLink();
 
   return (
-    <div className="app">
-      <Sidebar />
-      <Suspense fallback={<ViewLoading label={VIEW_LABEL[view] ?? "Loading…"} />}>
-      {view === "voice" ? (
-        <VoiceView />
-      ) : view === "settings" ? (
-        <SettingsView />
-      ) : view === "models" ? (
-        <ModelsView />
-      ) : view === "discover" ? (
-        <DiscoverView />
-      ) : view === "tools" ? (
-        <ToolsView />
-      ) : view === "workflows" ? (
-        <WorkflowsView />
-      ) : view === "agents" ? (
-        <AgentsView />
-      ) : view === "schedules" ? (
-        <SchedulesView />
-      ) : view === "benchmarks" ? (
-        <BenchmarksView />
-      ) : view === "compare" ? (
-        <CompareView />
-      ) : view === "evals" ? (
-        <EvalsView />
-      ) : view === "knowledge" ? (
-        <KnowledgeView />
-      ) : view === "skills" ? (
-        <SkillsView />
-      ) : view === "mcp" ? (
-        <McpView />
-      ) : view === "community" ? (
-        <CommunityView />
-      ) : view === "browser" ? (
-        <BrowserView />
+    <div className={`app${sidebarOpen ? "" : " left-collapsed"}${configOpen ? "" : " right-collapsed"}`}>
+      {sidebarOpen ? (
+        <Sidebar />
       ) : (
-        <>
-          <ChatWindow />
-          <SidePanel />
-          <ConfigPanel />
-        </>
+        <button
+          className="rail-reopen left"
+          title="Show sidebar"
+          aria-label="Show sidebar"
+          onClick={() => setSidebarOpen(true)}
+        >
+          <IconPanelLeft size={16} />
+        </button>
       )}
+      <Suspense fallback={<ViewLoading label={VIEW_BY_ID[view]?.loadLabel ?? "Loading…"} />}>
+      {(() => {
+        const def = VIEW_BY_ID[view];
+        if (def) {
+          const ViewComponent = def.Component;
+          return <ViewComponent />;
+        }
+        // Default surface: the chat, with its side and config panels.
+        return (
+          <>
+            <ChatWindow />
+            <SidePanel />
+            {configOpen ? (
+              <ConfigPanel />
+            ) : (
+              <button
+                className="rail-reopen right"
+                title="Show settings panel"
+                aria-label="Show settings panel"
+                onClick={() => setConfigOpen(true)}
+              >
+                <IconPanelRight size={16} />
+              </button>
+            )}
+          </>
+        );
+      })()}
       </Suspense>
       <DialogHost />
       <ContextMenu />

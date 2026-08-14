@@ -6,29 +6,25 @@ import { useStore, type View } from "../lib/store";
 import { useModal } from "../lib/useModal";
 import * as storage from "../lib/storage";
 import type { SnapshotInfo } from "../lib/storage";
+import { NAV_VIEWS, type NavSection } from "../lib/views";
 import {
-  IconAgent,
-  IconBook,
-  IconBox,
-  IconChart,
   IconChat,
-  IconColumns,
-  IconCompass,
-  IconGrid,
   IconDots,
-  IconFlow,
   IconGear,
-  IconPlug,
   IconPlus,
-  IconClock,
   IconSearch,
   IconSpeaker,
-  IconWrench,
   LogoMark,
   IconChevron,
+  IconPanelLeft,
   IconX,
 } from "./icons";
 import { NotificationBell } from "./NotificationBell";
+
+const NAV_SECTIONS: { key: NavSection; title: string }[] = [
+  { key: "library", title: "Library" },
+  { key: "automation", title: "Automation" },
+];
 
 function relTime(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
@@ -67,7 +63,12 @@ export function Sidebar() {
     saveProject,
     deleteProject,
     newProjectChat,
+    setSidebarOpen,
+    settings,
   } = useStore();
+  // Active profile hides whole views/sections from the nav (see lib/views).
+  const activeProfile = settings.profiles?.find((p) => p.id === settings.activeProfileId);
+  const hiddenViews = new Set<string>(activeProfile?.hiddenViews ?? []);
   const [query, setQuery] = useState("");
   const [menuFor, setMenuFor] = useState<{ id: string; top: number; left: number } | null>(null);
   const [snapsFor, setSnapsFor] = useState<string | null>(null);
@@ -192,8 +193,9 @@ export function Sidebar() {
       await snapshotChat(id);
     } else if (action === "snapshots") {
       setSnapsFor(id);
-    } else if (action === "export-md" || action === "export-json") {
-      const rel = await exportChat(id, action === "export-md" ? "md" : "json");
+    } else if (action === "export-md" || action === "export-json" || action === "export-jsonl") {
+      const fmt = action === "export-md" ? "md" : action === "export-jsonl" ? "jsonl" : "json";
+      const rel = await exportChat(id, fmt);
       toast.success(`Exported to ~\\.harnessx\\${rel.replace("/", "\\")}`);
     } else if (action === "delete") {
       if (await confirmDialog("Delete this chat?", { danger: true })) await deleteChat(id);
@@ -226,7 +228,7 @@ export function Sidebar() {
   };
 
   const navBtn = (v: View, label: string, icon: React.ReactNode) => (
-    <button className={`nav-btn ${view === v ? "active" : ""}`} onClick={() => setView(v)}>
+    <button key={v} className={`nav-btn ${view === v ? "active" : ""}`} onClick={() => setView(v)}>
       <span className="nav-icon">{icon}</span>
       {label}
     </button>
@@ -238,6 +240,14 @@ export function Sidebar() {
         <LogoMark />
         <span className="logo">HarnessStation</span>
         <NotificationBell />
+        <button
+          className="icon-btn sidebar-collapse"
+          title="Hide sidebar"
+          aria-label="Hide sidebar"
+          onClick={() => setSidebarOpen(false)}
+        >
+          <IconPanelLeft size={15} />
+        </button>
       </div>
 
       <div className="new-row">
@@ -401,6 +411,7 @@ export function Sidebar() {
               <button onClick={() => void menuAction(menuFor.id, "snapshots")}>Snapshots...</button>
               <button onClick={() => void menuAction(menuFor.id, "export-md")}>Export Markdown</button>
               <button onClick={() => void menuAction(menuFor.id, "export-json")}>Export JSON</button>
+              <button onClick={() => void menuAction(menuFor.id, "export-jsonl")}>Export trace (JSONL)</button>
               <button className="danger-item" onClick={() => void menuAction(menuFor.id, "delete")}>
                 Delete
               </button>
@@ -410,54 +421,34 @@ export function Sidebar() {
         )}
 
 
-      <div className="nav-section">
-        <button
-          className="nav-section-title"
-          onClick={() => toggleSection("library")}
-          aria-expanded={!collapsed.library}
-        >
-          <span className={`nav-caret ${collapsed.library ? "closed" : ""}`} aria-hidden="true">
-            <IconChevron size={13} />
-          </span>
-          Library
-        </button>
-        {!collapsed.library && (
-          <>
-            {navBtn("discover", "Discover", <IconCompass size={15} />)}
-            {navBtn("models", "My Models", <IconBox size={15} />)}
-            {navBtn("compare", "Compare", <IconColumns size={15} />)}
-            {navBtn("evals", "Evals", <IconGrid size={15} />)}
-            {navBtn("benchmarks", "Benchmarks", <IconChart size={15} />)}
-          </>
-        )}
-      </div>
-      <div className="nav-section">
-        <button
-          className="nav-section-title"
-          onClick={() => toggleSection("automation")}
-          aria-expanded={!collapsed.automation}
-        >
-          <span className={`nav-caret ${collapsed.automation ? "closed" : ""}`} aria-hidden="true">
-            <IconChevron size={13} />
-          </span>
-          Automation
-        </button>
-        {!collapsed.automation && (
-          <>
-            {navBtn("agents", "Agents", <IconAgent size={15} />)}
-            {navBtn("skills", "Skills", <IconBook size={15} />)}
-            {navBtn("knowledge", "Knowledge", <IconBook size={15} />)}
-            {navBtn("tools", "Tools", <IconWrench size={15} />)}
-            {navBtn("workflows", "Workflows", <IconFlow size={15} />)}
-            {navBtn("schedules", "Schedules", <IconClock size={15} />)}
-            {navBtn("mcp", "MCP Servers", <IconPlug size={15} />)}
-            {navBtn("community", "Community", <IconGrid size={15} />)}
-            {/* No Browser nav item: the browser opens on its own in the
-                conversation when the model uses it, so a sidebar toggle was
-                redundant clutter. */}
-          </>
-        )}
-      </div>
+      {NAV_SECTIONS.map((sec) => {
+        // Registry-driven nav: every view lives in lib/views, filtered here by
+        // the active profile so a profile can hide whole sections/panels.
+        const items = NAV_VIEWS.filter((v) => v.section === sec.key && !hiddenViews.has(v.id));
+        if (!items.length) return null;
+        return (
+          <div className="nav-section" key={sec.key}>
+            <button
+              className="nav-section-title"
+              onClick={() => toggleSection(sec.key)}
+              aria-expanded={!collapsed[sec.key]}
+            >
+              <span className={`nav-caret ${collapsed[sec.key] ? "closed" : ""}`} aria-hidden="true">
+                <IconChevron size={13} />
+              </span>
+              {sec.title}
+            </button>
+            {!collapsed[sec.key] && (
+              <>
+                {items.map((v) => {
+                  const Icon = v.Icon!;
+                  return navBtn(v.id, v.label, <Icon size={15} />);
+                })}
+              </>
+            )}
+          </div>
+        );
+      })}
       </div>
 
       {/* Pinned below the scroll region, so it's always one click away. */}

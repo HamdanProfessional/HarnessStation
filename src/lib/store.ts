@@ -131,6 +131,12 @@ interface AppState {
   /** Is the browser docked open beside the chat / call? */
   browserDock: boolean;
   setBrowserDock: (open: boolean) => void;
+  /** Left nav sidebar visible (persisted across restarts). */
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+  /** Right chat config panel visible (persisted across restarts). */
+  configOpen: boolean;
+  setConfigOpen: (open: boolean) => void;
   saveSettings: (s: Settings) => Promise<void>;
   /** Add or update a vault secret. `value` empty = keep the existing value (edit metadata only). */
   saveSecret: (meta: { ref: string; name: string; description: string }, value: string) => Promise<void>;
@@ -162,7 +168,7 @@ interface AppState {
   duplicateChat: (id: string) => Promise<void>;
   snapshotChat: (id: string) => Promise<void>;
   restoreSnapshot: (file: string) => Promise<void>;
-  exportChat: (id: string, format: "md" | "json") => Promise<string>;
+  exportChat: (id: string, format: "md" | "json" | "jsonl") => Promise<string>;
   updateChat: (patch: Partial<Chat>) => void;
   /** Patch a specific chat. Streaming must use this — the user can switch chats mid-reply. */
   updateChatById: (id: string, patch: Partial<Chat>) => void;
@@ -224,6 +230,23 @@ interface AppState {
 
   autoConnectMcp: () => Promise<void>;
 }
+
+/** Small persisted UI booleans (panel visibility). localStorage, best-effort. */
+const readBoolPref = (key: string, fallback: boolean): boolean => {
+  try {
+    const v = localStorage.getItem(key);
+    return v == null ? fallback : v === "1";
+  } catch {
+    return fallback;
+  }
+};
+const writeBoolPref = (key: string, value: boolean): void => {
+  try {
+    localStorage.setItem(key, value ? "1" : "0");
+  } catch {
+    /* private mode / no storage — the toggle still works for the session */
+  }
+};
 
 export const useStore = create<AppState>((set, get) => ({
   ready: false,
@@ -376,6 +399,16 @@ export const useStore = create<AppState>((set, get) => ({
 
   browserDock: false,
   setBrowserDock: (browserDock) => set({ browserDock }),
+  sidebarOpen: readBoolPref("hs-sidebar-open", true),
+  setSidebarOpen: (open) => {
+    writeBoolPref("hs-sidebar-open", open);
+    set({ sidebarOpen: open });
+  },
+  configOpen: readBoolPref("hs-config-open", true),
+  setConfigOpen: (open) => {
+    writeBoolPref("hs-config-open", open);
+    set({ configOpen: open });
+  },
 
   saveSettings: async (settings) => {
     set({ settings });
@@ -1372,20 +1405,24 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
       if (!base) break; // chat was deleted mid-turn — nothing left to write to
       const history = base.messages.slice(startIdx, -1);
 
+      // Compose once so the exact prompt the model receives can also be traced.
+      const systemStr = [
+        composeSystemPrompt(settings, base),
+        projectNote,
+        agentsNote,
+        skillIndex,
+        memoryBlock,
+        ragContext,
+        summaryNote,
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+      const turnStart = Date.now();
+
       const result = await streamChat({
         provider,
         model: chat.model,
-        system: [
-          composeSystemPrompt(settings, base),
-          projectNote,
-          agentsNote,
-          skillIndex,
-          memoryBlock,
-          ragContext,
-          summaryNote,
-        ]
-          .filter(Boolean)
-          .join("\n\n"),
+        system: systemStr,
         messages: history,
         temperature: chat.temperature,
         maxTokens: chat.maxTokens,
@@ -1407,6 +1444,29 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
         const { promptTokens, completionTokens } = result.usage;
         patchLast((m) => ({ ...m, promptTokens, completionTokens }));
       }
+
+      // Trajectory: stamp timing + round on every assistant step, and the loaded
+      // context on the first round only (it's stable across the turn, so storing
+      // it each round would bloat the saved conversation).
+      const durationMs = Date.now() - turnStart;
+      patchLast((m) => ({
+        ...m,
+        round,
+        startedAt: turnStart,
+        durationMs,
+        ...(round === 0
+          ? {
+              trace: {
+                system: systemStr || undefined,
+                rag: ragContext || undefined,
+                memory: memoryBlock || undefined,
+                skills: skillIndex || undefined,
+                project: projectNote || undefined,
+                agentsMd: agentsNote || undefined,
+              },
+            }
+          : {}),
+      }));
 
       if (!result.toolCalls?.length) {
         reachedLimit = false;
@@ -1437,6 +1497,7 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
       for (const call of result.toolCalls) {
         const tool = enabledTools.find((t) => t.name === call.name);
         let output: string;
+        const toolStart = Date.now();
         try {
           const args = JSON.parse(call.arguments || "{}");
           set({ activity: `Running ${call.name.replace(/[_-]+/g, " ")}...` });
@@ -1499,16 +1560,27 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
         }
         const notices = takeInbox(chatSession);
         if (notices && !output.startsWith("data:")) output = `${output}\n\n${notices}`;
+        const toolDur = Date.now() - toolStart;
         const att = output.startsWith("data:") ? dataUrlToAttachment(output, call.name) : null;
         if (att) {
           appendMsg({
             role: "tool",
             content: `[${att.kind} generated: ${att.name}]`,
             toolCallId: call.id,
+            toolName: call.name,
+            startedAt: toolStart,
+            durationMs: toolDur,
             attachments: [att],
           });
         } else {
-          appendMsg({ role: "tool", content: output, toolCallId: call.id });
+          appendMsg({
+            role: "tool",
+            content: output,
+            toolCallId: call.id,
+            toolName: call.name,
+            startedAt: toolStart,
+            durationMs: toolDur,
+          });
         }
       }
     }

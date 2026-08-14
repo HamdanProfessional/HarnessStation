@@ -20,6 +20,17 @@ const opts = { baseDir: BaseDirectory.Home };
 export const DEFAULT_SETTINGS: Settings = {
   providers: [
     {
+      // Default local provider: llama.cpp's `llama-server` speaks the OpenAI API
+      // at :8080/v1. First in the list, so a fresh install points here out of the
+      // box — run `llama-server -m model.gguf` and it just works, no key.
+      id: "llamacpp",
+      name: "llama.cpp (local)",
+      kind: "openai-compatible",
+      baseUrl: "http://localhost:8080/v1",
+      apiKey: "",
+      models: [],
+    },
+    {
       id: "lmstudio",
       name: "LM Studio (local)",
       kind: "openai-compatible",
@@ -140,8 +151,16 @@ export async function loadSettings(): Promise<Settings> {
   } catch {
     return DEFAULT_SETTINGS;
   }
-  // resolve API keys from the OS keychain; migrate any plaintext keys still in the JSON
+  // Ensure the default local llama.cpp provider exists. Existing installs saved
+  // their own `providers` array, which fully replaces the default seed — so a
+  // returning user would never get the new entry without this. Prepend it (once)
+  // so it becomes their default local provider too.
   let migrated = false;
+  if (!s.providers.some((p) => p.id === "llamacpp")) {
+    s.providers.unshift(DEFAULT_SETTINGS.providers.find((p) => p.id === "llamacpp")!);
+    migrated = true;
+  }
+  // resolve API keys from the OS keychain; migrate any plaintext keys still in the JSON
   for (const p of s.providers) {
     const stored = await getSecret(`provider:${p.id}`);
     if (stored) p.apiKey = stored;
@@ -863,14 +882,64 @@ function chatToMarkdown(chat: Chat): string {
   return lines.join("\n");
 }
 
+/**
+ * Session log: one JSON object per line — a header line, then one line per step
+ * with its trajectory fields (timing, round, tool name, and the context the model
+ * saw). Mirrors the DeepSeek Harness `session.jsonl`, and is what the Trajectory
+ * view renders, in a form other tools can diff/replay.
+ */
+function chatToJsonl(chat: Chat): string {
+  const lines: string[] = [];
+  lines.push(
+    JSON.stringify({
+      type: "session",
+      title: chat.title,
+      model: chat.model,
+      providerId: chat.providerId,
+      createdAt: chat.createdAt,
+      exportedAt: new Date().toISOString(),
+      messageCount: chat.messages.length,
+    }),
+  );
+  // recover tool names for older tool messages that predate the toolName field
+  const callName: Record<string, string> = {};
+  for (const m of chat.messages) for (const c of m.toolCalls ?? []) callName[c.id] = c.name;
+  for (const m of chat.messages) {
+    lines.push(
+      JSON.stringify({
+        type: m.role,
+        role: m.role,
+        content: m.content,
+        reasoning: m.reasoning,
+        toolCalls: m.toolCalls,
+        toolCallId: m.toolCallId,
+        toolName: m.toolName ?? (m.toolCallId ? callName[m.toolCallId] : undefined),
+        round: m.round,
+        startedAt: m.startedAt,
+        durationMs: m.durationMs,
+        promptTokens: m.promptTokens,
+        completionTokens: m.completionTokens,
+        trace: m.trace,
+        author: m.author,
+      }),
+    );
+  }
+  return lines.join("\n");
+}
+
 /** Writes the export into ~/.harnessx/exports and returns the path relative to ~/.harnessx. */
-export async function exportChat(chat: Chat, format: "md" | "json"): Promise<string> {
+export async function exportChat(chat: Chat, format: "md" | "json" | "jsonl"): Promise<string> {
   const dir = `${ROOT}/exports`;
   if (!(await exists(dir, opts))) await mkdir(dir, { ...opts, recursive: true });
   const safe = chat.title.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").slice(0, 40) || "chat";
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const name = `${safe}-${stamp}.${format}`;
-  const body = format === "json" ? JSON.stringify(chat, null, 2) : chatToMarkdown(chat);
+  const body =
+    format === "json"
+      ? JSON.stringify(chat, null, 2)
+      : format === "jsonl"
+        ? chatToJsonl(chat)
+        : chatToMarkdown(chat);
   await writeTextFile(`${dir}/${name}`, body, opts);
   return `exports/${name}`;
 }

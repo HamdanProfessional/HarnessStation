@@ -40,10 +40,27 @@ export interface KnowledgeBase {
   chunks: Chunk[];
 }
 
+/**
+ * A named workspace profile: activate/deactivate whole features so the app can
+ * be as minimal or as full as the task needs (inspired by "everything is a
+ * plug-in"). Currently toggles which views appear in the sidebar; extensible to
+ * tool sets and skills.
+ */
+export interface Profile {
+  id: string;
+  name: string;
+  /** View ids hidden from the sidebar nav under this profile. */
+  hiddenViews: string[];
+}
+
 export interface Settings {
   providers: Provider[];
   globalInstructions: string;
   theme: "dark" | "light" | "system";
+  /** Named feature profiles the user can switch between. */
+  profiles?: Profile[];
+  /** The currently active profile id (undefined = everything visible). */
+  activeProfileId?: string;
   /** Optional self-hosted gateway server; general APIs proxy through it when set. */
   serverUrl?: string;
   /** Artificial Analysis API key (only used when no serverUrl). */
@@ -263,6 +280,27 @@ export interface MediaModel {
   options?: string;
 }
 
+/**
+ * The context actually fed to the model on a step — captured so the Trajectory
+ * view can show exactly what the model saw (system prompt, retrieved knowledge,
+ * memory) instead of just the final answer. Stored once per turn (first round)
+ * to keep conversations from bloating on long tool chains.
+ */
+export interface MessageTrace {
+  /** Fully-composed system prompt the model received this step. */
+  system?: string;
+  /** Injected knowledge-base retrieval text (RAG), if any. */
+  rag?: string;
+  /** Injected passive-memory block, if any. */
+  memory?: string;
+  /** Injected skill index (names + descriptions). */
+  skills?: string;
+  /** Injected project brief, if the chat is in a project. */
+  project?: string;
+  /** Injected AGENTS.md note from the working directory. */
+  agentsMd?: string;
+}
+
 export interface Message {
   role: "user" | "assistant" | "tool";
   content: string;
@@ -270,12 +308,24 @@ export interface Message {
   attachments?: Attachment[];
   toolCalls?: ToolCall[];
   toolCallId?: string;
+  /** For tool messages: the tool that produced this result (so the trajectory
+   * view / export need not join back through toolCallId). */
+  toolName?: string;
   promptTokens?: number;
   completionTokens?: number;
   /** Multi-agent chats: which participant produced this message (their label). Absent = single-agent or user. */
   author?: string;
   /** Transient id used to target a specific message while streaming concurrently (multi-agent). */
   id?: string;
+  // ---- Trajectory / traceability (all optional; absent on older messages) ----
+  /** Epoch ms when this step started (assistant stream start, or tool-call start). */
+  startedAt?: number;
+  /** How long this step took, in ms (stream duration, or tool execution time). */
+  durationMs?: number;
+  /** Tool-loop round index within the turn (0-based), for assistant messages. */
+  round?: number;
+  /** The context fed to the model this step (first round of a turn only). */
+  trace?: MessageTrace;
 }
 
 /** A model or agent taking part in a multi-agent (battle / collaborate) chat. */

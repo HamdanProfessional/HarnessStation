@@ -28,9 +28,11 @@ import type {
   MediaKind,
   MediaModel,
   MemoryEntry,
+  Profile,
   Provider,
   Settings,
 } from "../lib/types";
+import { NAV_VIEWS } from "../lib/views";
 
 /**
  * Settings is long; these split it into panels rather than one endless scroll.
@@ -45,6 +47,12 @@ const TABS = [
     label: "General",
     blurb: "Instructions, conversation, theme",
     keywords: "system prompt instructions theme dark light conversation compact autotitle tray background",
+  },
+  {
+    id: "profiles",
+    label: "Profiles",
+    blurb: "Show/hide features per workspace",
+    keywords: "profile plugin toggle enable disable hide view panel sidebar feature minimal customize workspace",
   },
   {
     id: "providers",
@@ -503,6 +511,93 @@ export function SettingsView() {
           placeholder="e.g. Always answer in English. I'm a beginner programmer — explain things simply."
           onChange={(e) => setDraft({ ...draft, globalInstructions: e.target.value })}
         />
+      </section>
+
+      <section hidden={tab !== "profiles"}>
+        <h2>Profiles</h2>
+        <p className="hint">
+          A profile hides features you don't need so the app is only as big as the task. Pick which
+          views appear in the sidebar; switch the active profile anytime. No profile = everything visible.
+        </p>
+        <div className="provider-row" style={{ marginBottom: 14 }}>
+          <label className="grow">
+            Active profile
+            <select
+              value={draft.activeProfileId ?? ""}
+              onChange={(e) => setDraft({ ...draft, activeProfileId: e.target.value || undefined })}
+            >
+              <option value="">None (everything visible)</option>
+              {(draft.profiles ?? []).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className="btn"
+            onClick={() => {
+              const id = `prof-${Date.now()}`;
+              const next: Profile = { id, name: "New profile", hiddenViews: [] };
+              setDraft({ ...draft, profiles: [...(draft.profiles ?? []), next], activeProfileId: id });
+            }}
+          >
+            + New profile
+          </button>
+        </div>
+
+        {(draft.profiles ?? []).length === 0 && (
+          <p className="hint">No profiles yet — create one to tailor the sidebar.</p>
+        )}
+
+        {(draft.profiles ?? []).map((p) => {
+          const hidden = new Set(p.hiddenViews);
+          const patchProfile = (patch: Partial<Profile>) =>
+            setDraft({
+              ...draft,
+              profiles: (draft.profiles ?? []).map((x) => (x.id === p.id ? { ...x, ...patch } : x)),
+            });
+          const toggleView = (id: string) => {
+            const h = new Set(p.hiddenViews);
+            if (h.has(id)) h.delete(id);
+            else h.add(id);
+            patchProfile({ hiddenViews: [...h] });
+          };
+          return (
+            <div key={p.id} className="profile-card">
+              <div className="provider-row">
+                <input
+                  className="grow"
+                  value={p.name}
+                  placeholder="Profile name"
+                  onChange={(e) => patchProfile({ name: e.target.value })}
+                />
+                {draft.activeProfileId === p.id && <span className="badge">active</span>}
+                <button
+                  className="btn danger small"
+                  onClick={() =>
+                    setDraft({
+                      ...draft,
+                      profiles: (draft.profiles ?? []).filter((x) => x.id !== p.id),
+                      activeProfileId: draft.activeProfileId === p.id ? undefined : draft.activeProfileId,
+                    })
+                  }
+                >
+                  Delete
+                </button>
+              </div>
+              <p className="hint">Views shown in the sidebar for this profile:</p>
+              <div className="profile-views">
+                {NAV_VIEWS.map((v) => (
+                  <label key={v.id} className="profile-view">
+                    <input type="checkbox" checked={!hidden.has(v.id)} onChange={() => toggleView(v.id)} />
+                    {v.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </section>
 
       <section hidden={tab !== "providers"}>
