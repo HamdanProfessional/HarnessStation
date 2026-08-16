@@ -124,6 +124,46 @@ export function ModelsView() {
     }
   };
 
+  const importLlamaCpp = async () => {
+    setError(null);
+    setNotice(null);
+    try {
+      const res = await fetch("http://127.0.0.1:8080/v1/models");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const names: string[] = (json.data ?? []).map((m: { id: string }) => m.id);
+      if (!names.length) {
+        setError("llama-server is running but reports no model — start it with `llama-server -m your-model.gguf`.");
+        return;
+      }
+      const settings = structuredClone(useStore.getState().settings);
+      let p = settings.providers.find((x) => x.id === "llamacpp");
+      if (!p) {
+        p = {
+          id: "llamacpp",
+          name: "llama.cpp (local)",
+          kind: "openai-compatible",
+          baseUrl: "http://localhost:8080/v1",
+          apiKey: "",
+          models: [],
+        };
+        settings.providers.push(p);
+      }
+      p.models = names;
+      await useStore.getState().saveSettings(settings);
+      setNotice(
+        `Imported ${names.length} llama.cpp model(s) — pick "llama.cpp (local)" as the provider in any chat.`,
+      );
+    } catch (e) {
+      const msg = (e as Error).message || String(e);
+      setError(
+        msg.includes("error sending request")
+          ? "Could not reach llama-server at 127.0.0.1:8080 — start it with `llama-server -m your-model.gguf` (it serves the OpenAI API on :8080)."
+          : `llama.cpp import failed: ${msg}`,
+      );
+    }
+  };
+
   const importOllama = async () => {
     setError(null);
     setNotice(null);
@@ -280,6 +320,9 @@ export function ModelsView() {
       <div className="settings-header">
         <h1>My Models</h1>
         <div>
+          <button className="btn" onClick={() => void importLlamaCpp()} title="List the model from a running llama.cpp llama-server (:8080) and add it as a chat provider">
+            Import from llama.cpp
+          </button>{" "}
           <button className="btn" onClick={() => void importOllama()} title="List models from a running Ollama install and add them as a chat provider">
             Import from Ollama
           </button>{" "}
@@ -338,7 +381,7 @@ export function ModelsView() {
         {remoteProviders.map((p) => {
           const editing = editProvider === p.id;
           const hasKey = p.apiKey.trim().length > 0;
-          const localish = p.id === "ollama" || p.id === "lmstudio";
+          const localish = p.id === "ollama" || p.id === "lmstudio" || p.id === "llamacpp";
           return (
             <div key={p.id} className="provider-card">
               <div className="provider-row">
