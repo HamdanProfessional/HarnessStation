@@ -105,18 +105,15 @@ export function invalidateNeuralVoice(): void {
   piperInstalled = null;
 }
 
-/** Speak through Piper. Returns false if it couldn't, so the caller can fall back. */
-async function speakWithPiper(text: string, voiceId: string, human: boolean): Promise<boolean> {
+/** Synthesize through Piper to an audio URL. Returns null so the caller can fall back. */
+async function synthPiper(text: string, voiceId: string, human: boolean): Promise<string | null> {
   try {
     const { ensurePiper, piperSynthesize } = await import("./piper");
     await ensurePiper(() => {}, voiceId);
     piperInstalled = { voice: voiceId, ready: true };
-    const url = await piperSynthesize(text, voiceId, human);
-    if (cancelled) return true;
-    await playDataUrl(url);
-    return true;
+    return await piperSynthesize(text, voiceId, human);
   } catch {
-    return false; // caller falls back so speech never goes silent
+    return null; // caller falls back so speech never goes silent
   }
 }
 
@@ -124,18 +121,12 @@ async function speakWithPiper(text: string, voiceId: string, human: boolean): Pr
  * Speak through a cloud service. Returns false so the caller can fall back —
  * a network blip or an expired key should degrade to a local voice, not silence.
  */
-async function speakWithCloud(text: string, settings: Settings): Promise<boolean> {
+async function synthCloud(text: string, settings: Settings): Promise<string | null> {
   const cfg = settings.voice?.cloud;
   try {
     const { cloudSynthesize, speechConfigured } = await import("./speechProviders");
-    if (!speechConfigured(cfg)) return false;
-    const url = await cloudSynthesize(cfg, text, personaInstruction(settings));
-    if (cancelled) return true;
-    await playDataUrl(url);
-    // Blob URLs are held until the document unloads; a long call would otherwise
-    // accumulate one per sentence.
-    URL.revokeObjectURL(url);
-    return true;
+    if (!speechConfigured(cfg)) return null;
+    return await cloudSynthesize(cfg, text, personaInstruction(settings));
   } catch (e) {
     // Say why once — a silently-ignored billing failure is baffling.
     const message = (e as Error).message || "";
@@ -143,23 +134,19 @@ async function speakWithCloud(text: string, settings: Settings): Promise<boolean
       lastCloudError = message;
       toast.error(message);
     }
-    return false;
+    return null;
   }
 }
 
 let lastCloudError: string | null = null;
 
-/** Speak through Kokoro. Returns false so the caller can fall back. */
-async function speakWithKokoro(text: string, settings: Settings): Promise<boolean> {
+/** Synthesize through Kokoro to an audio URL. Returns null so the caller can fall back. */
+async function synthKokoro(text: string, settings: Settings): Promise<string | null> {
   try {
     const { kokoroSynthesize } = await import("./kokoro");
-    const url = await kokoroSynthesize(text, settings.voice?.kokoroVoice || undefined);
-    if (cancelled) return true;
-    await playDataUrl(url);
-    URL.revokeObjectURL(url);
-    return true;
+    return await kokoroSynthesize(text, settings.voice?.kokoroVoice || undefined);
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -180,7 +167,35 @@ function personaInstruction(settings: Settings): string {
   return [base, extra].filter(Boolean).join(" ");
 }
 
-async function speakOnce(raw: string, settings: Settings): Promise<void> {
+/**
+ * A synthesized utterance ready to play. Splitting synthesis (the expensive part —
+ * a network call or neural inference producing an audio URL) from playback lets the
+ * queue synthesize the *next* sentence while the current one is still playing, so
+ * there's no dead air between sentences. `play()` is always run serially, so only
+ * one utterance is ever audible at a time.
+ */
+interface Prepared {
+  play: () => Promise<void>;
+}
+
+/** A prepared utterance backed by an already-synthesized audio URL. */
+function fromUrl(url: string, revoke: boolean): Prepared {
+  return {
+    play: async () => {
+      if (cancelled) return;
+      await playDataUrl(url);
+      // Blob URLs are held until the document unloads; a long call would otherwise
+      // accumulate one per sentence. (data: URLs don't need it, but it's harmless.)
+      if (revoke) URL.revokeObjectURL(url);
+    },
+  };
+}
+
+/**
+ * Run the engine cascade and synthesize `raw` to a ready-to-play utterance. Does
+ * NOT play — that's `Prepared.play()`. Same engine order and fallbacks as before.
+ */
+async function prepareUtterance(raw: string, settings: Settings): Promise<Prepared> {
   const engine = settings.voice?.ttsEngine ?? "auto";
   const human = settings.voice?.humanDelivery ?? true;
   const text = human ? spokenForm(raw) : raw;
@@ -189,32 +204,34 @@ async function speakOnce(raw: string, settings: Settings): Promise<void> {
   const piperVoiceId = settings.voice?.piperVoice || "";
   // Piper's bundled voices are English-only; anything else needs a system voice.
   const english = detectLang(text, preferredLang(settings) || "en") === "en";
+  let url: string | null;
 
   // Explicitly chosen engines get first refusal, in quality order. Each returns
-  // false rather than throwing, so a failure moves down the list instead of
+  // null rather than throwing, so a failure moves down the list instead of
   // leaving the avatar mute.
   if (engine === "cloud") {
-    if (await speakWithCloud(text, settings)) return;
+    url = await synthCloud(text, settings);
+    if (url) return fromUrl(url, true);
   }
 
   // Kokoro is English-only in this build; handed another script it produces
   // confident nonsense rather than failing, so the check has to happen here.
   if (engine === "kokoro" && english) {
-    if (await speakWithKokoro(text, settings)) return;
+    url = await synthKokoro(text, settings);
+    if (url) return fromUrl(url, true);
   }
 
   // Offline neural voice, chosen explicitly — download it if this is the first use.
   if (engine === "piper" && english) {
-    if (await speakWithPiper(text, piperVoiceId, human)) return;
+    url = await synthPiper(text, piperVoiceId, human);
+    if (url) return fromUrl(url, false);
   }
 
   const model = engine === "windows" ? undefined : pickTtsModel(settings);
   if (model) {
     try {
       const { dataUrl } = await generateMedia(model, text);
-      if (cancelled) return;
-      await playDataUrl(dataUrl);
-      return;
+      return fromUrl(dataUrl, false);
     } catch {
       // fall through to the built-in voice if the cloud/local TTS fails
     }
@@ -226,10 +243,12 @@ async function speakOnce(raw: string, settings: Settings): Promise<void> {
   if (engine === "auto" && english) {
     const { kokoroCached } = await import("./kokoro");
     if (await kokoroCached()) {
-      if (await speakWithKokoro(text, settings)) return;
+      url = await synthKokoro(text, settings);
+      if (url) return fromUrl(url, true);
     }
     if (await neuralReady(piperVoiceId)) {
-      if (await speakWithPiper(text, piperVoiceId, human)) return;
+      url = await synthPiper(text, piperVoiceId, human);
+      if (url) return fromUrl(url, false);
     }
   }
   // Route to a voice that can actually read this script. An English SAPI voice
@@ -250,40 +269,93 @@ async function speakOnce(raw: string, settings: Settings): Promise<void> {
   lastMissingLang = null;
 
   if (voice.engine === "winrt") {
-    const url = await winrtSpeakToDataUrl(text, voice.name);
-    if (cancelled) return;
-    await playDataUrl(url);
-    return;
+    const wurl = await winrtSpeakToDataUrl(text, voice.name);
+    return fromUrl(wurl, false);
   }
 
-  // SAPI voices are the flattest of the lot, so they get the most help:
-  // SSML breath pauses plus a little pitch/rate movement per sentence.
-  await invoke("speak", {
-    text: human
-      ? humanSsml(text, {
-          expressiveness: settings.voice?.expressiveness ?? 1,
-          lang: voice.lang || lang,
-        })
-      : text,
-    voice: voice.name,
-    rate: settings.voice?.rate ?? 1,
-  });
+  // SAPI synthesizes and plays in one native call, so it can't be pre-synthesized —
+  // the whole thing runs at play time. That's fine: it's the local, instant engine.
+  return {
+    play: async () => {
+      if (cancelled) return;
+      await invoke("speak", {
+        text: human
+          ? humanSsml(text, {
+              expressiveness: settings.voice?.expressiveness ?? 1,
+              lang: voice.lang || lang,
+            })
+          : text,
+        voice: voice.name,
+        rate: settings.voice?.rate ?? 1,
+      });
+    },
+  };
+}
+
+/** Synthesize + play a single utterance (used for one-off previews). */
+async function speakOnce(raw: string, settings: Settings): Promise<void> {
+  await (await prepareUtterance(raw, settings)).play();
+}
+
+/** Resolve a queued (possibly rewritten) text to a synthesized, ready-to-play
+ *  utterance. A synth failure drops just that one sentence instead of the queue. */
+async function prepareFrom(item: Promise<string>, settings: Settings): Promise<Prepared | null> {
+  try {
+    const text = await item;
+    if (!text || cancelled) return null;
+    return await prepareUtterance(text, settings);
+  } catch {
+    return null; // e.g. no matching voice — skip this sentence, keep the queue alive
+  }
 }
 
 async function drain(settings: Settings) {
   if (draining) return;
   draining = true;
   try {
-    while (queue.length && !cancelled) {
-      const next = await queue.shift()!;
+    // One-sentence look-ahead: synthesize the next utterance while the current one
+    // plays. Playback (`play()`) is still strictly serial, so only one is audible.
+    let nextPrep: Promise<Prepared | null> | null = null;
+    while ((queue.length || nextPrep) && !cancelled) {
+      const prepared = await (nextPrep ?? prepareFrom(queue.shift()!, settings));
+      nextPrep = null;
       if (cancelled) break;
-      await speakOnce(next, settings);
+      // Kick off synthesis of the following sentence before playing this one.
+      if (queue.length && !cancelled) nextPrep = prepareFrom(queue.shift()!, settings);
+      if (prepared) await prepared.play();
     }
   } finally {
     draining = false;
     // Also release when the queue was abandoned mid-drain (cancelled), or a
     // barge-in would leave the caller awaiting a queue nobody will finish.
     if (!queue.length || cancelled) releaseWaiters();
+  }
+}
+
+/**
+ * Load the TTS engine ahead of the first reply, so the first sentence isn't
+ * delayed by a cold start (Kokoro loads ~90 MB of weights into memory; Piper
+ * spins up its process). Speaks nothing, and — like "auto" itself — never
+ * triggers a download or spend the user didn't ask for: engines that aren't
+ * already present are skipped. Safe to call repeatedly; failures are ignored.
+ */
+export async function warmSpeech(settings: Settings): Promise<void> {
+  const engine = settings.voice?.ttsEngine ?? "auto";
+  const piperVoiceId = settings.voice?.piperVoice || "";
+  try {
+    if (engine === "kokoro" || engine === "auto") {
+      const { kokoroCached, kokoroLoaded, loadKokoro } = await import("./kokoro");
+      if (!kokoroLoaded() && (await kokoroCached())) await loadKokoro();
+      if (engine === "kokoro") return;
+    }
+    if (engine === "piper" || engine === "auto") {
+      if (await neuralReady(piperVoiceId)) {
+        const { ensurePiper } = await import("./piper");
+        await ensurePiper(() => {}, piperVoiceId);
+      }
+    }
+  } catch {
+    /* warming is best-effort — the real call will surface any problem */
   }
 }
 

@@ -1,6 +1,6 @@
 [package]
 name = "harnessx"
-version = "0.2.0"
+version = "0.3.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
@@ -44,6 +44,10 @@ tar = "0.4"
 rand = "0.8"
 open = "5"
 url = "2"
+# Pure-Rust WebRTC voice-activity detector — no C deps, no model download. Used to
+# tell speech from background noise for turn-endpointing and barge-in in the voice
+# avatar (far more robust than a raw RMS threshold).
+earshot = "0.1"
 
 # Local WebSocket bridge to the browser extension. The extension runs inside the
 # user's real browser, so automation reuses their existing logins instead of a

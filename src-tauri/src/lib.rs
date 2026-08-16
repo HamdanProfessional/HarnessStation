@@ -223,6 +223,7 @@ pub fn run() {
             inapp_browser::inapp_navigate,
             audio::mic_level,
             audio::mic_active,
+            audio::mic_speech,
             audio::mic_devices,
             speech::speak,
             speech::speak_stop,

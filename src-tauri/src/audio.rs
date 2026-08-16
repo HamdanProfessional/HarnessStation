@@ -209,6 +209,58 @@ pub fn mic_active(state: State<Recorder>) -> bool {
     state.0.lock().unwrap().is_some()
 }
 
+/// Whether the most recent ~300 ms of mic input is *speech* (not just loud noise).
+///
+/// A WebRTC voice-activity detector run over the tail of the capture buffer. Unlike
+/// the raw RMS `mic_level`, this distinguishes a spoken voice from a fan, a door
+/// slam, or keyboard clatter — so turn-endpointing and barge-in don't fire on noise
+/// and don't miss a soft speaker. Returns false when not recording or still opening.
+/// Computed on demand (the poll loop already ticks) to keep the audio callback hot.
+#[tauri::command]
+pub fn mic_speech(state: State<Recorder>) -> bool {
+    use earshot::{VoiceActivityDetector, VoiceActivityProfile};
+    let guard = state.0.lock().unwrap();
+    let rec = match guard.as_ref() {
+        Some(r) => r,
+        None => return false,
+    };
+    let rate = rec.rate.load(Ordering::Relaxed);
+    if rate == 0 {
+        return false;
+    }
+    // Take the last ~300 ms of mono audio without consuming the buffer.
+    let tail: Vec<f32> = {
+        let buf = rec.samples.lock().unwrap();
+        let n = ((rate as usize * 300) / 1000).min(buf.len());
+        if n == 0 {
+            return false;
+        }
+        buf[buf.len() - n..].to_vec()
+    };
+    let pcm = if rate == 16000 {
+        tail
+    } else {
+        resample(&tail, rate, 16000)
+    };
+    // 20 ms frames (320 samples @ 16 kHz), as WebRTC VAD requires.
+    let mut det = VoiceActivityDetector::new(VoiceActivityProfile::AGGRESSIVE);
+    let mut voiced = 0usize;
+    let mut total = 0usize;
+    for chunk in pcm.chunks_exact(320) {
+        let frame: Vec<i16> = chunk
+            .iter()
+            .map(|&s| (s.clamp(-1.0, 1.0) * 32767.0) as i16)
+            .collect();
+        if matches!(det.predict_16khz(&frame), Ok(true)) {
+            voiced += 1;
+        }
+        total += 1;
+    }
+    // Call it speech when a clear share of recent frames are voiced — a couple of
+    // stray positives from a transient shouldn't count as the user talking.
+    total > 0 && voiced * 5 >= total * 2 // >= 40% of the window is voiced
+}
+
 /// Stop recording, write a 16 kHz mono WAV to ~/.harnessx/tmp/dictation.wav, return its relative path.
 #[tauri::command]
 pub async fn mic_stop(state: State<'_, Recorder>) -> Result<String, String> {

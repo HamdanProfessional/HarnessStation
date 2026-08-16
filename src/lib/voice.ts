@@ -9,7 +9,7 @@ import {
   type SttModelId,
 } from "./whisper";
 import { streamChat } from "./providers";
-import { speakQueued, stopSpeaking, whenSpoken, speakableText } from "./tts";
+import { speakQueued, stopSpeaking, whenSpoken, speakableText, warmSpeech } from "./tts";
 import {
   recall,
   recallBlock,
@@ -67,6 +67,14 @@ export interface VoiceContext {
 
 const DEFAULT_THRESHOLD = 0.02;
 const DEFAULT_SILENCE_MS = 900;
+/**
+ * End-of-turn silence when the native VAD is driving endpointing.
+ *
+ * The 900ms default is padding against an RMS threshold clipping soft trailing
+ * speech. Real voice-activity detection reports the boundary directly, so the turn
+ * can end much sooner — this is most of the perceived lag after you stop talking.
+ */
+const SNAPPY_SILENCE_MS = 450;
 const MAX_UTTERANCE_MS = 25_000;
 const IDLE_RESTART_MS = 30_000; // recycle a silent recording so the WAV stays small
 const MIN_UTTERANCE_MS = 350;
@@ -222,6 +230,13 @@ export class VoiceSession {
   /** Wake-word mode: follow-ups are accepted without the wake phrase until this time. */
   private awakeUntil = 0;
   private loudSince = 0;
+  /** Whether the native WebRTC VAD (`mic_speech`) is available: null=unprobed,
+   *  true=use it, false=fall back to the RMS threshold (e.g. on the web build). */
+  private vadOk: boolean | null = null;
+  /** When the audio behind the current live partial was captured. If that's after
+   *  the last voiced frame, the partial already covers the whole utterance and the
+   *  final transcription pass can be skipped. */
+  private partialCoversUntil = 0;
   /** Live transcript of the segment being spoken, for on-screen feedback. */
   private partial = "";
   /** Guards the rolling transcription so passes can't pile up on a slow machine. */
@@ -382,7 +397,7 @@ export class VoiceSession {
       narrate: v.narrateActions ?? true,
       wake: (v.wakeWord ?? "").trim().toLowerCase(),
       followUpMs: (v.followUpSeconds ?? 20) * 1000,
-      bargeIn: v.bargeIn ?? false,
+      bargeIn: v.bargeIn ?? true, // default-on: talking over the avatar interrupts it
       smartEndpoint: v.smartEndpoint ?? true,
       holdMs: v.holdMs ?? DEFAULT_HOLD_MS,
       human: v.humanDelivery ?? true,
@@ -419,6 +434,8 @@ export class VoiceSession {
       this.cb.onStatus(null);
       void startSttServer(stt);
     });
+    // Warm the voice too, so the first reply doesn't wait on a cold TTS engine.
+    void warmSpeech(this.getCtx().settings);
     if (mode === "auto") await this.beginListening();
   }
 
@@ -427,6 +444,7 @@ export class VoiceSession {
     this.running = false;
     this.pending = "";
     this.partial = "";
+    this.partialCoversUntil = 0;
     this.cb.onPartial?.("");
     this.holds = 0;
     if (this.timer) {
@@ -450,6 +468,8 @@ export class VoiceSession {
   /** Push-to-talk key went down. */
   async pttDown() {
     if (!this.running || this.busy) return;
+    this.aborter?.abort(); // barge-in: also cancel any in-flight generation, not
+    // just the audio, so a stale reply can't land after the new turn starts
     await stopSpeaking(); // barge-in: talking over the avatar interrupts it
     await this.beginListening();
   }
@@ -503,6 +523,25 @@ export class VoiceSession {
   }
 
   /** Poll the mic level: drives the orb, and the silence detection in auto mode. */
+  /**
+   * Real speech detection for the recent audio, or null if unavailable.
+   *
+   * Uses the native WebRTC VAD (`mic_speech`) to tell a voice from noise. Probes
+   * once; if the command isn't there (e.g. the web build) it disables itself and
+   * callers fall back to the raw RMS threshold. Returns null when there's no answer.
+   */
+  private async micSpeech(): Promise<boolean | null> {
+    if (this.vadOk === false) return null;
+    try {
+      const v = await invoke<boolean>("mic_speech");
+      this.vadOk = true;
+      return v;
+    } catch {
+      this.vadOk = false; // no native VAD here — fall back to RMS everywhere
+      return null;
+    }
+  }
+
   private async tick() {
     if (!this.running) return;
     let level = 0;
@@ -512,15 +551,21 @@ export class VoiceSession {
       /* not recording */
     }
     const { threshold, silenceMs, bargeIn, holdMs } = this.cfg();
+    // Prefer real voice-activity detection over a raw loudness threshold when the
+    // native VAD is available; `null` means fall back to RMS below.
+    const voiced = this.recorder ? await this.micSpeech() : null;
 
     // Barge-in: while the avatar is speaking we keep a recorder open and watch for
-    // sustained, clearly-louder-than-threshold input, then cut it off and listen.
+    // sustained speech (VAD), or a clearly-louder-than-threshold spike as fallback,
+    // then cut it off and listen.
     if (bargeIn && this.state === "speaking" && this.recorder) {
       const now = Date.now();
-      if (level > threshold * 2.5) {
+      if (voiced ?? level > threshold * 2.5) {
         if (!this.loudSince) this.loudSince = now;
         if (now - this.loudSince > 250) {
           this.loudSince = 0;
+          this.aborter?.abort(); // stop generating too, not just speaking — the
+          // user is taking the turn, so the in-flight reply is now stale
           await stopSpeaking();
           this.setState("listening");
           this.listenStart = now;
@@ -538,7 +583,10 @@ export class VoiceSession {
     if (this.state !== "listening" || !this.recorder) return;
     void this.updatePartial();
     const now = Date.now();
-    if (level > threshold) {
+    // A voiced frame (VAD) — or a loud one when VAD is unavailable — keeps the turn
+    // open. Using real speech here means breathing/fan noise no longer resets the
+    // silence timer, and a soft speaker under the RMS threshold isn't cut off.
+    if (voiced ?? level > threshold) {
       this.lastLoud = now;
       this.heardSpeech = true;
     }
@@ -547,7 +595,12 @@ export class VoiceSession {
     const elapsed = now - this.listenStart;
     // While we're holding a half-finished sentence, give the speaker the longer
     // grace window — they're mid-thought, not done.
-    const wait = this.pending ? Math.max(silenceMs, holdMs) : silenceMs;
+    let wait = this.pending ? Math.max(silenceMs, holdMs) : silenceMs;
+    // With real VAD, speech boundaries are clean — a long silence guard only exists
+    // to avoid clipping soft trailing speech under an RMS threshold, which VAD
+    // doesn't need. End the turn sooner for a snappier, more seamless back-and-forth
+    // (smart-endpointing still catches genuinely unfinished sentences via `pending`).
+    if (this.vadOk && !this.pending) wait = Math.min(wait, SNAPPY_SILENCE_MS);
     if (this.heardSpeech && this.lastLoud && now - this.lastLoud > wait) {
       await this.finishUtterance();
     } else if (elapsed > MAX_UTTERANCE_MS && this.heardSpeech) {
@@ -578,6 +631,9 @@ export class VoiceSession {
     this.lastPartialAt = now;
     this.partialBusy = true;
     try {
+      // The snapshot covers audio up to this instant — remember it, so the final
+      // pass can tell whether this transcript already includes everything said.
+      const snapAt = Date.now();
       const wav = await this.recorder.snapshotPath();
       const stt = (this.getCtx().settings.voice?.sttModel as SttModelId) || DEFAULT_STT;
       const text = (await transcribeFast(wav, stt, this.sttOpts())).trim();
@@ -585,6 +641,7 @@ export class VoiceSession {
       if (!this.recorder || this.state !== "listening") return;
       if (text && !NOISE.test(text)) {
         this.partial = text;
+        this.partialCoversUntil = snapAt;
         this.cb.onPartial?.([this.pending, text].filter(Boolean).join(" "));
       }
     } catch {
@@ -610,6 +667,10 @@ export class VoiceSession {
     // Read the VAD result for the segment being handed over BEFORE resetting it
     // for the next one — this is what decides whether to transcribe at all.
     const spoke = this.heardSpeech;
+    // Did the rolling pass already hear everything? Only true when its audio was
+    // captured after the final voiced frame — otherwise it's missing the tail.
+    const partialIsComplete =
+      !!livePartial && this.lastLoud > 0 && this.partialCoversUntil > this.lastLoud;
     try {
       const wav = continuous ? await rec.takePath() : await rec.stopPath();
       if (continuous) {
@@ -618,21 +679,29 @@ export class VoiceSession {
         this.lastLoud = 0;
         this.heardSpeech = false;
         this.partial = "";
+        this.partialCoversUntil = 0;
       }
       const nothing = spokeFor < MIN_UTTERANCE_MS || (this.mode === "auto" && !spoke);
       let chunk = "";
       if (!nothing) {
         this.setState("thinking");
-        this.cb.onStatus("Transcribing…");
-        const stt = (this.getCtx().settings.voice?.sttModel as SttModelId) || DEFAULT_STT;
-        await ensureWhisper((s) => this.cb.onStatus(s), stt);
-        chunk = (await transcribeFast(wav, stt, this.sttOpts())).trim();
-        this.cb.onStatus(null);
-        if (NOISE.test(chunk)) chunk = "";
-        // The live pass already transcribed this audio once. If the final pass
-        // comes back empty but the rolling one heard words, trust those rather
-        // than dropping the turn entirely.
-        if (!chunk && livePartial && !NOISE.test(livePartial)) chunk = livePartial;
+        if (partialIsComplete && !NOISE.test(livePartial)) {
+          // The rolling pass already transcribed this exact audio, tail included —
+          // re-running the whole segment would just spend seconds reproducing it.
+          // Skipping it removes most of the pause between speaking and replying.
+          chunk = livePartial;
+        } else {
+          this.cb.onStatus("Transcribing…");
+          const stt = (this.getCtx().settings.voice?.sttModel as SttModelId) || DEFAULT_STT;
+          await ensureWhisper((s) => this.cb.onStatus(s), stt);
+          chunk = (await transcribeFast(wav, stt, this.sttOpts())).trim();
+          this.cb.onStatus(null);
+          if (NOISE.test(chunk)) chunk = "";
+          // The live pass already transcribed this audio once. If the final pass
+          // comes back empty but the rolling one heard words, trust those rather
+          // than dropping the turn entirely.
+          if (!chunk && livePartial && !NOISE.test(livePartial)) chunk = livePartial;
+        }
       }
       // Nothing new in this slice: if we were holding a half-sentence, send it now.
       if (!chunk && !this.pending) return;
@@ -672,6 +741,7 @@ export class VoiceSession {
       }
       this.awakeUntil = Date.now() + followUpMs;
       this.partial = "";
+      this.partialCoversUntil = 0;
       this.cb.onPartial?.("");
       this.cb.onUser(spoken);
       await this.respond(spoken);
@@ -826,10 +896,15 @@ export class VoiceSession {
     // Speak in reasonably sized chunks: a short reply ("Hi there. How can I help?")
     // goes out as ONE utterance instead of two, which sounds far more natural.
     const MIN_SPEAK_CHARS = 90;
+    // Speak the very first complete sentence as soon as it lands — waiting for the
+    // full 90-char batch adds real latency to time-to-first-audio. Once we've said
+    // something, batch the rest into larger chunks so playback isn't choppy.
+    const FIRST_SPEAK_CHARS = 12;
     const flush = (chunk: string, force = false) => {
       if (!speak) return chunk;
       const { ready, rest } = force ? { ready: chunk, rest: "" } : takeSentences(chunk);
-      if (!force && ready.trim().length < MIN_SPEAK_CHARS) return chunk; // keep accumulating
+      const min = spokeAny ? MIN_SPEAK_CHARS : FIRST_SPEAK_CHARS;
+      if (!force && ready.trim().length < min) return chunk; // keep accumulating
       if (ready.trim()) {
         const line = speakableText(ready);
         if (line) {

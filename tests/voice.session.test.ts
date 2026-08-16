@@ -47,6 +47,7 @@ vi.mock("../src/lib/tts", () => ({
   stopSpeaking: vi.fn(async () => {}),
   whenSpoken: vi.fn(async () => {}),
   speakableText: (s: string) => s,
+  warmSpeech: vi.fn(async () => {}),
 }));
 vi.mock("../src/lib/memory", () => ({
   recall: vi.fn(async () => []),

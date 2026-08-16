@@ -1144,6 +1144,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0881ea181b1df73ff77ffaaf9c7544ecc11e82fba9b5f27b262a3c73a332555"
 
 [[package]]
+name = "earshot"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "88d6e21bffead7abb6d9202cfb3285b34b2e750335d8cf3460b004f886c6f6db"
+
+[[package]]
 name = "either"
 version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1796,10 +1802,11 @@ dependencies = [
 
 [[package]]
 name = "harnessx"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "base64 0.22.1",
  "cpal",
+ "earshot",
  "flate2",
  "futures-util",
  "keyring",

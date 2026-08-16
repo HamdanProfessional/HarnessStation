@@ -697,7 +697,7 @@ export function VoiceView() {
           <label className="agent-check">
             <input
               type="checkbox"
-              checked={voiceCfg.bargeIn ?? false}
+              checked={voiceCfg.bargeIn ?? true}
               onChange={(e) => patchVoice({ bargeIn: e.target.checked })}
             />
             Let me interrupt by talking (use headphones)
