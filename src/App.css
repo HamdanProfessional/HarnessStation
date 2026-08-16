@@ -5087,3 +5087,172 @@ textarea {
   color: var(--text);
 }
 .profile-view input { width: auto; }
+
+/* ---- Files view (workspace / VM /mnt browser) ---- */
+.files-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 18px 26px;
+  overflow: hidden;
+}
+.files-actions {
+  display: flex;
+  gap: 8px;
+}
+.files-hint {
+  margin: 2px 0 12px;
+}
+.files-crumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.files-crumbs .crumb {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 5px;
+  font-size: 13px;
+}
+.files-crumbs .crumb:hover:not(:disabled) {
+  background: var(--bg-3);
+}
+.files-crumbs .crumb:disabled {
+  color: var(--text-2);
+  cursor: default;
+}
+.files-crumbs .crumb-sep {
+  color: var(--text-dim);
+}
+.files-body {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) 1fr;
+  gap: 14px;
+  flex: 1;
+  min-height: 0;
+}
+.files-list {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-2);
+  overflow-y: auto;
+  padding: 6px;
+}
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  border-radius: 7px;
+}
+.file-row.active,
+.file-row:hover {
+  background: var(--bg-3);
+}
+.file-row > .file-open {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 7px 8px;
+  text-align: left;
+  font-size: 13px;
+}
+.file-ic {
+  display: inline-flex;
+  width: 16px;
+  justify-content: center;
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+.file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-mini {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 4px 7px;
+  border-radius: 6px;
+  opacity: 0;
+  flex-shrink: 0;
+}
+.file-row:hover .file-mini {
+  opacity: 1;
+}
+.file-mini:hover {
+  background: var(--bg-2);
+  color: var(--text);
+}
+.file-mini.danger:hover {
+  color: var(--danger);
+}
+.files-viewer {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-2);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+.files-viewer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.files-viewer-name {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 12px;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.files-content {
+  overflow: auto;
+  padding: 12px 14px;
+  flex: 1;
+  min-height: 0;
+}
+.files-note {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.files-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px;
+  text-align: center;
+}
+.files-placeholder {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+.files-err {
+  color: var(--danger);
+  font-size: 13px;
+  white-space: pre-wrap;
+}

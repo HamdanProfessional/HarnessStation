@@ -77,7 +77,8 @@ export type View =
   | "skills"
   | "mcp"
   | "community"
-  | "browser";
+  | "browser"
+  | "files";
 
 /** What `deleteItem` removes: a whole message, its text, its reasoning, or one tool call. */
 export type DeletePart = "message" | "content" | "reasoning" | { toolCallId: string };

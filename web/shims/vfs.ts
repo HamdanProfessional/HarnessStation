@@ -85,6 +85,7 @@ registerCommand("fs_exists", async (args) => {
 
 registerCommand("fs_list", async (args) => {
   const { base, path } = args as { base: string; path: string };
+  await ensureWorkspace(); // so listing the root of a fresh workspace is empty, not an error
   const entries = await fs.readDir(resolve(base ?? "", path));
   // The desktop returns { name, dir }; match it so the tool layer is unchanged.
   return entries.map((e) => ({ name: e.name, dir: e.isDirectory }));

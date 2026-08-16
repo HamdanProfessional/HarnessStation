@@ -232,6 +232,12 @@ export const IconPencil = ({ size }: IconProps) =>
     size,
   );
 
+export const IconFolder = ({ size }: IconProps) =>
+  svg(
+    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
+    size,
+  );
+
 /** App logo mark: rounded square with an H node-graph. */
 export const LogoMark = ({ size = 26 }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
