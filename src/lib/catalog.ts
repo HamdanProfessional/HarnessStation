@@ -181,6 +181,29 @@ export const CATALOG: CatalogEntry[] = [
   },
   {
     publisher: "unsloth",
+    repo: "Qwen3.8-27B-GGUF",
+    // Sizes are the repo's real byte counts, not the quantsFor() estimate — the
+    // Unsloth Dynamic quants don't scale uniformly. Q8_0 is deliberately absent:
+    // it's the one file published without the "UD-" prefix, so fileBase wouldn't
+    // resolve it.
+    fileBase: "Qwen3.8-27B-UD",
+    displayName: "Qwen 3.8 27B",
+    params: "27B",
+    blurb:
+      "Alibaba's dense multimodal 27B (Apache 2.0), 262K context. Fits a single 24 GB GPU at Q4. Unsloth Dynamic quants. (Text works out of the box; the vision projector isn't auto-loaded.)",
+    quants: [
+      { q: "Q2_K_XL", sizeMB: 9373 },
+      { q: "IQ3_XXS", sizeMB: 10428 },
+      { q: "Q3_K_XL", sizeMB: 12537 },
+      { q: "Q4_K_S", sizeMB: 14646 },
+      { q: "Q4_K_M", sizeMB: 15701 },
+      { q: "Q5_K_M", sizeMB: 18856 },
+      { q: "Q6_K", sizeMB: 20965 },
+    ],
+    defaultQuant: "Q4_K_M",
+  },
+  {
+    publisher: "unsloth",
     repo: "Qwen3.5-122B-A10B-GGUF",
     fileBase: "Qwen3.5-122B-A10B-UD",
     displayName: "Qwen3.5 122B (A10B MoE)",
@@ -230,16 +253,18 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     name: "Groq",
     by: "groq.com",
     blurb:
-      "Extremely fast inference on open models (Llama, Qwen, GPT-OSS, Kimi). Generous free tier.",
+      "Extremely fast inference on open models (GPT-OSS, Qwen, MiniMax) plus Groq's own agentic Compound systems. Generous free tier.",
     kind: "openai-compatible",
     baseUrl: "https://api.groq.com/openai/v1",
+    // Groq retired the Llama 3.x, Qwen3-32B and Kimi-K2 endpoints — those ids now
+    // 404. The last two here are preview models and can move without notice.
     models: [
-      "llama-3.3-70b-versatile",
-      "llama-3.1-8b-instant",
       "openai/gpt-oss-120b",
       "openai/gpt-oss-20b",
-      "qwen/qwen3-32b",
-      "moonshotai/kimi-k2-instruct",
+      "groq/compound",
+      "groq/compound-mini",
+      "qwen/qwen3.6-27b",
+      "minimaxai/minimax-m2.7",
     ],
     keyUrl: "https://console.groq.com/keys",
     free: true,
@@ -253,10 +278,11 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     kind: "openai-compatible",
     baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
     models: [
+      "gemini-3.7-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.1-pro-preview",
       "gemini-2.5-pro",
       "gemini-2.5-flash",
-      "gemini-2.5-flash-lite",
-      "gemini-2.0-flash",
     ],
     keyUrl: "https://aistudio.google.com/apikey",
     free: true,
@@ -295,11 +321,13 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
       "One key for hundreds of models across providers. Many :free variants available.",
     kind: "openai-compatible",
     baseUrl: "https://openrouter.ai/api/v1",
+    // Which models carry a `:free` variant rotates constantly — these were live at
+    // the last refresh. Hit "refresh" in a chat to pull the current list.
     models: [
-      "deepseek/deepseek-r1:free",
-      "meta-llama/llama-3.3-70b-instruct:free",
-      "google/gemini-2.0-flash-exp:free",
-      "qwen/qwen3-coder:free",
+      "nvidia/nemotron-3.5-lightning:free",
+      "liquid/lfm-2.5-2.6b:free",
+      "dots-studio/dots-3-note-preview:free",
+      "poolside/laguna-s-2.1:free",
     ],
     keyUrl: "https://openrouter.ai/keys",
     free: true,
@@ -308,10 +336,10 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     id: "cerebras",
     name: "Cerebras",
     by: "cerebras.ai",
-    blurb: "Fastest tokens/sec on the market for Llama and Qwen. Free tier for developers.",
+    blurb: "Fastest tokens/sec on the market, now serving GPT-OSS and Gemma 4. Free tier for developers.",
     kind: "openai-compatible",
     baseUrl: "https://api.cerebras.ai/v1",
-    models: ["llama-3.3-70b", "llama3.1-8b", "qwen-3-235b-a22b-instruct-2507"],
+    models: ["gpt-oss-120b", "gemma-4-31b"],
     keyUrl: "https://cloud.cerebras.ai",
     free: true,
   },
@@ -322,7 +350,9 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     blurb: "DeepSeek's own API — chat and reasoning models at very low cost.",
     kind: "openai-compatible",
     baseUrl: "https://api.deepseek.com/v1",
-    models: ["deepseek-chat", "deepseek-reasoner"],
+    // V4 renamed the endpoints: the old `deepseek-chat` / `deepseek-reasoner` ids
+    // are no longer in the API docs. Off-peak pricing (UTC) is roughly half.
+    models: ["deepseek-v4-pro", "deepseek-v4-flash"],
     keyUrl: "https://platform.deepseek.com/api_keys",
   },
   {
@@ -332,7 +362,7 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     blurb: "Grok models from xAI via an OpenAI-compatible endpoint.",
     kind: "openai-compatible",
     baseUrl: "https://api.x.ai/v1",
-    models: ["grok-4", "grok-4-fast", "grok-3", "grok-3-mini"],
+    models: ["grok-4.6", "grok-4.5", "grok-4.3"],
     keyUrl: "https://console.x.ai",
   },
   {
@@ -342,7 +372,9 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     blurb: "Mistral's hosted models (Large, Small, Codestral). Free tier available.",
     kind: "openai-compatible",
     baseUrl: "https://api.mistral.ai/v1",
-    models: ["mistral-large-latest", "mistral-small-latest", "codestral-latest", "ministral-8b-latest"],
+    // `-latest` aliases still resolve (large → Mistral Large 3 / 2512) and keep this
+    // row current on their own, so they're preferred over pinned dates where one exists.
+    models: ["mistral-large-latest", "mistral-medium-2604", "mistral-small-latest", "codestral-latest", "ministral-3-8b-2512"],
     keyUrl: "https://console.mistral.ai/api-keys",
     free: true,
   },
@@ -354,10 +386,11 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     kind: "openai-compatible",
     baseUrl: "https://api.together.xyz/v1",
     models: [
-      "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-      "Qwen/Qwen2.5-72B-Instruct-Turbo",
-      "deepseek-ai/DeepSeek-V3",
-      "mistralai/Mixtral-8x7B-Instruct-v0.1",
+      "deepseek-ai/DeepSeek-V4-Pro",
+      "Qwen/Qwen3.8-2.4T-A95B",
+      "moonshotai/Kimi-K3",
+      "zai-org/GLM-5.2",
+      "google/gemma-4-31B-it",
     ],
     keyUrl: "https://api.together.ai/settings/api-keys",
     free: true,
@@ -370,9 +403,11 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     kind: "openai-compatible",
     baseUrl: "https://api.fireworks.ai/inference/v1",
     models: [
-      "accounts/fireworks/models/llama-v3p3-70b-instruct",
-      "accounts/fireworks/models/deepseek-v3",
-      "accounts/fireworks/models/qwen2p5-72b-instruct",
+      "accounts/fireworks/models/kimi-k3",
+      "accounts/fireworks/models/deepseek-v4-pro",
+      "accounts/fireworks/models/qwen3p8-2p4t-a95b",
+      "accounts/fireworks/models/glm-5p2",
+      "accounts/fireworks/models/minimax-m3",
     ],
     keyUrl: "https://fireworks.ai/account/api-keys",
     free: true,
@@ -385,9 +420,10 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     kind: "openai-compatible",
     baseUrl: "https://api.deepinfra.com/v1/openai",
     models: [
-      "meta-llama/Llama-3.3-70B-Instruct",
-      "deepseek-ai/DeepSeek-V3",
-      "Qwen/Qwen2.5-72B-Instruct",
+      "deepseek-ai/DeepSeek-V4-Pro-0813",
+      "Qwen/Qwen3.8-Max",
+      "moonshotai/Kimi-K3",
+      "zai-org/GLM-5.2",
     ],
     keyUrl: "https://deepinfra.com/dash/api_keys",
   },
@@ -413,7 +449,7 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     blurb: "Zhipu's GLM models — strong and cheap, with a generous coding plan. Pay-as-you-go API.",
     kind: "openai-compatible",
     baseUrl: "https://api.z.ai/api/openai/v1",
-    models: ["glm-5.2", "glm-5.1", "glm-5-turbo", "glm-4.7", "glm-4.7-flash"],
+    models: ["glm-5.3", "glm-5.2", "glm-5.1", "glm-5-turbo", "glm-4.7", "glm-4.7-flash"],
     keyUrl: "https://z.ai/manage-apikey/apikey-list",
   },
   {
@@ -424,7 +460,7 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
       "GLM Coding Plan endpoint — flat-rate subscription for heavy coding use. Uses the same z.ai API key on the coding-only URL.",
     kind: "openai-compatible",
     baseUrl: "https://api.z.ai/api/coding/paas/v4",
-    models: ["glm-5.2", "glm-5.1", "glm-4.7"],
+    models: ["glm-5.3", "glm-5.2", "glm-5.1", "glm-4.7"],
     keyUrl: "https://z.ai/subscribe",
   },
   {
@@ -492,20 +528,23 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     id: "openai",
     name: "OpenAI",
     by: "openai.com",
-    blurb: "GPT-5 series and the o-series reasoning models, direct from OpenAI.",
+    blurb: "The GPT-5.6 family — Sol (deepest reasoning), Terra (balanced) and Luna (fastest), direct from OpenAI.",
     kind: "openai-compatible",
     baseUrl: "https://api.openai.com/v1",
-    models: ["gpt-5.1", "gpt-5", "gpt-5-mini", "o4-mini"],
+    // The bare `gpt-5.6` alias routes to Sol; the tiers are listed explicitly so
+    // the picker shows the cost/latency choice rather than hiding it behind one id.
+    // o4-mini was dropped here: deprecated 2026-04-22, shuts down 2026-10-23.
+    models: ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.1"],
     keyUrl: "https://platform.openai.com/api-keys",
   },
   {
     id: "anthropic",
     name: "Anthropic (Claude)",
     by: "anthropic.com",
-    blurb: "Claude models direct from Anthropic — Opus, Sonnet and Haiku. Great at coding and tool use.",
+    blurb: "Claude models direct from Anthropic — Fable, Opus, Sonnet and Haiku. Great at coding and tool use.",
     kind: "anthropic",
     baseUrl: "https://api.anthropic.com",
-    models: ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"],
+    models: ["claude-fable-5", "claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"],
     keyUrl: "https://console.anthropic.com/settings/keys",
   },
   {
