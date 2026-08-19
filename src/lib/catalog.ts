@@ -247,6 +247,54 @@ export interface CloudProvider {
   free?: boolean;
 }
 
+/**
+ * Maps a `CLOUD_PROVIDERS` id to its provider slug in the live price catalog
+ * (models.dev, via `lib/pricing/sources`).
+ *
+ * This list below is hand-maintained and goes stale silently: in Aug 2026 the
+ * Groq rows still advertised `llama-3.3-70b-versatile` and the DeepSeek rows
+ * still said `deepseek-chat`, months after both endpoints were retired. Nothing
+ * caught it, because nothing was checking.
+ *
+ * The app already fetches ~6,700 priced models with their exact `modelKey`s, so
+ * the answer was already in the building — it just wasn't wired to the question.
+ * `tests/catalog.live.test.ts` joins the two on this map and reports ids the
+ * live feed has never heard of.
+ *
+ * `null` means "the price catalog doesn't cover this provider", which is a
+ * different statement from "we forgot". Both are unverifiable, but only one is
+ * a bug. Note `hyperbolic` is deliberately null: models.dev has a `hyper` slug,
+ * but that is Charm Hyper, a different company.
+ *
+ * Omitted ids default to the id itself. A test asserts every provider is
+ * accounted for here, so adding a provider without deciding this fails the build
+ * rather than quietly opting out of the check.
+ */
+export const PRICE_SLUG: Record<string, string | null> = {
+  gemini: "google",
+  together: "togetherai",
+  fireworks: "fireworks-ai",
+  "zai-coding": "zai-coding-plan",
+  moonshot: "moonshotai",
+  qwen: "alibaba",
+  novita: "novita-ai",
+  "inference-net": "inference",
+  // Not carried by the price feed — unverifiable, not broken.
+  hyperbolic: null,
+  sambanova: null,
+  featherless: null,
+  lambda: null,
+  "github-models": null,
+  avian: null,
+  aimlapi: null,
+  nscale: null,
+};
+
+/** The price-catalog slug for a provider, or null when it isn't covered. */
+export function priceSlugFor(id: string): string | null {
+  return id in PRICE_SLUG ? PRICE_SLUG[id] : id;
+}
+
 export const CLOUD_PROVIDERS: CloudProvider[] = [
   {
     id: "groq",
@@ -374,7 +422,7 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     baseUrl: "https://api.mistral.ai/v1",
     // `-latest` aliases still resolve (large → Mistral Large 3 / 2512) and keep this
     // row current on their own, so they're preferred over pinned dates where one exists.
-    models: ["mistral-large-latest", "mistral-medium-2604", "mistral-small-latest", "codestral-latest", "ministral-3-8b-2512"],
+    models: ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest", "codestral-latest", "ministral-8b-latest"],
     keyUrl: "https://console.mistral.ai/api-keys",
     free: true,
   },
@@ -435,9 +483,10 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     kind: "openai-compatible",
     baseUrl: "https://api.studio.nebius.com/v1",
     models: [
-      "meta-llama/Llama-3.3-70B-Instruct",
-      "Qwen/Qwen2.5-72B-Instruct",
-      "deepseek-ai/DeepSeek-V3",
+      "deepseek-ai/DeepSeek-V4-Pro",
+      "zai-org/GLM-5.2",
+      "moonshotai/Kimi-K3",
+      "MiniMaxAI/MiniMax-M3",
     ],
     keyUrl: "https://studio.nebius.com",
     free: true,
@@ -502,9 +551,11 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     kind: "openai-compatible",
     baseUrl: "https://api.novita.ai/v3/openai",
     models: [
-      "deepseek/deepseek-v3",
-      "meta-llama/llama-3.3-70b-instruct",
-      "qwen/qwen2.5-72b-instruct",
+      "deepseek/deepseek-v4-pro",
+      "deepseek/deepseek-v4-flash",
+      "moonshotai/kimi-k3",
+      "zai-org/glm-5.2",
+      "qwen/qwen3.7-max",
     ],
     keyUrl: "https://novita.ai/settings/key-management",
     free: true,
@@ -516,10 +567,13 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     blurb: "Decentralized inference (Bittensor) — many open models near-free ($0–0.30 / 1M tokens).",
     kind: "openai-compatible",
     baseUrl: "https://llm.chutes.ai/v1",
+    // Chutes suffixes its ids "-TEE" (models run in a trusted execution
+    // environment); an id without it is not a valid model there.
     models: [
-      "deepseek-ai/DeepSeek-V3",
-      "Qwen/Qwen2.5-72B-Instruct",
-      "chutesai/Llama-4-Scout-17B-16E-Instruct",
+      "deepseek-ai/DeepSeek-V4-Flash-0731-TEE",
+      "Qwen/Qwen3.8-27B-TEE",
+      "moonshotai/Kimi-K3-TEE",
+      "zai-org/GLM-5.2-TEE",
     ],
     keyUrl: "https://chutes.ai/app/api",
     free: true,
@@ -554,7 +608,7 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     blurb: "Sonar models with live web search built in — cited, up-to-date answers.",
     kind: "openai-compatible",
     baseUrl: "https://api.perplexity.ai",
-    models: ["sonar-pro", "sonar", "sonar-reasoning-pro", "sonar-reasoning"],
+    models: ["sonar-pro", "sonar", "sonar-reasoning-pro", "sonar-deep-research"],
     keyUrl: "https://www.perplexity.ai/settings/api",
   },
   {
@@ -564,7 +618,7 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     blurb: "Command models via Cohere's OpenAI-compatible endpoint. Strong RAG and tool use.",
     kind: "openai-compatible",
     baseUrl: "https://api.cohere.ai/compatibility/v1",
-    models: ["command-a-03-2025", "command-r-plus", "command-r"],
+    models: ["command-a-plus-05-2026", "command-a-03-2025", "command-a-reasoning-08-2025"],
     keyUrl: "https://dashboard.cohere.com/api-keys",
   },
   {
@@ -586,10 +640,10 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     kind: "openai-compatible",
     baseUrl: "https://integrate.api.nvidia.com/v1",
     models: [
-      "meta/llama-3.3-70b-instruct",
-      "deepseek-ai/deepseek-v3",
-      "qwen/qwen2.5-72b-instruct",
-      "nvidia/llama-3.1-nemotron-70b-instruct",
+      "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "nvidia/nemotron-3-ultra-550b-a55b",
+      "z-ai/glm-5.2",
+      "minimaxai/minimax-m3",
     ],
     keyUrl: "https://build.nvidia.com",
     free: true,
@@ -612,7 +666,7 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     blurb: "Large catalog of open models (DeepSeek, Qwen, GLM) on a fast API. Free tier available.",
     kind: "openai-compatible",
     baseUrl: "https://api.siliconflow.com/v1",
-    models: ["deepseek-ai/DeepSeek-V3", "Qwen/Qwen2.5-72B-Instruct", "THUDM/glm-4-9b-chat"],
+    models: ["deepseek-ai/DeepSeek-V4-Pro", "zai-org/GLM-5.2", "Qwen/Qwen3.6-27B"],
     keyUrl: "https://cloud.siliconflow.com/account/ak",
     free: true,
   },
@@ -675,7 +729,7 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     blurb: "EU-hosted open models (Llama, Qwen, DeepSeek) on a fast OpenAI-compatible API. Free beta.",
     kind: "openai-compatible",
     baseUrl: "https://api.scaleway.ai/v1",
-    models: ["llama-3.3-70b-instruct", "qwen2.5-coder-32b-instruct", "deepseek-r1-distill-llama-70b"],
+    models: ["glm-5.2", "qwen3.6-35b-a3b", "mistral-medium-3.5-128b", "gemma-4-26b-a4b-it"],
     keyUrl: "https://console.scaleway.com/generative-api/models",
     free: true,
   },
@@ -701,7 +755,9 @@ export const CLOUD_PROVIDERS: CloudProvider[] = [
     blurb: "Low-cost serverless inference for open models via an OpenAI-compatible API.",
     kind: "openai-compatible",
     baseUrl: "https://api.inference.net/v1",
-    models: ["meta-llama/llama-3.3-70b-instruct", "deepseek-ai/deepseek-v3", "qwen/qwen2.5-coder-32b-instruct"],
+    // inference.net's roster is small and older than the aggregators' — these
+    // are what it actually serves, not what we'd like it to serve.
+    models: ["google/gemma-3", "meta/llama-3.1-8b-instruct", "meta/llama-3.2-3b-instruct"],
     keyUrl: "https://inference.net/dashboard/api-keys",
   },
   {
