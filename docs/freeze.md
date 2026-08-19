@@ -1,6 +1,7 @@
 # Frozen — what this project is deliberately not doing
 
-*Written 2026-08-17.*
+*Written 2026-08-17. Bundle figures corrected 2026-08-20 — see constraint 2;
+the correction affects the avatars entry.*
 
 A roadmap says what you'll build. This says what you won't, which for a
 single-maintainer project with 127 frontend files matters more. Anything listed
@@ -18,16 +19,33 @@ decision to be re-litigated each time it's touched; it has already been decided.
 
 ## Why freeze anything
 
-Three constraints, all real:
+Two constraints, both real — and one that turned out not to be:
 
 1. **One maintainer.** Every feature is a surface that breaks when a dependency,
    a provider API or an OS moves. The surface is already larger than one person
    can actively develop.
-2. **The bundle.** The entry chunk is ~6 MB (2.1 MB gzipped). Now that the
-   browser build is the front door, that number is a conversion cost paid by
-   every first-time visitor, not just a build-log warning.
+2. **~~The bundle.~~ Corrected 2026-08-20 — this was measured wrong, and it was
+   the weakest of the three anyway.**
+
+   The original claim was "the entry chunk is ~6 MB (2.1 MB gzipped)... a
+   conversion cost paid by every first-time visitor". **The entry chunk is
+   774 kB (241 kB gzipped).**
+
+   The 6 MB chunk is `@mlc-ai/web-llm`, which Vite happened to name
+   `index-*.js` in the build log — that is where the misreading came from. It is
+   lazy: `dist/index.html` neither loads nor preloads it, and it is fetched only
+   if someone actually runs a model in the tab. Verified by forcing it into an
+   explicitly named chunk, which produced a byte-identical file with the same
+   content hash.
+
+   Bundle size still deserves attention now that a tab is the first impression.
+   But at 241 kB gzipped it is not a number that justifies freezing a feature,
+   and it should not be cited as one.
 3. **The sentence.** You cannot say what a product is in one line while it does
    everything. Freezing the long tail is what makes the short pitch true.
+
+Constraints 1 and 3 are untouched by the correction, and between them they still
+justify most of this document. Only the avatars entry leaned on constraint 2.
 
 ---
 
@@ -40,17 +58,33 @@ Three constraints, all real:
 **Frozen:** `roadmap.md` §2.1 (viseme lip-sync via `AnalyserNode`, mouse/camera
 head tracking) is **not being done**.
 
-**Why:** it carries `three` (734 kB) + `three-vrm` (150 kB) + a vendored
-`MMDLoader`, which is the single largest dependency group serving the smallest
-audience. It's also the feature most likely to make a serious evaluator — the
-kind who'd pay for an org licence — stop taking the product seriously.
+**Why:** it is the feature most likely to make a serious evaluator — the kind
+who'd pay for an org licence — stop taking the product seriously. That reason is
+about positioning, it is independent of anything technical, and it stands.
+
+**~~Why (bundle cost)~~ — withdrawn 2026-08-20.** The original entry also said
+`three` (734 kB) + `three-vrm` (150 kB) + the vendored `MMDLoader` were "the
+single largest dependency group serving the smallest audience". They are still
+the largest group, but they cost a non-user **nothing**: `three` builds as its
+own chunk and `dist/index.html` carries no modulepreload for it, so it is
+fetched only when an avatar is actually opened. See constraint 2.
 
 **Honest counter-argument:** it is probably the best social-media hook in the
 app. A talking 3D character is far more shareable than a price table. That's why
 this is frozen at "works" rather than removed.
 
-**Unfreeze when:** avatars are demonstrably driving adoption, or the whole
-avatar stack can move behind a lazy boundary that costs a non-user nothing.
+**Unfreeze when:** avatars are demonstrably driving adoption.
+
+> The second condition here used to read "or the whole avatar stack can move
+> behind a lazy boundary that costs a non-user nothing". **That condition was
+> already met when it was written** — the lazy boundary exists. It has been
+> removed rather than marked satisfied, because leaving it would mean this entry
+> unfreezes on a technicality rather than on the positioning judgement that is
+> the actual reason to keep it frozen.
+>
+> Net effect of the correction: the freeze still holds, but on one reason
+> instead of two. If the positioning argument ever stops convincing, there is
+> nothing else holding it.
 
 ### The 74-lecture course
 
@@ -123,7 +157,7 @@ earn work:
 | **Device mesh** (`src-tauri/src/mesh.rs`) | Rare, and the request bodies are still plaintext — a stated security hole in a product whose whole pitch is privacy. Fixing it is not optional. |
 | **Value / price intelligence** (`lib/pricing/`) | Nobody else in the category has it, it needs no key or server, and it depends on upstream schemas that will move — hence the live canary test. |
 | **Core loop** — chat, tools, MCP, memory | The thing everything else hangs off. |
-| **Bundle size** | Directly a conversion cost now that a tab is the first impression. |
+| **Bundle size** | Worth watching now that a tab is the first impression — but the entry is 241 kB gzipped, not the 6 MB previously claimed, so this is maintenance rather than a fire. Keep the heavy deps (`web-llm`, `three`, `kokoro`, `mermaid`) behind the lazy boundaries they are already behind. |
 | **Making features into MCP servers** | The structural fix for all of the above: a small core plus independently-versioned satellites is the only shape one person can sustain. |
 
 ---
