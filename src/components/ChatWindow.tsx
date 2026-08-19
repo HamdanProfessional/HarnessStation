@@ -8,7 +8,9 @@ import { startRecording, type Recorder } from "../lib/audio";
 import type { Attachment } from "../lib/types";
 import { useStore } from "../lib/store";
 import { ensureWhisper, transcribePath } from "../lib/whisper";
-import { LogoMark } from "./icons";
+import { IconX, IconSpeaker, LogoMark } from "./icons";
+import { useMicAvailable, type MicStatus } from "../lib/micDetect";
+import { FirstRunKey } from "./FirstRunKey";
 import { InlineBrowser } from "./InlineBrowser";
 import { MultiAgentBar } from "./MultiAgentBar";
 import { TrajectoryView } from "./TrajectoryView";
@@ -84,7 +86,7 @@ function DeleteItemBtn({ label, onDelete }: { label: string; onDelete: () => voi
       }}
       onKeyDown={(e) => e.key === "Enter" && onDelete()}
     >
-      ×
+      <IconX size={11} />
     </span>
   );
 }
@@ -170,7 +172,7 @@ function ToolResult({
 }
 
 export function ChatWindow() {
-  const { chats, currentId, streaming, error, sendMessage, regenerate, stop, clearError, branchAt, editUserMessage, rewindTo, deleteItem, agents, compactChat, setView, settings, browserDock } =
+  const { chats, currentId, streaming, error, sendMessage, regenerate, stop, clearError, branchAt, editUserMessage, rewindTo, deleteItem, agents, compactChat, settings, browserDock, setView, updateChatById } =
     useStore();
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
@@ -181,6 +183,23 @@ export function ChatWindow() {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [recorder, setRecorder] = useState<Recorder | null>(null);
   const [voiceState, setVoiceState] = useState<string | null>(null);
+  /** Voice-first is the default empty state. The "Type instead" link toggles
+   *  to the text-mode starter prompts. Persisted per-chat so a user who
+   *  prefers text doesn't have to flip it every chat. The persisted choice
+   *  wins, but if the user hasn't chosen, smart detection picks the default:
+   *  voice-first when a mic is available or unknown, text-first when one
+   *  isn't. Toggling always updates the persisted preference. */
+  const micStatus = useMicAvailable();
+  const [textMode, setTextMode] = useState<boolean | null>(() => {
+    const saved = localStorage.getItem("hs-chat-textmode");
+    if (saved === "1") return true;
+    if (saved === "0") return false;
+    return null; // not yet chosen — smart detection will decide
+  });
+  /** Resolved text-mode for this render. Pending until the mic status resolves
+   *  (so we don't flash voice-first on a mic-less device). */
+  const resolvedTextMode =
+    textMode !== null ? textMode : micStatus === "unavailable";
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -259,17 +278,50 @@ export function ChatWindow() {
         {chat.messages.length === 0 && (() => {
           const provider = settings.providers.find((p) => p.id === chat.providerId);
           const isLocal = provider ? /localhost|127\.0\.0\.1/.test(provider.baseUrl) : false;
-          const ready = !!provider && !!chat.model && (isLocal || provider.apiKey.trim() !== "");
+          const currentReady = !!provider && !!chat.model && (isLocal || provider.apiKey.trim() !== "");
+          // The user has ANY key on file — they're set up, just not necessarily
+          // on this chat's provider. Show the starter prompts and let them pick
+          // a model in the right rail rather than nagging them to add a key
+          // they already have.
+          const anyKey = settings.providers.some((p) => /localhost|127\.0\.0\.1/.test(p.baseUrl) || p.apiKey.trim() !== "");
+          const ready = currentReady || anyKey;
+          // Voice-first is THE default. The brand promise is hands-free, and the
+          // top of the empty state is the strongest piece of real estate in the
+          // app. Text mode is still here, but one click away rather than equal.
+          const toggleTextMode = () => {
+            const next = !resolvedTextMode;
+            setTextMode(next);
+            localStorage.setItem("hs-chat-textmode", next ? "1" : "0");
+          };
+          // Voice mode is a property of the chat, not a navigation. Toggling
+          // it on persists across loads, so the chat reopens in voice mode
+          // when the user comes back. The VoiceView is still a fullscreen
+          // focus-mode — voice mode is the persistent flag, the view is the
+          // spot to use it.
+          const openVoice = () => {
+            updateChatById(chat.id, { voiceMode: true });
+            setView("voice");
+          };
           return (
             <div className="empty-state">
-              <LogoMark size={46} />
-              <h2>Run any model as an agent</h2>
-              <p>
-                Local, free-cloud, or a flat-rate coding plan — with tools, files, and knowledge, in
-                one place.
-              </p>
-              {ready ? (
+              {!ready ? (
                 <>
+                  <LogoMark size={46} />
+                  <h2>Your AI chat. Your machine. Your keys.</h2>
+                  <p>
+                    Give any model real tools — your files, a terminal, the web and a browser —
+                    without an account and without your conversations leaving this computer.
+                  </p>
+                  <FirstRunKey />
+                </>
+              ) : resolvedTextMode ? (
+                <>
+                  <LogoMark size={46} />
+                  <h2>Your AI chat. Your machine. Your keys.</h2>
+                  <p>
+                    Give any model real tools — your files, a terminal, the web and a browser —
+                    without an account and without your conversations leaving this computer.
+                  </p>
                   <p className="empty-hint">Try one of these to get started:</p>
                   <div className="prompt-chips">
                     {STARTER_PROMPTS.map((p) => (
@@ -278,15 +330,37 @@ export function ChatWindow() {
                       </button>
                     ))}
                   </div>
+                  {!currentReady && (
+                    <p className="hint">
+                      <b>Pick a model in the right panel</b> — your key is set, just on a
+                      different provider than this chat's default.
+                    </p>
+                  )}
+                  <button className="link-btn empty-voice-link" onClick={toggleTextMode}>
+                    🎙 Try voice instead
+                  </button>
                 </>
               ) : (
                 <>
+                  {/* The orb is the only button the user needs to press. It
+                      opens the full Voice view, which handles its own setup
+                      (mic permission, TTS engine, etc.). */}
+                  <button
+                    className="voice-orb-cta"
+                    onClick={openVoice}
+                    aria-label="Start a voice conversation"
+                    title="Start a voice conversation"
+                  >
+                    <span className="orb-core" />
+                  </button>
+                  <h2>Press to talk</h2>
                   <p className="empty-hint">
-                    No model connected yet. Add a free local, free-cloud, or coding-plan model to
-                    begin.
+                    Speak naturally — your AI chat listens and replies out loud. Your mic and
+                    the conversation stay on your machine.
                   </p>
-                  <button className="btn primary" onClick={() => setView("discover")}>
-                    Connect a model →
+                  <MicStatusHint status={micStatus} />
+                  <button className="link-btn empty-voice-link" onClick={toggleTextMode}>
+                    Type instead →
                   </button>
                 </>
               )}
@@ -445,7 +519,7 @@ export function ChatWindow() {
           <div className="error-banner" role="alert">
             <span>{error}</span>
             <button className="error-dismiss" onClick={clearError} aria-label="Dismiss error">
-              ×
+              <IconX size={12} />
             </button>
           </div>
         )}
@@ -528,6 +602,27 @@ export function ChatWindow() {
               >
                 {recorder ? "Stop rec" : "Dictate"}
               </button>
+              {/* Persistent voice-mode entry point. Distinct from "Dictate" —
+                  this opens the full hands-free voice session, not a one-shot
+                  dictation. The mic button is always visible so the brand
+                  promise of voice-first is reinforced every time the user
+                  looks at the composer. */}
+              <button
+                className={`btn ghost composer-mic${chat.voiceMode ? " active" : ""}`}
+                onClick={() => {
+                  // Toggle voice mode on the chat, then open the VoiceView
+                  // for the actual session. voiceMode persists so the chat
+                  // is in voice mode next time the user opens it — the
+                  // fullscreen view is just where you use it.
+                  updateChatById(chat.id, { voiceMode: !chat.voiceMode });
+                  setView("voice");
+                }}
+                title={chat.voiceMode ? "Voice mode is on — open session" : "Open voice mode (hands-free)"}
+                aria-label="Open voice mode"
+                aria-pressed={!!chat.voiceMode}
+              >
+                <IconSpeaker size={14} /> Voice
+              </button>
             </div>
             <div className="composer-right">
               {streaming ? (
@@ -566,10 +661,35 @@ export function ChatWindow() {
                   </button>
                 </>
               )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-  );
+             </div>
+           </div>
+         </div>
+       </div>
+     </main>
+   );
+ }
+
+/**
+ * One-line trust signal under the voice-first empty state. Three states:
+ *
+ *   - "available"   a small green dot says "Mic ready" — quiet reassurance
+ *   - "unavailable" a warning says voice needs a mic, and a hint to type
+ *   - "unknown"     nothing rendered — we don't want to claim what's
+ *                   unverified. The orb CTA still works on click.
+ *
+ * The "unavailable" hint is the only one that surfaces a problem a user
+ * might otherwise hit on click. The other two are quiet by design.
+ */
+function MicStatusHint({ status }: { status: MicStatus }) {
+  if (status === "available") {
+    return <p className="mic-hint mic-hint-ok"><span className="mic-dot" />Mic ready</p>;
+  }
+  if (status === "unavailable") {
+    return (
+      <p className="mic-hint mic-hint-warn">
+        No microphone detected — voice mode won't work on this device.
+      </p>
+    );
+  }
+  return null;
 }

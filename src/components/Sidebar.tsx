@@ -18,6 +18,9 @@ import {
   IconChevron,
   IconPanelLeft,
   IconX,
+  IconSun,
+  IconMoon,
+  IconShield,
 } from "./icons";
 import { NotificationBell } from "./NotificationBell";
 
@@ -65,6 +68,7 @@ export function Sidebar() {
     newProjectChat,
     setSidebarOpen,
     settings,
+    saveSettings,
   } = useStore();
   // Active profile hides whole views/sections from the nav (see lib/views).
   const activeProfile = settings.profiles?.find((p) => p.id === settings.activeProfileId);
@@ -131,7 +135,7 @@ export function Sidebar() {
       onClick={() => selectChat(c.id)}
     >
       <span className="chat-icon">
-        {c.kind === "voice" ? <IconSpeaker size={14} /> : <IconChat size={14} />}
+        {c.kind === "voice" || c.voiceMode ? <IconSpeaker size={14} /> : <IconChat size={14} />}
       </span>
       <span className="chat-text">
         <span className="chat-title">
@@ -140,7 +144,9 @@ export function Sidebar() {
         </span>
         <span className="chat-sub">
           {c.id === activeVoiceChat ? <span className="live-dot" title="Call in progress" /> : null}
-          {c.kind === "voice" ? "Call · " : ""}
+          {c.voiceMode && c.id !== activeVoiceChat ? "Voice · " : ""}
+          {c.kind === "voice" && !c.voiceMode ? "Call · " : ""}
+          {c.id === activeVoiceChat ? "On call · " : ""}
           {relTime(c.updatedAt)}
           {/* Loaded chats know their own length; the rest come from the index. */}
           {(c.messages.length || messageCounts[c.id] || 0) > 0 &&
@@ -227,6 +233,18 @@ export function Sidebar() {
     if (ok) await deleteProject(id);
   };
 
+  // Cycle dark → light → system → dark. The icon shows the *current* state so the
+  // button reads as a state indicator as well as an action.
+  const cycleTheme = () => {
+    const next = settings.theme === "dark" ? "light" : settings.theme === "light" ? "system" : "dark";
+    void saveSettings({ ...settings, theme: next });
+  };
+  const themeIcon = settings.theme === "light" ? <IconSun size={14} /> : <IconMoon size={14} />;
+  const themeLabel =
+    settings.theme === "dark" ? "Theme: dark (click for light)" :
+    settings.theme === "light" ? "Theme: light (click for system)" :
+    "Theme: follows system (click for dark)";
+
   const navBtn = (v: View, label: string, icon: React.ReactNode) => (
     <button key={v} className={`nav-btn ${view === v ? "active" : ""}`} onClick={() => setView(v)}>
       <span className="nav-icon">{icon}</span>
@@ -241,6 +259,14 @@ export function Sidebar() {
         <span className="logo">HarnessStation</span>
         <NotificationBell />
         <button
+          className="icon-btn"
+          title={themeLabel}
+          aria-label={themeLabel}
+          onClick={cycleTheme}
+        >
+          {themeIcon}
+        </button>
+        <button
           className="icon-btn sidebar-collapse"
           title="Hide sidebar"
           aria-label="Hide sidebar"
@@ -249,6 +275,18 @@ export function Sidebar() {
           <IconPanelLeft size={15} />
         </button>
       </div>
+
+      {/* The privacy claim is the product's one uncopyable differentiator, so it
+          is stated where it is always visible rather than left in PRIVACY.md
+          for the few who go looking. */}
+      <button
+        className="trust-badge"
+        title="Local-first. No account. No telemetry. Your keys stay in your OS keychain. Your chats never leave your machine."
+        onClick={() => setView("settings")}
+      >
+        <IconShield size={12} />
+        We don&apos;t see your chats
+      </button>
 
       <div className="new-row">
         <button className="btn primary new-chat-btn" onClick={newChat}>
@@ -449,6 +487,24 @@ export function Sidebar() {
           </div>
         );
       })}
+      {/* A profile hides views rather than removing them, so the way back has to
+          be visible — a feature you can't find is the same as one that isn't
+          there. Shown only while something is actually hidden. */}
+      {hiddenViews.size > 0 && (
+        <div className="nav-section">
+          <button
+            className="nav-btn nav-more"
+            title="Show every view in the sidebar"
+            onClick={() => void saveSettings({ ...settings, activeProfileId: undefined })}
+          >
+            <span className="nav-ico" aria-hidden="true">
+              <IconPlus size={15} />
+            </span>
+            Show all features
+            <span className="nav-count">{hiddenViews.size}</span>
+          </button>
+        </div>
+      )}
       </div>
 
       {/* Pinned below the scroll region, so it's always one click away. */}
@@ -492,7 +548,7 @@ export function Sidebar() {
                     );
                   }}
                 >
-                  x
+                  <IconX size={12} />
                 </button>
               </div>
             ))}

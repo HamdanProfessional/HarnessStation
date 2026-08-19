@@ -9,6 +9,7 @@ import { prettyName } from "../lib/format";
 import { STT_LANGUAGES } from "../lib/whisper";
 import * as storage from "../lib/storage";
 import { Spinner } from "./Loading";
+import { IconX } from "./icons";
 import type { Tool, VoiceMode } from "../lib/types";
 
 // three.js + three-vrm are large; keep them out of the initial bundle.
@@ -73,6 +74,9 @@ export function VoiceView() {
   const [heard, setHeard] = useState("");
   const [running, setRunning] = useState(false);
   const [holding, setHolding] = useState(false);
+  /** User has spoken but has been silent for >600ms. Drives the orb's
+   *  brief "thinking" pulse so the avatar doesn't look frozen mid-thought. */
+  const [paused, setPaused] = useState(false);
 
   const mode: VoiceMode = voiceCfg.mode ?? "ptt";
   const smooth = useRef(0);
@@ -119,6 +123,7 @@ export function VoiceView() {
           setTurns((t) => [...t, { role: "assistant", text }]);
         },
         onAction: (label) => setTurns((t) => [...t, { role: "action", text: label }]),
+        onPause: setPaused,
         onError: (msg) => {
           setError(msg);
           if (!liveSession?.isRunning()) {
@@ -287,7 +292,9 @@ export function VoiceView() {
   const pastVoiceChats = useMemo(
     () =>
       chats
-        .filter((c) => c.kind === "voice" && c.id !== sessionRef.current?.getChatId())
+        // Voice chats come in two flavours: legacy kind="voice" and the new
+        // voiceMode toggle. Both show up in the resume list.
+        .filter((c) => (c.kind === "voice" || c.voiceMode) && c.id !== sessionRef.current?.getChatId())
         .slice(0, 8),
     [chats],
   );
@@ -324,8 +331,13 @@ export function VoiceView() {
       setError("Add a provider with a model first, then start the avatar.");
       return;
     }
+    // Stage 2: voice mode is a property of the chat. If the current chat has
+    // voice mode on, the session binds to it — voice and text are the same
+    // conversation now. Otherwise, start a fresh voice chat as before.
+    const currentChat = useStore.getState().chats.find((c) => c.id === useStore.getState().currentId);
+    const targetChatId = currentChat?.voiceMode ? currentChat.id : undefined;
     setRunning(true);
-    await s.start(mode);
+    await s.start(mode, targetChatId);
     setActiveVoiceChat(s.getChatId());
   };
 
@@ -398,6 +410,10 @@ export function VoiceView() {
   const amp = state === "listening" ? Math.min(1, level * 9) : 0;
   const scale = 1 + amp * 0.28;
   const speaking = state === "speaking";
+  // Five bars, each fills when the running level exceeds its threshold.
+  // Subtle by default — confirms the mic is picking up audio without
+  // pulling the eye away from the orb or avatar.
+  const meterBars = state === "listening" ? [0.18, 0.36, 0.55, 0.75, 0.92] : [];
 
   return (
     <main className="voice-main">
@@ -424,7 +440,7 @@ export function VoiceView() {
             )}
           </Suspense>
         ) : (
-          <div className={`orb-wrap orb-${state}`}>
+          <div className={`orb-wrap orb-${state}${paused ? " orb-paused" : ""}`}>
             <div className="orb-ring" style={{ transform: `scale(${1 + amp * 0.5})`, opacity: 0.25 + amp * 0.5 }} />
             <div className={`orb ${speaking ? "orb-speaking" : ""}`} style={{ transform: `scale(${scale})` }}>
               <div className="orb-core" />
@@ -435,12 +451,27 @@ export function VoiceView() {
           <div className="error-banner voice-error" role="alert">
             <span>{avatarError}</span>
             <button className="error-dismiss" aria-label="Dismiss" onClick={() => setAvatarError(null)}>
-              ×
+              <IconX size={12} />
             </button>
           </div>
         )}
 
         <div className="voice-state-label">{running ? STATE_LABEL[state] : "Off"}</div>
+        {running && meterBars.length > 0 && (
+          // Five bars that fill when the mic level exceeds their threshold.
+          // The opacity rises with the level so quieter speech reads as a
+          // gentler wave, not a binary on/off. Only meaningful while
+          // listening — when speaking or idle there's nothing to meter.
+          <div className="voice-meter" aria-label="Microphone level" role="meter" aria-valuemin={0} aria-valuemax={1} aria-valuenow={Math.min(1, level * 9)}>
+            {meterBars.map((threshold, i) => (
+              <span
+                key={i}
+                className={`voice-meter-bar ${level * 9 >= threshold ? "on" : ""}`}
+                style={{ opacity: level * 9 >= threshold ? 0.55 + (level * 9 - threshold) * 0.45 : 0.18 }}
+              />
+            ))}
+          </div>
+        )}
         {status && <div className="voice-substatus">{status}</div>}
         {error && (
           <div className="error-banner voice-error" onClick={() => setError(null)}>
@@ -697,7 +728,7 @@ export function VoiceView() {
           <label className="agent-check">
             <input
               type="checkbox"
-              checked={voiceCfg.bargeIn ?? true}
+              checked={voiceCfg.bargeIn ?? false}
               onChange={(e) => patchVoice({ bargeIn: e.target.checked })}
             />
             Let me interrupt by talking (use headphones)

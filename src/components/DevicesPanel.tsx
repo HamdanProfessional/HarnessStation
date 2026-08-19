@@ -22,6 +22,7 @@ import { saveMeshPeers, startMesh, stopMesh } from "../lib/meshRuntime";
 import { DEFAULT_LOCAL_API_PORT, localApiStatus } from "../lib/localApi";
 import { useStore } from "../lib/store";
 import { Spinner } from "./Loading";
+import { IconX } from "./icons";
 import { isWeb } from "../lib/web";
 import { GetDesktopApp } from "./GetDesktopApp";
 
@@ -335,7 +336,7 @@ export function DevicesPanel() {
         <div className="error-banner" role="alert">
           <span>{error}</span>
           <button className="error-dismiss" aria-label="Dismiss" onClick={() => setError(null)}>
-            ×
+            <IconX size={12} />
           </button>
         </div>
       )}

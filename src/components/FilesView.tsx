@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Markdown } from "./Markdown";
 import { EmptyState } from "./EmptyState";
 import { Spinner } from "./Loading";
-import { IconFolder } from "./icons";
+import { IconFolder, IconX } from "./icons";
 import { confirmDialog, promptDialog } from "../lib/dialog";
 import { toast } from "../lib/toast";
 import {
@@ -213,7 +213,7 @@ export function FilesView() {
                     </button>
                   )}
                   <button className="file-mini danger" title="Delete" onClick={() => void removeEntry(e)}>
-                    ×
+                    <IconX size={11} />
                   </button>
                 </div>
               ))}

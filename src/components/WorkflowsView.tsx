@@ -8,7 +8,7 @@ import type { CondOp, Condition, ParallelLane, Workflow, WorkflowStep } from "..
 import { WORKFLOW_PRESETS } from "../lib/workflowPresets";
 import { toast } from "../lib/toast";
 import { EmptyState } from "./EmptyState";
-import { IconFlow } from "./icons";
+import { IconFlow, IconX } from "./icons";
 
 const OPS: { value: CondOp; label: string; noRight?: boolean }[] = [
   { value: "contains", label: "contains" },
@@ -599,7 +599,7 @@ export function WorkflowsView() {
                                   title="Remove lane"
                                   onClick={() => patchStep(i, { lanes: s.lanes.filter((_, m) => m !== k) })}
                                 >
-                                  ×
+                                  <IconX size={11} />
                                 </button>
                               </div>
                               {lane.kind === "prompt" ? (

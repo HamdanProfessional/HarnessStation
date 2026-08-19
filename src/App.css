@@ -23,42 +23,95 @@
   --ease-pop: cubic-bezier(0.34, 1.36, 0.64, 1);
 }
 
+/*
+ * Theme system.
+ *
+ *   --theme   = dark | light | system   (controls canvas + chrome)
+ *   --accent  = indigo | forest | ember (controls brand color)
+ *
+ * Both are set as data attributes on <html>. The two axes are independent so
+ * a user can pick "light + forest" without us shipping a combinatorial matrix.
+ *
+ * Accent palettes are chosen for usable contrast on either canvas:
+ *   - dark canvas:  a slightly desaturated mid-tone reads as a "color"
+ *   - light canvas: a deeper version of the same hue for AA contrast
+ *
+ * Status colors (ok/warn/danger) are part of the theme, not the palette —
+ * they encode state, not brand, and shifting them with the accent would mix
+ * the two signals.
+ */
+
 [data-theme="dark"] {
   --bg: #0b0d13;
-  --bg-2: #11141c;
-  --bg-3: #1a1e29;
-  --bg-glass: rgba(17, 20, 28, 0.72);
+  --bg-2: #14171f;
+  --bg-3: #1d212c;
+  --bg-glass: rgba(20, 23, 31, 0.72);
   --text: #e8eaf2;
   --text-dim: #8b91a3;
   --border: rgba(255, 255, 255, 0.07);
   --border-strong: rgba(255, 255, 255, 0.14);
-  --accent: #5e6ad2;
-  --accent-2: #2fd4e8;
-  --grad: var(--accent); /* was a gradient — flat now */
   --ok: #3fd68f;
   --warn: #e3b341;
   --danger: #ff5d55;
   --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
-  --glow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+  --backdrop: rgba(4, 6, 12, 0.6);
 }
 
 [data-theme="light"] {
-  --bg: #f4f5fa;
+  --bg: #eef0f6;
   --bg-2: #ffffff;
-  --bg-3: #eceef6;
-  --bg-glass: rgba(255, 255, 255, 0.8);
-  --text: #171923;
-  --text-dim: #5d6374;
-  --border: rgba(20, 24, 40, 0.09);
-  --border-strong: rgba(20, 24, 40, 0.18);
-  --accent: #4b56c9;
-  --accent-2: #0eb5cc;
+  --bg-3: #e4e7ef;
+  --bg-glass: rgba(255, 255, 255, 0.78);
+  --text: #14172a;
+  --text-dim: #545b6e;
+  --border: rgba(20, 24, 40, 0.10);
+  --border-strong: rgba(20, 24, 40, 0.20);
+  --ok: #1a8f56;
+  --warn: #946200;
+  --danger: #c8291f;
+  --shadow: 0 1px 2px rgba(20, 24, 40, 0.06), 0 4px 14px rgba(20, 24, 40, 0.08);
+  --backdrop: rgba(20, 24, 40, 0.28);
+}
+
+/* ---------- Accent palettes ----------
+   Each palette has a dark-canvas color (mid-tone, desaturated) and a
+   light-canvas color (deeper, for AA contrast on white). The dark value is
+   the default; the light variant is overridden when both attributes are set. */
+
+[data-accent="indigo"] {
+  --accent: #5e6ad2;
+  --accent-2: #2fd4e8;
   --grad: var(--accent);
-  --ok: #199e60;
-  --warn: #a8790a;
-  --danger: #d43a33;
-  --shadow: 0 8px 24px rgba(30, 36, 60, 0.12);
-  --glow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+[data-theme="light"][data-accent="indigo"] {
+  --accent: #3f49b8;
+}
+
+[data-accent="forest"] {
+  --accent: #3eb872;
+  --accent-2: #56c79a;
+  --grad: var(--accent);
+}
+[data-theme="light"][data-accent="forest"] {
+  --accent: #1f8a4c;
+}
+
+[data-accent="ember"] {
+  --accent: #e88a4a;
+  --accent-2: #f0b070;
+  --grad: var(--accent);
+}
+[data-theme="light"][data-accent="ember"] {
+  --accent: #c45a14;
+}
+
+/* A glow ring follows whatever accent is current — defined here once so the
+   many focus styles throughout the file don't have to repeat the formula. */
+[data-accent] {
+  --glow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+[data-theme="light"][data-accent] {
+  --glow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 * {
@@ -310,6 +363,16 @@ select:focus {
   align-items: center;
   gap: 10px;
   padding: 2px 4px 6px;
+}
+
+/* Pin the chrome buttons (theme, collapse) to the right edge of the header.
+   The NotificationBell is the first one so a margin-left:auto there pushes the
+   whole cluster while the logo stays where it is. */
+.sidebar-header > .icon-btn {
+  margin-left: auto;
+}
+.sidebar-header > .icon-btn + .icon-btn {
+  margin-left: 0;
 }
 
 .logo {
@@ -586,6 +649,88 @@ select:focus {
   margin-top: 10px;
 }
 
+/* ---------- First run ----------
+   The whole first-run path is these few rules: a key field, three escape
+   hatches and the trust line. Anything more elaborate here is a step between a
+   new user and their first message. */
+
+.firstrun {
+  width: 100%;
+  max-width: 460px;
+  margin-top: 4px;
+}
+
+.firstrun-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.firstrun-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.firstrun-alt {
+  margin-top: 10px !important;
+  line-height: 1.9;
+}
+
+.trust-line {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  max-width: 460px;
+}
+
+/* ---------- Trust badge (sidebar) ---------- */
+
+.trust-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: calc(100% - 20px);
+  margin: 0 10px 8px;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.trust-badge:hover {
+  border-color: var(--accent);
+  color: var(--text);
+  background: var(--bg-2);
+}
+
+.trust-badge svg {
+  flex: none;
+  color: var(--ok);
+}
+
+/* ---------- "Show all features" ---------- */
+
+.nav-more {
+  color: var(--text-dim);
+}
+
+.nav-count {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--bg-3);
+  font-size: 10.5px;
+  color: var(--text-dim);
+}
+
 .prompt-chip {
   border: 1px solid var(--border-strong);
   background: var(--bg-2);
@@ -604,7 +749,121 @@ select:focus {
 }
 
 .empty-state .btn.primary {
-  margin-top: 14px;
+  margin-top: 10px;
+}
+
+/* ---------- Voice-first empty state ----------
+   The voice orb CTA is the primary action on the empty chat. It mirrors the
+   VoiceView's orb (focus ring, breathing pulse, accent halo) so the brand
+   promise of "press to talk" is visible the moment the user lands in chat.
+   The orb is a button, not a div — same shape as the VoiceView's orb but
+   sized for the empty chat panel. */
+
+.voice-orb-cta {
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, var(--accent) 28%, var(--bg-2)),
+    var(--bg-2) 70%
+  );
+  cursor: pointer;
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin: 14px 0 4px;
+  transition:
+    transform var(--t-base) var(--ease),
+    box-shadow var(--t-base) var(--ease),
+    border-color var(--t-base) var(--ease);
+  animation: orbBreathe 5s ease-in-out infinite;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.voice-orb-cta:hover {
+  transform: scale(1.04);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 18%, transparent);
+  animation: none;
+}
+.voice-orb-cta:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.voice-orb-cta .orb-core {
+  width: 62%;
+  height: 62%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, var(--accent) 65%, white),
+    var(--accent) 70%
+  );
+  filter: blur(0.6px);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+/* A small text-mode toggle off the bottom of the empty state. The link
+   won't get the same visual weight as the orb — voice is the headline. */
+.empty-voice-link {
+  margin-top: 18px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.empty-voice-link:hover {
+  color: var(--text);
+}
+
+/* Mic status hint — the only feedback the user gets about whether the
+   orb CTA will actually work. "available" is a quiet green dot; "unavailable"
+   is a warning with a clear path to type mode. */
+
+.mic-hint {
+  margin-top: 4px;
+  font-size: 11.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+}
+.mic-hint-ok {
+  color: var(--ok);
+}
+.mic-hint-warn {
+  color: var(--warn);
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warn) 25%, transparent);
+}
+.mic-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ok) 25%, transparent);
+}
+
+/* "Voice" button in the composer — a small, persistent path back to the
+   full VoiceView from any chat. Distinct from "Dictate" which is a one-shot
+   STT pass into the textfield. */
+.composer-mic {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.composer-mic:hover {
+  color: var(--accent);
+}
+
+/* The orbBreathe keyframes are already defined for the VoiceView orb earlier
+   in this file. Reusing them here keeps the brand motion consistent across
+   surfaces — same animation, same period, same easing. */
+@media (prefers-reduced-motion: reduce) {
+  .voice-orb-cta {
+    animation: none;
+  }
 }
 
 /* ---------- Voice avatar ---------- */
@@ -649,7 +908,7 @@ select:focus {
   height: 156px;
   border-radius: 50%;
   background: var(--grad);
-  box-shadow: 0 0 60px 0 rgba(94, 106, 210, 0.45);
+  box-shadow: 0 0 60px 0 color-mix(in srgb, var(--accent) 45%, transparent);
   transition: transform 0.09s ease-out, box-shadow 0.25s ease;
   display: grid;
   place-items: center;
@@ -667,12 +926,12 @@ select:focus {
 
 .orb-idle .orb {
   opacity: 0.55;
-  box-shadow: 0 0 26px 0 rgba(94, 106, 210, 0.22);
+  box-shadow: 0 0 26px 0 color-mix(in srgb, var(--accent) 22%, transparent);
   animation: orbBreathe 5s ease-in-out infinite;
 }
 
 .orb-listening .orb {
-  box-shadow: 0 0 70px 6px rgba(94, 106, 210, 0.45);
+  box-shadow: 0 0 70px 6px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 .orb-thinking .orb {
@@ -687,6 +946,19 @@ select:focus {
 .orb-speaking .orb,
 .orb.orb-speaking {
   animation: orbSpeak 0.85s ease-in-out infinite;
+}
+
+/* Pause feedback — the user has spoken but has been silent for >600ms. The
+   orb gets a brief "thinking" pulse so the avatar doesn't look frozen. We
+   don't transition to the full thinking state — the turn hasn't ended yet.
+   The hue pulses at a slower rate than the active thinking animation so the
+   eye can tell pause from real thinking. */
+.orb-paused .orb {
+  animation: orbBreathe 2s ease-in-out infinite;
+}
+.orb-paused .orb-ring {
+  border-style: dashed;
+  opacity: 0.55;
 }
 
 @keyframes orbBreathe {
@@ -708,6 +980,26 @@ select:focus {
   font-size: 19px;
   font-weight: 600;
   letter-spacing: 0.2px;
+}
+
+/* ---------- Voice activity meter ----------
+   Five bars that fill when the running mic level exceeds their threshold.
+   Subtle by default: only the orb should pull the eye, but a quiet meter
+   confirms the mic is picking up audio. The fill colour uses the accent
+   palette so it follows the user's chosen brand. */
+.voice-meter {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 14px;
+  margin-top: 2px;
+}
+.voice-meter-bar {
+  width: 4px;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 1.5px;
+  transition: opacity 60ms linear;
 }
 
 .voice-substatus {
@@ -2135,6 +2427,111 @@ select:focus {
   max-width: 860px;
 }
 
+/* ---------- Theme picker ----------
+   The two swatch groups (canvas + accent) are independent so a user can mix.
+   Each swatch is a button that previews what the choice looks like — the
+   canvas preview shows a tiny fake chrome, the accent preview is just the
+   colour square. The whole row is hover- and focus-visible-aware without
+   ever colouring the swatch itself: that's what the preview is for. */
+
+.theme-label {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 14px 0 8px;
+}
+
+.theme-swatches {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.theme-swatch {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 12px 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-2);
+  color: var(--text);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease),
+    background var(--t-fast) var(--ease),
+    transform var(--t-fast) var(--ease);
+}
+.theme-swatch:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-3);
+}
+.theme-swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.theme-swatch.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-2));
+}
+
+.theme-name {
+  font-weight: 500;
+}
+
+/* A small dark/light canvas preview — a rectangle split into bg + bg-2 with
+   a tinted dot, so the user can see which is which before clicking. */
+.theme-preview {
+  width: 30px;
+  height: 22px;
+  border-radius: 5px;
+  border: 1px solid var(--border-strong);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3px 4px;
+  gap: 2px;
+  position: relative;
+  overflow: hidden;
+}
+.theme-preview-dark {
+  background: #0b0d13;
+}
+.theme-preview-light {
+  background: #ffffff;
+}
+.theme-preview-system {
+  background: linear-gradient(135deg, #0b0d13 50%, #ffffff 50%);
+}
+.theme-preview-line {
+  height: 2px;
+  width: 70%;
+  border-radius: 1px;
+  background: var(--text-dim);
+  opacity: 0.55;
+}
+.theme-preview-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* The accent picker is just a coloured square — what the choice looks like. */
+.theme-chip {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+
 /* Vertical rail entries: a label with a line of context under it, so the panels
    are distinguishable without opening each one. */
 .settings-page .settings-tab {
@@ -2160,6 +2557,23 @@ select:focus {
 .settings-tab:hover:not(.active) {
   background: var(--bg-3);
   color: var(--text);
+}
+
+/* The "Advanced →" / "← Back to settings" toggle at the bottom of the rail.
+   Visually subordinate to the real tabs so it doesn't read as a tab itself. */
+.settings-tab-advanced {
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  opacity: 0.7;
+}
+.settings-tab-advanced:hover {
+  opacity: 1;
+}
+.settings-tab-advanced .settings-tab-label {
+  font-size: 12px;
+  color: var(--text-dim);
+}
 }
 
 /* Each section is a card. The panels are long — Voice runs to a dozen settings —
@@ -2286,6 +2700,55 @@ select:focus {
 
 .provider-card .hint {
   margin-top: 2px;
+}
+
+/* Quick-add cards (the "tap a provider to add your key" UI on the Models page).
+   Skinnier than provider-card because they're tiles, not detail rows. */
+.quick-add {
+  margin-bottom: 14px;
+}
+
+.quick-add-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 9px;
+  margin-bottom: 8px;
+}
+
+.quick-add-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-2);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease),
+    background var(--t-fast) var(--ease),
+    transform var(--t-fast) var(--ease);
+}
+.quick-add-card:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-2));
+  transform: translateY(-1px);
+}
+.quick-add-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.quick-add-name {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.quick-add-blurb {
+  font-size: 11px;
+  color: var(--text-dim);
 }
 
 .provider-row {
@@ -2761,7 +3224,7 @@ select:focus {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(4, 6, 12, 0.6);
+  background: var(--backdrop);
   backdrop-filter: blur(3px);
   z-index: 40;
   display: grid;

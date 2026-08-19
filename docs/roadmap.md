@@ -89,13 +89,18 @@ and update `plugins.updater.pubkey`.
 
 ## Tier 2 — Features
 
-### 2.1 Avatar polish — **S/M**
+> **Frozen (2026-08-17):** §2.1 (avatar polish) and §2.2 (React artifacts) are
+> **not being done** — see [`freeze.md`](freeze.md) for the reasoning and the
+> conditions for unfreezing. They are left described below rather than deleted so
+> the decision is legible rather than forgotten.
+
+### 2.1 Avatar polish — **S/M** · FROZEN
 **What:** The VRM avatar animates from the voice state and mic level. Two things would lift it:
 real viseme lip-sync (analyse the played audio with a WebAudio `AnalyserNode` instead of the
 synthetic envelope — only possible on the data-URL engines, not Windows SAPI), and mouse/camera
 head tracking.
 
-### 2.2 React artifacts in the canvas — **M**
+### 2.2 React artifacts in the canvas — **M** · FROZEN
 **What:** The canvas renders HTML, SVG and Mermaid. JSX/React components still fall back to a code
 block.
 **Why deferred:** Doing it offline and sandboxed means shipping `@babel/standalone` (~2.7 MB) plus

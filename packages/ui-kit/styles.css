@@ -23,43 +23,83 @@
   --ease-pop: cubic-bezier(0.34, 1.36, 0.64, 1);
 }
 
-:root,
+/*
+ * Theme system.
+ *
+ *   --theme   = dark | light | system   (controls canvas + chrome)
+ *   --accent  = indigo | forest | ember (controls brand color)
+ *
+ * Both are set as data attributes on <html>. The two axes are independent so
+ * a user can pick "light + forest" without us shipping a combinatorial matrix.
+ *
+ * Mirrored from src/App.css — the kit is the design-system twin, the app is
+ * the runtime. If you change one, change the other.
+ */
+
 [data-theme="dark"] {
   --bg: #0b0d13;
-  --bg-2: #11141c;
-  --bg-3: #1a1e29;
-  --bg-glass: rgba(17, 20, 28, 0.72);
+  --bg-2: #14171f;
+  --bg-3: #1d212c;
+  --bg-glass: rgba(20, 23, 31, 0.72);
   --text: #e8eaf2;
   --text-dim: #8b91a3;
   --border: rgba(255, 255, 255, 0.07);
   --border-strong: rgba(255, 255, 255, 0.14);
-  --accent: #5e6ad2;
-  --accent-2: #2fd4e8;
-  --grad: var(--accent); /* was a gradient — flat now */
   --ok: #3fd68f;
   --warn: #e3b341;
   --danger: #ff5d55;
   --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
-  --glow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+  --backdrop: rgba(4, 6, 12, 0.6);
 }
 
 [data-theme="light"] {
-  --bg: #f4f5fa;
+  --bg: #eef0f6;
   --bg-2: #ffffff;
-  --bg-3: #eceef6;
-  --bg-glass: rgba(255, 255, 255, 0.8);
-  --text: #171923;
-  --text-dim: #5d6374;
-  --border: rgba(20, 24, 40, 0.09);
-  --border-strong: rgba(20, 24, 40, 0.18);
-  --accent: #4b56c9;
-  --accent-2: #0eb5cc;
+  --bg-3: #e4e7ef;
+  --bg-glass: rgba(255, 255, 255, 0.78);
+  --text: #14172a;
+  --text-dim: #545b6e;
+  --border: rgba(20, 24, 40, 0.10);
+  --border-strong: rgba(20, 24, 40, 0.20);
+  --ok: #1a8f56;
+  --warn: #946200;
+  --danger: #c8291f;
+  --shadow: 0 1px 2px rgba(20, 24, 40, 0.06), 0 4px 14px rgba(20, 24, 40, 0.08);
+  --backdrop: rgba(20, 24, 40, 0.28);
+}
+
+[data-accent="indigo"] {
+  --accent: #5e6ad2;
+  --accent-2: #2fd4e8;
   --grad: var(--accent);
-  --ok: #199e60;
-  --warn: #a8790a;
-  --danger: #d43a33;
-  --shadow: 0 8px 24px rgba(30, 36, 60, 0.12);
-  --glow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+[data-theme="light"][data-accent="indigo"] {
+  --accent: #3f49b8;
+}
+
+[data-accent="forest"] {
+  --accent: #3eb872;
+  --accent-2: #56c79a;
+  --grad: var(--accent);
+}
+[data-theme="light"][data-accent="forest"] {
+  --accent: #1f8a4c;
+}
+
+[data-accent="ember"] {
+  --accent: #e88a4a;
+  --accent-2: #f0b070;
+  --grad: var(--accent);
+}
+[data-theme="light"][data-accent="ember"] {
+  --accent: #c45a14;
+}
+
+[data-accent] {
+  --glow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+[data-theme="light"][data-accent] {
+  --glow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 * {
@@ -518,7 +558,7 @@ body {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(4, 6, 12, 0.6);
+  background: var(--backdrop);
   backdrop-filter: blur(3px);
   z-index: 40;
   display: grid;

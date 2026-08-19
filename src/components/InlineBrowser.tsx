@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { registerPane } from "../lib/browserPane";
 import { useStore } from "../lib/store";
 import { Spinner } from "./Loading";
+import { IconX } from "./icons";
 
 /**
  * The browser, embedded in the conversation.
@@ -184,7 +185,7 @@ export function InlineBrowser() {
           {busy ? <Spinner size={12} /> : "Go"}
         </button>
         <button className="icon-btn" title="Close browser" aria-label="Close browser" onClick={close}>
-          ×
+          <IconX size={12} />
         </button>
       </div>
 
@@ -201,7 +202,7 @@ export function InlineBrowser() {
         <div className="error-banner" role="alert">
           <span>{error}</span>
           <button className="error-dismiss" aria-label="Dismiss" onClick={() => setError(null)}>
-            ×
+            <IconX size={12} />
           </button>
         </div>
       )}

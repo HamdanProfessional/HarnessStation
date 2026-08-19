@@ -31,7 +31,9 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
 
   if (dismissing) return null;
 
-  const codingCount = CLOUD_PROVIDERS.filter((p) => p.id === "zai" || p.id === "minimax" || p.id === "moonshot").length;
+  const codingIds = ["zai", "minimax", "moonshot"] as const;
+  const codingCount = CLOUD_PROVIDERS.filter((p) => (codingIds as readonly string[]).includes(p.id)).length;
+  const codingTag = codingCount > 0 ? `${codingCount} plans` : "Flat-rate";
 
   return createPortal(
     <div className="modal-backdrop" onClick={finish}>
@@ -71,7 +73,7 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
             <span className="onboard-ic"><IconCloud size={22} /></span>
             <b>Flat-rate coding plan</b>
             <span className="hint">z.ai, MiniMax and Kimi offer strong models on a fixed monthly plan — use them all day.</span>
-            <span className="onboard-tag">{codingCount}+ plans</span>
+            <span className="onboard-tag">{codingTag}</span>
           </button>
 
           <button className="onboard-card" onClick={() => go("settings")}>

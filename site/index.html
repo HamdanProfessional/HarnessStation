@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>HarnessStation — run any AI model as a private, local agent</title>
-<meta name="description" content="A desktop app for running AI models as agents. Bring your own model — local or your own cloud key — with tools, files, knowledge, voice and a browser. No account by default, no telemetry, private by design." />
-<meta property="og:title" content="HarnessStation" />
-<meta property="og:description" content="Run any AI model as a private, local agent. No account by default, no telemetry, bring your own key." />
+<title>HarnessStation — your AI chat, your machine, your keys</title>
+<meta name="description" content="A private AI chat app for people who don't want their conversations on someone else's server. Local-first. No account. No telemetry. Your keys stay in your OS keychain. Bring any model — local or your own cloud key — and give it real tools." />
+<meta property="og:title" content="HarnessStation — your AI chat, your machine, your keys" />
+<meta property="og:description" content="Local-first. No account. No telemetry. Your keys stay in your OS keychain. Your chats never leave your machine." />
 <meta property="og:type" content="website" />
 <link rel="stylesheet" href="/style.css" />
 </head>
@@ -21,6 +21,7 @@
   <a class="brand" href="/">Harness<b>Station</b></a>
   <div class="grow"></div>
   <a class="navlink" href="/features.html">Features</a>
+  <a class="navlink" href="#anywhere">In a browser</a>
   <a class="navlink" href="#demos">See it</a>
   <a class="navlink" href="/privacy.html">Privacy</a>
   <a class="navlink" href="https://hsdocs.retris.io">Docs</a>
@@ -29,15 +30,17 @@
 
 <header class="hero" id="top"><div class="wrap"><div class="grid2">
   <div>
-    <span class="eyebrow">Local-first · bring your own model</span>
-    <h1>Run any AI model<br/>as a <span class="g">private, local agent</span></h1>
-    <p class="lead">Give a model real tools — your files, a terminal, the web, a browser, voice,
-      knowledge and memory. Local or your own cloud key. No account by default, no telemetry.</p>
+    <span class="eyebrow">Private by architecture · bring your own model</span>
+    <h1>Your AI chat.<br/>Your machine. <span class="g">Your keys.</span></h1>
+    <p class="lead">A serious AI chat app for people who'd rather their conversations weren't on
+      someone else's server. Bring any model — a local one, or a cloud one with your own key — and
+      give it real tools: your files, a terminal, the web and a browser.</p>
     <div class="cta">
-      <a class="btn primary" href="https://hsapp.retris.io">Try it in your browser →</a>
-      <a class="btn" href="/download.html">Download for desktop</a>
+      <a class="btn primary" href="/download.html">Download for Windows</a>
+      <a class="btn" href="https://hsapp.retris.io">Or try it in your browser →</a>
     </div>
-    <div class="note">Free &amp; open source · Windows &amp; Linux · keys stay in your OS keychain</div>
+    <div class="trustline">Local-first. No account. No telemetry. Your keys stay in your OS
+      keychain. Your chats never leave your machine.</div>
   </div>
 
   <div class="mock-wrap" data-reveal>
@@ -77,6 +80,24 @@
     <div class="card" style="--ic:#f472b6" data-reveal><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11"/></svg><h3>Multi-agent chats</h3><p>Put up to five models in one conversation — compare them side by side, or have them collaborate on parts of a task.</p></div>
   </div>
   <p style="margin-top:28px" data-reveal><a class="btn" href="/features.html">See everything it does →</a></p>
+</div></section>
+
+<section id="anywhere"><div class="wrap">
+  <span class="eyebrow" data-reveal>One app, two places</span>
+  <h2 data-reveal>Nothing to install, if you don't want to</h2>
+  <p class="sub" data-reveal>The desktop app and the web app are the same React tree — not a cut-down
+    demo. Open a tab and you get a working agent workstation in seconds, with a real Linux kernel,
+    real CPython and a persistent filesystem running inside the page. Nothing is uploaded; it all
+    executes in your own browser.</p>
+  <div class="grid3">
+    <div class="card" style="--ic:#22d3ee" data-reveal><h3>Real Linux, client-side</h3><p>A Linux kernel boots in WebAssembly (v86) and shares a workspace with the model's file tools. No server, no container, no install.</p></div>
+    <div class="card" style="--ic:#6d7cff" data-reveal><h3>Real Python</h3><p>CPython via Pyodide, so the model can actually run the code it writes — in the tab, on your machine.</p></div>
+    <div class="card" style="--ic:#3fb984" data-reveal><h3>A filesystem that persists</h3><p>Files live in the Origin Private File System, sandboxed so a path can't escape into the app's own data. Close the tab and come back to it.</p></div>
+  </div>
+  <p style="margin-top:28px" data-reveal>
+    <a class="btn primary" href="https://hsapp.retris.io">Open the web app →</a>
+    <span class="note" style="margin-left:12px">Desktop adds local models, stdio MCP and the device mesh.</span>
+  </p>
 </div></section>
 
 <section id="demos"><div class="wrap">

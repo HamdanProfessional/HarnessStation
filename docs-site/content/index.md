@@ -1,21 +1,26 @@
 ---
 title: What HarnessStation is
-description: A desktop app that turns any AI model into an agent that can use tools, read your files, browse, and talk — running on your machine, with your own keys.
+description: Your AI chat, your machine, your keys. Local-first, no account, no telemetry — a private AI chat app that gives any model real tools.
 ---
 
 # What HarnessStation is
 
-HarnessStation is a desktop app for **running AI models as agents**. You bring the
-model — a local one through Ollama or LM Studio, or a cloud one through your own
-API key — and the app supplies everything around it: tools, files, knowledge,
-memory, a browser it can drive, and a voice you can talk to.
+**Your AI chat. Your machine. Your keys.**
 
-It runs on Windows and Linux, stores everything on your own machine, and ships
-with no API keys of its own.
+Local-first. No account. No telemetry. Your keys stay in your OS keychain. Your
+chats never leave your machine.
+
+It's a serious AI chat app for people who'd rather their conversations weren't on
+someone else's server. You bring the model — a local one through Ollama or
+LM Studio, or a cloud one through your own API key — and the app gives it real
+tools: your files, a terminal, the web, a browser it can drive, knowledge, memory
+and a voice you can talk to.
+
+It runs as a desktop app on Windows and Linux, and — from the same codebase — in
+a browser tab with no install at all, where a real Linux kernel and real CPython
+run inside the page. See [trying it without installing](advanced/web).
 
 ## What that means in practice
-
-Most chat apps give a model a text box. This gives it hands.
 
 - **Tools** — read and write files, run searches, call your own scripts, drive a
   browser. Off by default; you turn on what you want it to reach.

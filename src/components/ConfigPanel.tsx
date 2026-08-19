@@ -1,4 +1,4 @@
-import { IconChevron, IconPanelRight } from "./icons";
+import { IconChevron, IconPanelRight, IconX } from "./icons";
 import { useEffect, useState } from "react";
 import { promptDialog } from "../lib/dialog";
 import { prettyName } from "../lib/format";
@@ -248,7 +248,7 @@ export function ConfigPanel() {
                 if (target) void deletePreset(target.id);
               }}
             >
-              ×
+              <IconX size={11} />
             </button>
           )}
         </div>

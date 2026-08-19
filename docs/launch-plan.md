@@ -8,10 +8,45 @@ sequencing and the decisions around them.*
 
 ## The one-line goal
 
-Ship a **downloadable, self-updating desktop app** (Windows + Linux) plus the
-**browser build** at `hsapp.retris.io`, positioned as *"run any AI model as a
-private, local agent — bring your own key, no account, no telemetry"* — without
-shipping any of the sharp edges below into strangers' hands.
+Ship a **signed, self-updating desktop app** (Windows first) positioned as
+*"your AI chat, your machine, your keys"* — the private AI chat app for people
+who don't want their conversations on someone else's server. The browser build at
+`hsapp.retris.io` is the no-install trial, not the headline.
+
+### The positioning decision (2026-08-17)
+
+The old line — *"run any AI model as a private, local agent, bring your own key,
+no account"* — is approximately what LM Studio, Jan, Cherry Studio, Open WebUI
+and AnythingLLM all say. It describes the app accurately and gives a stranger no
+reason to switch.
+
+**The chosen position is the intersection nobody else occupies cleanly:**
+
+| | Local models | Cloud models | Doesn't phone home |
+| --- | --- | --- | --- |
+| LM Studio | yes | no | yes |
+| Claude Desktop | no | yes | no |
+| **HarnessStation** | **yes** | **yes** | **yes** |
+
+Everything else — the local runner, voice, workflows, swarms, evals, the mesh —
+stays in the product but is a **checkbox, not the headline**. Feature density is
+what the crowded end of this market competes on, and it is not what makes anyone
+switch.
+
+**The one sentence, used verbatim everywhere:**
+
+> Local-first. No account. No telemetry. Your keys stay in your OS keychain. Your
+> chats never leave your machine.
+
+It appears in the empty chat, the sidebar, the landing hero, the download page
+and the README. Repetition is the point — it is the line a journalist quotes.
+
+### Where the browser build fits
+
+Still worth leading *with a link to* even though it isn't the headline: it is the
+only zero-friction trial in the category, and it sidesteps the SmartScreen
+problem entirely for anyone who wants to look before installing. It is the
+secondary CTA under the download button, not the primary one.
 
 ## Current state (honest snapshot)
 

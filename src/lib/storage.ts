@@ -17,6 +17,37 @@ const CONV = `${ROOT}/conversations`;
 const PRESETS = `${ROOT}/presets`;
 const opts = { baseDir: BaseDirectory.Home };
 
+export const ESSENTIALS_PROFILE_ID = "essentials";
+
+/**
+ * Views hidden on a fresh install.
+ *
+ * A first-run sidebar with fourteen destinations reads as "I don't know what
+ * this is for". Three reads as confidence. Everything here still exists, still
+ * works and is one click away — the profile only controls what a *new* user is
+ * shown before they've asked for more.
+ *
+ * What survives: Discover (how you connect a model), My Models, and Tools —
+ * the minimum that makes the pitch true. Chat and Settings are not views and
+ * are always present.
+ *
+ * Ids are checked against the view registry by a test, so a rename can't turn
+ * one of these into a silent no-op.
+ */
+export const ESSENTIALS_HIDDEN = [
+  "compare",
+  "evals",
+  "benchmarks",
+  "agents",
+  "skills",
+  "knowledge",
+  "workflows",
+  "schedules",
+  "mcp",
+  "community",
+  "files",
+] as const;
+
 export const DEFAULT_SETTINGS: Settings = {
   providers: [
     {
@@ -65,10 +96,13 @@ export const DEFAULT_SETTINGS: Settings = {
   ],
   globalInstructions: "",
   theme: "dark",
+  accent: "indigo",
   serverUrl: "",
   aaApiKey: "",
   autoCompact: false,
   compactThreshold: 8000,
+  profiles: [{ id: ESSENTIALS_PROFILE_ID, name: "Essentials", hiddenViews: [...ESSENTIALS_HIDDEN] }],
+  activeProfileId: ESSENTIALS_PROFILE_ID,
 };
 
 // Checked once per session rather than on every read/write — these directories
@@ -147,7 +181,14 @@ export async function loadSettings(): Promise<Settings> {
   let s: Settings;
   try {
     const raw = await readTextFile(`${ROOT}/settings.json`, opts);
-    s = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    const saved = JSON.parse(raw) as Partial<Settings>;
+    s = { ...DEFAULT_SETTINGS, ...saved };
+    // The Essentials profile is a *first-run* default, not a migration. Spreading
+    // defaults underneath a saved file would apply it to everyone who upgraded —
+    // someone who has been using Workflows for months would open the app to find
+    // it gone, which is a bug, not an onboarding improvement. An existing file
+    // with no profile chosen means "show me everything", so honour that.
+    if (!("activeProfileId" in saved)) s.activeProfileId = undefined;
   } catch {
     return DEFAULT_SETTINGS;
   }

@@ -9,6 +9,7 @@ import {
 } from "../lib/browserTools";
 import { useStore } from "../lib/store";
 import { Spinner } from "./Loading";
+import { IconX } from "./icons";
 
 /**
  * Browser view.
@@ -168,7 +169,7 @@ export function BrowserView() {
             <div className="error-banner" role="alert">
               <span>{error}</span>
               <button className="error-dismiss" aria-label="Dismiss" onClick={() => setError(null)}>
-                ×
+                <IconX size={12} />
               </button>
             </div>
           )}

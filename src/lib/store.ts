@@ -1620,6 +1620,10 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
   void maybeAutoTitle(get, provider, chat.model, chat.id);
   // passive memory: harvest durable facts in the background, no tool call needed
   void maybeHarvestMemory(get, provider, chat.model, chat.id);
+  // Stage 2: in text mode, speak the reply if the user has speakReplies on.
+  // The voice session handles its own queue when voice mode is on, so we
+  // skip in that case to avoid two TTS pipelines fighting.
+  void speakReplyIfWanted(get, chat.id);
 }
 
 /**
@@ -1731,6 +1735,8 @@ async function runMultiCompletion(set: Set, get: Get): Promise<void> {
   const first = participants[0];
   const fp = settings.providers.find((x) => x.id === first.providerId);
   if (fp) void maybeAutoTitle(get, fp, first.model, chat.id);
+  // Stage 2: speak the reply in text mode if the user wants it.
+  void speakReplyIfWanted(get, chat.id);
 }
 
 /**
@@ -1799,4 +1805,21 @@ async function maybeAutoTitle(
   } catch {
     /* keep the fallback title */
   }
+}
+
+/**
+ * Stage 2: speak the assistant's just-completed reply in text mode if the
+ * user has `speakReplies` enabled. The voice session has its own TTS path,
+ * so we skip when voice mode is on — two queues fighting would be
+ * worse than no audio.
+ */
+function speakReplyIfWanted(get: Get, chatId: string): void {
+  const chat = get().chats.find((c) => c.id === chatId);
+  if (!chat || chat.voiceMode) return;
+  const lastAssistant = [...chat.messages].reverse().find((m) => m.role === "assistant" && m.content.trim());
+  if (!lastAssistant) return;
+  // Lazily import so the store doesn't pull in tts at startup.
+  void import("./tts").then(({ maybeSpeakReply }) => {
+    maybeSpeakReply(lastAssistant.content, get().settings, { voiceMode: false });
+  });
 }

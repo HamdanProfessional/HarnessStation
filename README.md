@@ -1,12 +1,18 @@
 # HarnessStation
 
-A desktop app for **running AI models as agents**. You bring the model — a local
-one through Ollama or LM Studio, or a cloud one through your own API key — and
-the app supplies everything around it: tools, files, knowledge, memory, a browser
-it can drive, and a voice you can talk to.
+**Your AI chat. Your machine. Your keys.**
 
-Windows and Linux. Everything stored on your own machine. **Ships with no API
-keys of its own.**
+Local-first. No account. No telemetry. Your keys stay in your OS keychain. Your
+chats never leave your machine.
+
+A serious AI chat app for people who'd rather their conversations weren't on
+someone else's server. You bring the model — a local one through Ollama or
+LM Studio, or a cloud one through your own API key — and the app gives it real
+tools: your files, a terminal, the web, a browser it can drive, knowledge, memory
+and a voice you can talk to.
+
+Windows and Linux, with a browser build that needs no install at all. **Ships
+with no API keys of its own.**
 
 Built with Tauri v2, React 19 and TypeScript, with a Rust backend.
 
@@ -51,6 +57,12 @@ knowledge. Discovery over the LAN, pairing by a code that never crosses the wire
 by side, score them against your own eval set, and check public benchmarks before
 paying for one.
 
+**Value** — live prices for ~6,600 AI models, plus VPS and GPU compute, read
+straight from the providers' own public price lists. No key and no account: these
+are published numbers, and every row links to the page it came from. Ranks on
+what a workload would actually cost — cache reads, cache writes, batch discounts,
+long-context tiers and rate-limit feasibility, not the sticker price.
+
 ## Documentation
 
 Full documentation lives in [`docs-site/`](docs-site/) — 40 pages including
@@ -82,8 +94,11 @@ The first Rust build compiles several hundred crates and takes a few minutes.
 Later builds are incremental.
 
 ```bash
-npm test               # 493 tests
+npm test               # 699 tests
 npx tsc --noEmit       # type-check app and docs site
+
+# Price feeds change upstream; this checks the adapters against the real APIs.
+PRICING_LIVE=1 npx vitest run tests/pricing.live.test.ts
 ```
 
 ## Where your data lives

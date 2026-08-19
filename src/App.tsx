@@ -11,8 +11,12 @@ import { DialogHost } from "./components/Dialog";
 import { ContextMenu } from "./components/ContextMenu";
 import { Toaster } from "./components/Toaster";
 import { CommandPalette } from "./components/CommandPalette";
-import { Onboarding, hasOnboarded } from "./components/Onboarding";
-import { hasDeepLink } from "./lib/deeplink";
+// The getting-started modal used to open here on first run. It was a chooser in
+// front of a chooser: pick a path, land in Discover, pick a provider, then find
+// your way back to a chat. New users now start *in* the conversation with an
+// inline key prompt (see ChatWindow's empty state), which is the same decision
+// with four fewer steps. Onboarding.tsx is kept for reference until the flow has
+// been seen by real users.
 import { IconPanelLeft, IconPanelRight } from "./components/icons";
 import { ClosingOverlay, Splash, ViewLoading } from "./components/Loading";
 import { useStore } from "./lib/store";
@@ -33,7 +37,6 @@ export default function App() {
     configOpen,
     setConfigOpen,
   } = useStore();
-  const [, setForce] = useState(0);
   const [closing, setClosing] = useState(false);
 
   useEffect(() => {
@@ -202,11 +205,14 @@ export default function App() {
     document.documentElement.dataset.theme = theme;
   }, [settings.theme]);
 
-  if (!ready) return <Splash status={bootStatus} />;
+  // The accent palette is independent of the canvas so a user can pick
+  // "light + forest" without us shipping a combinatorial matrix. Defaults to
+  // indigo when unset (early installs, partial settings.json).
+  useEffect(() => {
+    document.documentElement.dataset.accent = settings.accent ?? "indigo";
+  }, [settings.accent]);
 
-  // Arriving via a share link means the setup is already chosen — don't block it
-  // with the getting-started chooser.
-  const showOnboard = !hasOnboarded() && !hasDeepLink();
+  if (!ready) return <Splash status={bootStatus} />;
 
   return (
     <div className={`app${sidebarOpen ? "" : " left-collapsed"}${configOpen ? "" : " right-collapsed"}`}>
@@ -254,7 +260,6 @@ export default function App() {
       <ContextMenu />
       <Toaster />
       <CommandPalette />
-      {showOnboard && <Onboarding onClose={() => setForce((n) => n + 1)} />}
       {closing && <ClosingOverlay />}
     </div>
   );

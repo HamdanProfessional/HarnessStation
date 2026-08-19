@@ -376,6 +376,26 @@ export function speakQueued(text: string, settings: Settings): void {
   void drain(settings);
 }
 
+/**
+ * Stage 2: decide whether to speak the just-completed reply out loud.
+ *
+ * Stage 2 behaviour: voice mode is a property of the chat, not a separate
+ * chat. The `speakReplies` setting is the smarter default — text-mode
+ * chats get TTS for replies when the user has it on, hands-free voice
+ * mode gets TTS for the same reason. No mode flag to keep in sync.
+ *
+ * Silence rules: empty content, error markers, and the user being already
+ * in voice mode (the voice session has its own queue) all skip. The voice
+ * session is bypassed entirely here — the chat only speaks in text mode.
+ */
+export function maybeSpeakReply(content: string, settings: Settings, opts: { voiceMode?: boolean } = {}): void {
+  if (opts.voiceMode) return;
+  if (settings.voice?.speakReplies === false) return;
+  const text = speakableText(content);
+  if (!text) return;
+  speakQueued(text, settings);
+}
+
 /** Keep the rewriter in the same language as the reply. */
 function languageHint(settings: Settings): string {
   const code = settings.voice?.replyLanguage;

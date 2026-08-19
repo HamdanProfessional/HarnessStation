@@ -215,28 +215,38 @@ pub fn mic_active(state: State<Recorder>) -> bool {
 /// the raw RMS `mic_level`, this distinguishes a spoken voice from a fan, a door
 /// slam, or keyboard clatter — so turn-endpointing and barge-in don't fire on noise
 /// and don't miss a soft speaker. Returns false when not recording or still opening.
-/// Computed on demand (the poll loop already ticks) to keep the audio callback hot.
+/// The voice poll loop calls this ~12x a second for the whole of a call, so it is
+/// `async` — a synchronous command runs on the UI thread, and doing this much work
+/// there that often stops the window pumping messages (same trap as `join_capture`
+/// below). It also copies the audio out under a short lock and releases it before
+/// doing anything: the capture callback takes `samples` on every buffer, and
+/// holding it across a resample would fight a real-time thread.
 #[tauri::command]
-pub fn mic_speech(state: State<Recorder>) -> bool {
+pub async fn mic_speech(state: State<'_, Recorder>) -> Result<bool, String> {
     use earshot::{VoiceActivityDetector, VoiceActivityProfile};
-    let guard = state.0.lock().unwrap();
-    let rec = match guard.as_ref() {
-        Some(r) => r,
-        None => return false,
-    };
-    let rate = rec.rate.load(Ordering::Relaxed);
-    if rate == 0 {
-        return false;
-    }
-    // Take the last ~300 ms of mono audio without consuming the buffer.
-    let tail: Vec<f32> = {
-        let buf = rec.samples.lock().unwrap();
+
+    // Scope: copy the tail, then drop both guards before any real work.
+    let (tail, rate) = {
+        // A panicked capture thread must not poison the mic for the rest of the
+        // session — recover the data rather than propagating the panic.
+        let guard = state.0.lock().unwrap_or_else(|e| e.into_inner());
+        let rec = match guard.as_ref() {
+            Some(r) => r,
+            None => return Ok(false),
+        };
+        let rate = rec.rate.load(Ordering::Relaxed);
+        if rate == 0 {
+            return Ok(false);
+        }
+        // Last ~300 ms of mono audio, without consuming the buffer.
+        let buf = rec.samples.lock().unwrap_or_else(|e| e.into_inner());
         let n = ((rate as usize * 300) / 1000).min(buf.len());
         if n == 0 {
-            return false;
+            return Ok(false);
         }
-        buf[buf.len() - n..].to_vec()
+        (buf[buf.len() - n..].to_vec(), rate)
     };
+
     let pcm = if rate == 16000 {
         tail
     } else {
@@ -258,7 +268,7 @@ pub fn mic_speech(state: State<Recorder>) -> bool {
     }
     // Call it speech when a clear share of recent frames are voiced — a couple of
     // stray positives from a transient shouldn't count as the user talking.
-    total > 0 && voiced * 5 >= total * 2 // >= 40% of the window is voiced
+    Ok(total > 0 && voiced * 5 >= total * 2) // >= 40% of the window is voiced
 }
 
 /// Stop recording, write a 16 kHz mono WAV to ~/.harnessx/tmp/dictation.wav, return its relative path.
@@ -285,20 +295,28 @@ pub async fn mic_stop(state: State<'_, Recorder>) -> Result<String, String> {
 /// it false gives a rolling snapshot for live transcription. Either way the mic
 /// keeps running, which is what lets the avatar hear you while it is still
 /// transcribing or answering the previous thing you said.
+///
+/// The lock is released before the resample and the file write: both callers run
+/// on a timer for the whole of a call, and holding the recorder — which the
+/// real-time capture callback also needs — across disk I/O is what makes a window
+/// stop responding.
 fn dump(state: &State<Recorder>, name: &str, take: bool) -> Result<String, String> {
-    let guard = state.0.lock().unwrap();
-    let rec = guard.as_ref().ok_or("not recording")?;
-    let rate = rec.rate.load(Ordering::Relaxed);
-    if rate == 0 {
-        return Err("microphone still opening".into());
-    }
-    let pcm_raw = {
-        let mut buf = rec.samples.lock().unwrap();
-        if take {
+    let (pcm_raw, rate) = {
+        // A panicked capture thread must not poison the mic for the rest of the
+        // session — recover the data rather than propagating the panic.
+        let guard = state.0.lock().unwrap_or_else(|e| e.into_inner());
+        let rec = guard.as_ref().ok_or("not recording")?;
+        let rate = rec.rate.load(Ordering::Relaxed);
+        if rate == 0 {
+            return Err("microphone still opening".into());
+        }
+        let mut buf = rec.samples.lock().unwrap_or_else(|e| e.into_inner());
+        let pcm_raw = if take {
             std::mem::take(&mut *buf)
         } else {
             buf.clone()
-        }
+        };
+        (pcm_raw, rate)
     };
     if pcm_raw.is_empty() {
         return Err("no audio captured".into());
@@ -315,14 +333,21 @@ fn dump(state: &State<Recorder>, name: &str, take: bool) -> Result<String, Strin
 }
 
 /// Take the audio so far as a segment and keep recording. Used per utterance.
+///
+/// `async` for the same reason as `mic_speech`: this writes a WAV, and a
+/// synchronous command would do that on the UI thread.
 #[tauri::command]
-pub fn mic_take(state: State<Recorder>) -> Result<String, String> {
+pub async fn mic_take(state: State<'_, Recorder>) -> Result<String, String> {
     dump(&state, "segment.wav", true)
 }
 
 /// Copy the audio so far without consuming it — for rolling live transcription.
+///
+/// Runs about once a second for the whole of a call, so it is `async` too: this
+/// is the heaviest of the three (it copies and writes the entire segment, not a
+/// 300 ms tail) and must never land on the UI thread.
 #[tauri::command]
-pub fn mic_snapshot(state: State<Recorder>) -> Result<String, String> {
+pub async fn mic_snapshot(state: State<'_, Recorder>) -> Result<String, String> {
     dump(&state, "partial.wav", false)
 }
 

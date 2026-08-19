@@ -33,6 +33,7 @@ import type {
   Settings,
 } from "../lib/types";
 import { NAV_VIEWS } from "../lib/views";
+import { IconX } from "./icons";
 
 /**
  * Settings is long; these split it into panels rather than one endless scroll.
@@ -41,76 +42,123 @@ import { NAV_VIEWS } from "../lib/views";
  * actually has in mind — nobody looks for "barge-in" under "Voice", they type
  * "interrupt".
  */
+
+/** Canvas options. "system" follows the OS preference; the App effect writes
+ *  the resolved "dark" or "light" to `data-theme` after this point. */
+const THEMES: { value: Settings["theme"]; label: string }[] = [
+  { value: "dark", label: "Dark" },
+  { value: "light", label: "Light" },
+  { value: "system", label: "System" },
+];
+
+/** Brand accent palettes. The CSS lives in App.css under [data-accent="..."];
+ *  the swatch colour here is a static preview so the picker reads at a glance
+ *  without having to flip the whole app on every hover. */
+const ACCENTS: { value: NonNullable<Settings["accent"]>; label: string }[] = [
+  { value: "indigo", label: "Indigo" },
+  { value: "forest", label: "Forest" },
+  { value: "ember", label: "Ember" },
+];
+
+/**
+ * Settings is grouped into two sections:
+ *   - "core"      — what every new user needs in the first 10 minutes
+ *   - "advanced"  — power-user features: profiles, memory, mesh, secrets, hooks,
+ *                   channels, cloud sync, usage, data
+ *
+ * The rail shows only the core tabs by default. Searching shows every match
+ * across both sections. The "Advanced" toggle at the bottom of the rail swaps
+ * the visible list for the advanced set, so a new user isn't confronted with
+ * 13 options on first launch.
+ */
 const TABS = [
   {
     id: "general",
-    label: "General",
-    blurb: "Instructions, conversation, theme",
-    keywords: "system prompt instructions theme dark light conversation compact autotitle tray background",
+    section: "core",
+    label: "Appearance",
+    blurb: "Theme, conversation, instructions",
+    keywords: "system prompt instructions theme dark light accent color brand appearance conversation compact autotitle tray background",
   },
   {
-    id: "profiles",
-    label: "Profiles",
-    blurb: "Show/hide features per workspace",
-    keywords: "profile plugin toggle enable disable hide view panel sidebar feature minimal customize workspace",
+    id: "voice",
+    section: "core",
+    label: "Voice",
+    blurb: "Speech, microphone, avatar",
+    keywords: "avatar speech tts stt whisper microphone mic kokoro piper elevenlabs interrupt barge wake word language vrm",
   },
   {
     id: "providers",
+    section: "core",
     label: "Providers",
     blurb: "Models, keys, embeddings",
     keywords: "api key openai anthropic ollama local model endpoint base url embeddings gateway benchmarks",
   },
   {
+    id: "profiles",
+    section: "advanced",
+    label: "Profiles",
+    blurb: "Show/hide features per workspace",
+    keywords: "profile plugin toggle enable disable hide view panel sidebar feature minimal customize workspace",
+  },
+  {
     id: "media",
+    section: "advanced",
     label: "Media models",
     blurb: "Image, audio, video, 3D",
     keywords: "image audio video 3d generate replicate stable diffusion speech",
   },
   {
-    id: "voice",
-    label: "Voice",
-    blurb: "Avatar, speech, microphone",
-    keywords: "avatar speech tts stt whisper microphone mic kokoro piper elevenlabs interrupt barge wake word language vrm",
-  },
-  {
     id: "memory",
+    section: "advanced",
     label: "Memory",
     blurb: "What the app remembers",
     keywords: "memory facts recall forget passive context window budget share",
   },
   {
     id: "devices",
+    section: "advanced",
     label: "Devices",
     blurb: "Pair your other machines",
     keywords: "mesh lan network pair peer share remote device",
   },
   {
     id: "secrets",
+    section: "advanced",
     label: "Secrets",
     blurb: "API keys the model uses but can't read",
     keywords: "secret api key token credential vault password cloudflare github stripe openai redact placeholder",
   },
   {
     id: "hooks",
+    section: "advanced",
     label: "Hooks & guardrails",
     blurb: "Tool policies and event webhooks",
     keywords: "guardrail confirm block deny allow tool policy webhook hook slack event turn error notify alert automation",
   },
   {
     id: "channels",
+    section: "advanced",
     label: "Channels",
     blurb: "Reach your agent from Telegram & Discord",
     keywords: "telegram discord channel bot message chat gateway messaging platform reach mobile",
   },
   {
     id: "cloud",
+    section: "advanced",
     label: "Cloud sync",
     blurb: "Optional encrypted backup & sync",
     keywords: "cloud sync account backup restore login sign in encrypted end-to-end conversations chats multi-device password",
   },
-  { id: "usage", label: "Usage", blurb: "Spend caps and totals", keywords: "cost spend budget cap daily monthly tokens price" },
+  {
+    id: "usage",
+    section: "advanced",
+    label: "Usage",
+    blurb: "Spend caps and totals",
+    keywords: "cost spend budget cap daily monthly tokens price",
+  },
   {
     id: "data",
+    section: "advanced",
     label: "Data & updates",
     blurb: "Storage, export, version",
     keywords: "data folder export import backup update version about reset",
@@ -118,8 +166,10 @@ const TABS = [
 ] as const;
 
 type Tab = (typeof TABS)[number]["id"];
+type Section = (typeof TABS)[number]["section"];
 
 const TAB_KEY = "hs-settings-tab";
+const VIEW_KEY = "hs-settings-view";
 
 const MEDIA_ENGINES: { value: MediaEngine; label: string; kind: MediaKind }[] = [
   { value: "openai-image", label: "OpenAI-compatible image (cloud/local)", kind: "image" },
@@ -140,12 +190,38 @@ export function SettingsView() {
     const saved = localStorage.getItem(TAB_KEY);
     return TABS.some((t) => t.id === saved) ? (saved as Tab) : "general";
   });
+  const [section, setSection] = useState<Section>(() => {
+    const saved = localStorage.getItem(VIEW_KEY);
+    return saved === "advanced" ? "advanced" : "core";
+  });
 
   const openTab = (id: Tab) => {
     setTab(id);
     localStorage.setItem(TAB_KEY, id);
+    // Switching tabs from a different section (e.g. a search match in Advanced
+    // when the user is in Core) follows the user to that section.
+    const target = TABS.find((t) => t.id === id);
+    if (target && target.section !== section) {
+      setSection(target.section);
+      localStorage.setItem(VIEW_KEY, target.section);
+    }
     // Each panel is its own page — start it at the top.
     document.querySelector(".settings-body")?.scrollTo({ top: 0 });
+  };
+  const showSection = (next: Section) => {
+    setSection(next);
+    localStorage.setItem(VIEW_KEY, next);
+    // If the currently active tab is in the other section, follow the user
+    // by switching to the first tab of the new section. Otherwise the panel
+    // body would keep showing a tab the rail no longer highlights.
+    const currentSection = TABS.find((t) => t.id === tab)?.section;
+    if (currentSection !== next) {
+      const first = TABS.find((t) => t.section === next);
+      if (first) {
+        setTab(first.id);
+        localStorage.setItem(TAB_KEY, first.id);
+      }
+    }
   };
   const [saved, setSaved] = useState(false);
   const [query, setQuery] = useState("");
@@ -433,11 +509,15 @@ export function SettingsView() {
    */
   const dirty = JSON.stringify(draft) !== JSON.stringify(settings);
 
-  /** Sections matching the search box, by label, blurb or keyword. */
+  /** Sections matching the search box, by label, blurb or keyword.
+   *  When not searching, returns only the current section's tabs — core by
+   *  default, advanced when the user asks for it. Searching overrides the
+   *  section filter so a user can find a setting without having to guess
+   *  which section it's in. */
   const q = query.trim().toLowerCase();
   const matches = q
     ? TABS.filter((t) => `${t.label} ${t.blurb} ${t.keywords}`.toLowerCase().includes(q))
-    : [...TABS];
+    : TABS.filter((t) => t.section === section);
 
   // Ctrl+S, because this is a form with an explicit Save and everyone tries it.
   useEffect(() => {
@@ -498,6 +578,21 @@ export function SettingsView() {
               <span className="settings-tab-blurb">{t.blurb}</span>
             </button>
           ))}
+          {/* Section switch — hidden during search so a single match isn't
+              followed by mode-switching UI the user didn't ask for. */}
+          {!q && (
+            section === "core" ? (
+              <button className="settings-tab settings-tab-advanced" onClick={() => showSection("advanced")}>
+                <span className="settings-tab-label">Advanced →</span>
+                <span className="settings-tab-blurb">Profiles, memory, mesh, hooks, channels, data</span>
+              </button>
+            ) : (
+              <button className="settings-tab settings-tab-advanced" onClick={() => showSection("core")}>
+                <span className="settings-tab-label">← Back to settings</span>
+                <span className="settings-tab-blurb">Appearance, voice, providers</span>
+              </button>
+            )
+          )}
         </nav>
 
         <div className="settings-body">
@@ -992,7 +1087,7 @@ export function SettingsView() {
                 <option value="3d">3D model</option>
               </select>
               <button className="icon-btn" title="Remove" onClick={() => removeMedia(m.id)}>
-                ×
+                <IconX size={12} />
               </button>
             </div>
             <div className="provider-row">
@@ -1602,15 +1697,52 @@ export function SettingsView() {
       </section>
 
       <section hidden={tab !== "general"}>
-        <h2>Theme</h2>
-        <select
-          value={draft.theme}
-          onChange={(e) => setDraft({ ...draft, theme: e.target.value as Settings["theme"] })}
-        >
-          <option value="dark">Dark</option>
-          <option value="light">Light</option>
-          <option value="system">System</option>
-        </select>
+        <h2>Appearance</h2>
+        <p className="hint">
+          The canvas (dark/light) and the accent color are independent — pick a
+          canvas that suits the room, then a brand color that suits the canvas.
+        </p>
+
+        <div className="theme-label">Canvas</div>
+        <div className="theme-swatches" role="radiogroup" aria-label="Canvas">
+          {THEMES.map((t) => (
+            <button
+              key={t.value}
+              role="radio"
+              aria-checked={draft.theme === t.value}
+              className={`theme-swatch ${draft.theme === t.value ? "active" : ""}`}
+              onClick={() => setDraft({ ...draft, theme: t.value })}
+              title={t.label}
+            >
+              <span className={`theme-preview theme-preview-${t.value}`} aria-hidden="true">
+                <span className="theme-preview-line" />
+                <span className="theme-preview-dot" />
+              </span>
+              <span className="theme-name">{t.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="theme-label">Accent</div>
+        <div className="theme-swatches" role="radiogroup" aria-label="Accent color">
+          {ACCENTS.map((a) => (
+            <button
+              key={a.value}
+              role="radio"
+              aria-checked={(draft.accent ?? "indigo") === a.value}
+              className={`theme-swatch ${(draft.accent ?? "indigo") === a.value ? "active" : ""}`}
+              onClick={() => setDraft({ ...draft, accent: a.value })}
+              title={a.label}
+            >
+              <span
+                className="theme-chip"
+                style={{ background: a.value === "indigo" ? "#5e6ad2" : a.value === "forest" ? "#3eb872" : "#e88a4a" }}
+                aria-hidden="true"
+              />
+              <span className="theme-name">{a.label}</span>
+            </button>
+          ))}
+        </div>
       </section>
 
       {/* Web build only: the real-Linux terminal. The desktop already runs a
@@ -1722,7 +1854,7 @@ export function SettingsView() {
                   setDraft({ ...draft, providers: draft.providers.filter((x) => x.id !== p.id) })
                 }
               >
-                ×
+                <IconX size={12} />
               </button>
             </div>
             <div className="provider-row">

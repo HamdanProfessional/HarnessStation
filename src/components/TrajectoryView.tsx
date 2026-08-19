@@ -3,6 +3,7 @@ import type { Chat, Message, MessageTrace } from "../lib/types";
 import { prettyName } from "../lib/format";
 import { useStore } from "../lib/store";
 import { toast } from "../lib/toast";
+import { IconX } from "./icons";
 
 /**
  * A read-only, step-by-step trace of a run. Everything the model actually saw
@@ -193,7 +194,7 @@ export function TrajectoryView({ chat, onClose }: { chat: Chat; onClose: () => v
             Export log
           </button>
           <button className="icon-btn" aria-label="Close" title="Close (Esc)" onClick={onClose}>
-            ×
+            <IconX size={12} />
           </button>
         </div>
         <div className="traj-scroll">

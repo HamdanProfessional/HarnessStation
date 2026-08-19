@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import {
   CATALOG,
@@ -20,6 +20,8 @@ import { promptDialog } from "../lib/dialog";
 import { toast } from "../lib/toast";
 import { IconBolt, IconCloud, IconPencil, IconPlus } from "./icons";
 import type { MediaEngine, MediaKind, MediaModel } from "../lib/types";
+
+const ValueTab = lazy(() => import("./ValueTab").then((m) => ({ default: m.ValueTab })));
 
 interface MediaPreset {
   id: string;
@@ -168,10 +170,10 @@ interface DlState {
 
 export function DiscoverView() {
   const { setView, addCloudProvider, settings, saveSettings } = useStore();
-  const [tab, setTab] = useState<"cloud" | "local" | "media">(() => {
+  const [tab, setTab] = useState<"cloud" | "local" | "media" | "value">(() => {
     const t = sessionStorage.getItem("hs-discover-tab");
     sessionStorage.removeItem("hs-discover-tab");
-    return t === "local" ? "local" : t === "media" ? "media" : "cloud";
+    return t === "local" || t === "media" || t === "value" ? t : "cloud";
   });
   const [localMediaUrl, setLocalMediaUrl] = useState<Record<string, string>>(() =>
     Object.fromEntries(MEDIA_LOCAL_PRESETS.map((p) => [p.id, p.baseUrl])),
@@ -380,7 +382,18 @@ export function DiscoverView() {
         <button className={`seg-btn ${tab === "media" ? "active" : ""}`} onClick={() => setTab("media")}>
           Media generation
         </button>
+        <button className={`seg-btn ${tab === "value" ? "active" : ""}`} onClick={() => setTab("value")}>
+          Value
+        </button>
       </div>
+
+      {/* Lazily loaded: the price catalog pulls a few MB of JSON, and nobody
+          should pay for that just by opening Discover to add a provider. */}
+      {tab === "value" && (
+        <Suspense fallback={<p className="hint">Loading price data...</p>}>
+          <ValueTab />
+        </Suspense>
+      )}
 
       {tab === "cloud" && (
         <>

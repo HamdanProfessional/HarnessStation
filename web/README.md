@@ -48,8 +48,12 @@ memory, over one sandboxed OPFS workspace:
 - **Python** — real CPython via Pyodide (`pyodide.ts`), loaded from CDN on first
   use.
 - **Terminal** — a coreutils subset (`shell.ts`): ls, cat, echo, grep, pipes,
-  redirection, `&&`/`;`, cd — over the same workspace. Full Linux (CheerpX) is a
-  future upgrade behind the same seam.
+  redirection, `&&`/`;`, cd — over the same workspace. Fast to start, and enough
+  for most file work.
+- **Full Linux** — a real kernel boots client-side in WebAssembly via v86
+  (`vm.ts`, kernel and BIOS images in `public/vm/`), behind the same seam as the
+  coreutils shell. Nothing is uploaded and no server is involved: the VM runs in
+  the user's own tab.
 
 Still genuinely can't run in a browser tab:
 

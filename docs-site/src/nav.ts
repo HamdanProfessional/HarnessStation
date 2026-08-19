@@ -26,6 +26,10 @@ export const NAV: NavSection[] = [
     title: "Getting started",
     items: [
       { slug: "index", label: "What this is" },
+      // Deliberately above Install: opening a tab is the fastest way to try the
+      // app, and filing it under "Advanced" buried the one thing nothing else
+      // in this category does.
+      { slug: "advanced/web", label: "Try it without installing" },
       { slug: "start/install", label: "Install" },
       { slug: "start/first-chat", label: "Your first chat" },
       { slug: "start/tour", label: "A tour of the app" },
@@ -103,7 +107,6 @@ export const NAV: NavSection[] = [
   {
     title: "Advanced",
     items: [
-      { slug: "advanced/web", label: "The web version" },
       { slug: "advanced/cloud-sync", label: "Cloud sync" },
       { slug: "advanced/devices", label: "Device mesh" },
       { slug: "advanced/data", label: "Where your data lives" },

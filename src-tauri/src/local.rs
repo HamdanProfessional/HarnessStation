@@ -423,6 +423,19 @@ pub fn stt_serve(
         &port.to_string(),
         "-t",
         &threads,
+        // Tuned for short conversational turns on modest hardware, where the wait
+        // between speaking and being answered is the thing that matters:
+        //   -bo 1  decode one candidate instead of whisper's default two
+        //   -nf    skip the temperature-fallback re-decode when a segment scores
+        //          badly — a retry costs more than the occasional worse guess here
+        //   -nt    no timestamps; only the text is ever read back
+        // Verified against the flags this whisper-server build actually accepts —
+        // an unknown flag stops the server booting, which silently drops every
+        // utterance onto the far slower one-shot CLI path.
+        "-bo",
+        "1",
+        "-nf",
+        "-nt",
     ])
     .stdin(Stdio::null())
     .stdout(Stdio::null())

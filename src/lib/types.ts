@@ -57,6 +57,9 @@ export interface Settings {
   providers: Provider[];
   globalInstructions: string;
   theme: "dark" | "light" | "system";
+  /** Brand accent palette. Independent of theme — a light canvas can carry any
+   *  of these accents. Each palette has a dark-canvas and a light-canvas hue. */
+  accent?: "indigo" | "forest" | "ember";
   /** Named feature profiles the user can switch between. */
   profiles?: Profile[];
   /** The currently active profile id (undefined = everything visible). */
@@ -368,8 +371,16 @@ export interface Project {
 export interface Chat {
   id: string;
   title: string;
-  /** "voice" chats are spoken sessions; they persist and resume like any other. */
+  /** Legacy: pre-Stage-2 voice chats were created with kind="voice".
+   *  New chats use voiceMode (a runtime toggle on any chat). The two
+   *  flags can coexist — a migrated chat shows the voice icon because
+   *  of kind, but voiceMode is the source of truth for whether the
+   *  voice overlay is active. */
   kind?: "voice";
+  /** Whether the chat is currently in voice mode (the embedded voice
+   *  panel replaces the text composer). Independent of kind: any chat
+   *  can be in voice mode. */
+  voiceMode?: boolean;
   /** The project this belongs to, if any — decides which memory it shares. */
   projectId?: string;
   /** Turn off recalled memory for this one conversation. */
