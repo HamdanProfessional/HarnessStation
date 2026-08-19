@@ -50,14 +50,33 @@ Everything below is in the tree and working.
 | VRM avatar (VTuber models) | `VrmAvatar.tsx`, `storage.listAvatars` |
 | Skills (progressive disclosure) | `lib/skills.ts` |
 | Swarm coordination between agents | `lib/swarm.ts` |
+| Value / price intelligence (~6,700 models, VPS, GPU) | `lib/pricing/`, `ValueTab.tsx` |
+| Inline first-run key prompt (replaces the onboarding modal) | `FirstRunKey.tsx`, `ChatWindow` empty state |
+| Multi-token prediction for the local engine (`--spec-type draft-mtp`) | `src-tauri/src/local.rs` `LaunchOpts`, Models → Advanced |
+| Discover catalog checked against the live price feed | `catalog.PRICE_SLUG`, `tests/catalog.live.test.ts` |
 
 ### Test suite
 
-`npm test` runs Vitest over `tests/` — 283 specs covering the pure logic plus the store's streaming
-path, tool loop, lazy-hydration invariants, the agent loop, the memory store and the voice stack. It exists because a correctness sweep on 2026-07-31
+`npm test` runs Vitest over `tests/` — 755 specs covering the pure logic plus the store's streaming
+path, tool loop, lazy-hydration invariants, the agent loop, the memory store, the pricing stack and
+the voice stack. It exists because a correctness sweep on 2026-07-31
 found several live bugs, including a `chunkText` infinite loop that hung any knowledge-base import
 over 200 characters, and streaming writes that landed in whichever chat was on screen. Add cover
 alongside new logic; `.github/workflows/ci.yml` gates every push and PR.
+
+Two suites are opt-in because they call third parties, and a build shouldn't break when someone
+else has a bad afternoon:
+
+```bash
+PRICING_LIVE=1 npx vitest run tests/pricing.live.test.ts   # upstream price schemas still parse
+CATALOG_LIVE=1 npx vitest run tests/catalog.live.test.ts   # Discover's model ids still exist
+```
+
+The second is worth running before any release. Provider model ids are retired without notice, and
+a dead id in `CLOUD_PROVIDERS` doesn't look stale to a user — it 404s the first time they pick it.
+
+The Rust side has its own: `cd src-tauri && cargo test --lib launch_tests` covers the llama-server
+flag translation, where a wrong flag name silently changes nothing rather than erroring.
 
 ### Note on the chat index
 
