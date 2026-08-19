@@ -181,6 +181,30 @@ export const CATALOG: CatalogEntry[] = [
   },
   {
     publisher: "unsloth",
+    repo: "Qwen3.6-27B-MTP-GGUF",
+    fileBase: "Qwen3.6-27B",
+    displayName: "Qwen 3.6 27B (MTP)",
+    params: "27B",
+    // The only staff pick that can use the "Multi-token prediction" switch in
+    // Advanced. MTP heads have to be built into the GGUF; a normal build ignores
+    // the flag silently, so a model that actually carries them is worth listing
+    // even though 3.8 is the newer generation. No first-party 3.8 MTP build
+    // exists yet — when one lands, this entry should follow it.
+    blurb:
+      "Qwen 3.6 with multi-token-prediction heads built in — turn on 'Multi-token prediction' in Advanced for roughly 1.5–2x tokens/sec, with no second model in memory. Needs llama.cpp build 9200+.",
+    quants: [
+      { q: "Q3_K_S", sizeMB: 11992 },
+      { q: "Q3_K_M", sizeMB: 13179 },
+      { q: "IQ4_XS", sizeMB: 14978 },
+      { q: "Q4_K_S", sizeMB: 15375 },
+      { q: "Q4_K_M", sizeMB: 16314 },
+      { q: "Q5_K_M", sizeMB: 18915 },
+      { q: "Q6_K", sizeMB: 21824 },
+    ],
+    defaultQuant: "Q4_K_M",
+  },
+  {
+    publisher: "unsloth",
     repo: "Qwen3.8-27B-GGUF",
     // Sizes are the repo's real byte counts, not the quantsFor() estimate — the
     // Unsloth Dynamic quants don't scale uniformly. Q8_0 is deliberately absent:

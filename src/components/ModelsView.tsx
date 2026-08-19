@@ -7,6 +7,7 @@ import {
   serverStatus,
   startServer,
   stopServer,
+  MTP_DEFAULTS,
   type HwInfo,
   type ServerStatus,
 } from "../lib/local";
@@ -54,6 +55,10 @@ export function ModelsView() {
   const [mlock, setMlock] = useState(false);
   const [cpuMoe, setCpuMoe] = useState<string>(""); // blank = off; "0" = all experts to RAM
   const [threads, setThreads] = useState<string>("");
+  // MTP is off by default: it needs build 9200+ and an MTP-built GGUF, and is a
+  // no-op (not an error) when either is missing — so it can't be a default.
+  const [mtp, setMtp] = useState(false);
+  const [mtpDraft, setMtpDraft] = useState<string>(String(MTP_DEFAULTS.specDraftNMax));
   const [notice, setNotice] = useState<string | null>(null);
   const [colibriUrl, setColibriUrl] = useState("http://localhost:8080/v1");
   /** When true, the Colibri section is rendered. Off by default so a new user
@@ -250,6 +255,15 @@ export function ModelsView() {
         mlock,
         cpuMoe: cpuMoe.trim() === "" ? undefined : Number(cpuMoe),
         threads: threads.trim() === "" ? undefined : Number(threads),
+        mtp,
+        // p-min isn't exposed: it has one sensible value and getting it wrong
+        // quietly turns MTP into a slowdown, which is not a knob worth offering.
+        ...(mtp
+          ? {
+              specDraftNMax: mtpDraft.trim() === "" ? MTP_DEFAULTS.specDraftNMax : Number(mtpDraft),
+              specDraftPMin: MTP_DEFAULTS.specDraftPMin,
+            }
+          : {}),
       });
       // wait for the server to answer, then register the Local provider
       let modelIds: string[] = [];
@@ -636,6 +650,32 @@ export function ModelsView() {
               <input type="checkbox" checked={mlock} onChange={(e) => setMlock(e.target.checked)} />
               Lock in RAM (no swap to disk) — needs enough RAM
             </label>
+            <label className="check">
+              <input type="checkbox" checked={mtp} onChange={(e) => setMtp(e.target.checked)} />
+              Multi-token prediction — ~1.5–2x faster, no extra memory
+            </label>
+            {mtp && (
+              <>
+                <label>
+                  Draft tokens{" "}
+                  <input
+                    type="number"
+                    min={1}
+                    max={8}
+                    value={mtpDraft}
+                    style={{ width: 60 }}
+                    onChange={(e) => setMtpDraft(e.target.value)}
+                  />
+                  <span className="hint"> 2 for a dense model, 3 for MoE.</span>
+                </label>
+                <p className="hint">
+                  Only works on a model built with MTP heads (its name usually says
+                  “MTP”) and llama.cpp build 9200+. On any other model it does
+                  nothing at all rather than failing, so if you see no speed-up,
+                  that is why. The gain shows up on long replies, not short ones.
+                </p>
+              </>
+            )}
             <label>
               MoE experts → RAM{" "}
               <input

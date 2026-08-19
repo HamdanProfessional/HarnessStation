@@ -60,19 +60,29 @@ doesn't materialise — one head-to-head had DFlash ahead at 100 tokens (46.9 vs
 44.6 tok/s). For a chat app whose median reply is short, MTP is not a
 free win on every turn.
 
-### What it would take here
+### Shipped
 
-`LaunchOpts` in `src-tauri/src/local.rs` already models exactly this kind of
-optional flag — `threads`, `cpu_moe`, `flash_attn`, `mlock`, `no_mmap`, `fit`,
-`fit_target`, each appended by `launch_flag_args`. Adding MTP is two more fields
-and a push.
+Done, same day this was written. `LaunchOpts` in `src-tauri/src/local.rs` gained
+`mtp`, `spec_draft_n_max` and `spec_draft_p_min`; `launch_flag_args` emits
+`--spec-type draft-mtp` and gates the two draft knobs behind it, because passing
+them alone yields a launch that looks tuned and isn't. Surfaced in Models →
+Advanced as "Multi-token prediction", off by default.
 
-The existing comment there is the warning worth heeding: these flags *"fail on an
-old engine"*. `--spec-type` is newer than any of them, so it needs the same
-version guard, and the guard needs to know about build 9200.
+`--spec-draft-p-min` is set to 0.75 in code and **not** exposed as a knob: it has
+one sensible value, and getting it wrong quietly converts MTP into a slowdown.
+`--spec-draft-n-max` is exposed, defaulting to 2.
 
-**Verdict: the highest-value item on this list, and the only one that is
-mostly an integration job rather than a hardware purchase.**
+No runtime version probe. Same contract as every other flag in that struct —
+opt-in, unset by default, so an old engine is unaffected — with the build-9200
+requirement stated in the UI hint instead. Adding a `llama-server --version`
+parse would buy little: the failure mode is a silent no-op, not a crash.
+
+`unsloth/Qwen3.6-27B-MTP-GGUF` is now in the staff picks, since the switch is
+useless without a model that carries the heads. 3.6 rather than 3.8 because no
+first-party 3.8 MTP build exists yet.
+
+A test pins the flag spelling (`mtp_uses_the_renamed_spec_type_form`) precisely
+because the wrong form is what the tutorials show, and the failure is silent.
 
 ---
 
@@ -154,7 +164,7 @@ already ship appears — at that point the fit badge probably needs a
 
 | Item | Reachable from llama.cpp? | Work for us |
 |---|---|---|
-| MTP | **Yes**, build 9200+ | `LaunchOpts` + version guard + MTP-variant catalog rows |
+| MTP | **Yes**, build 9200+ | **done** — `LaunchOpts` + Models→Advanced + an MTP staff pick |
 | DFlash | No — SGLang/vLLM | none; re-check later |
 | FlashAttention-4 | Yes, via existing `--flash-attn on` | none |
 | NVFP4 / MXFP4 | Yes, Blackwell-accelerated | none yet; fit-badge honesty later |

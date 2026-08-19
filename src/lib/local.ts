@@ -44,7 +44,26 @@ export interface LaunchOpts {
   fitOff?: boolean;
   /** Auto-fit VRAM margin per GPU, MB (`--fit-target`). */
   fitTarget?: number;
+  /**
+   * Multi-token prediction (`--spec-type draft-mtp`) — ~1.5–2x tokens/sec with
+   * no second model in memory, because the draft heads ship inside the model.
+   *
+   * Needs llama.cpp build 9200+ *and* a GGUF built with MTP heads; on a normal
+   * GGUF the flag is silently inert. Long generations benefit most — below a few
+   * hundred output tokens the speedup doesn't show up.
+   */
+  mtp?: boolean;
+  /** Draft tokens per step (`--spec-draft-n-max`): 2 for dense, 3 for MoE. */
+  specDraftNMax?: number;
+  /**
+   * Minimum acceptance probability for a draft token (`--spec-draft-p-min`).
+   * Effectively required: without it, rejection on long contexts eats the gain.
+   */
+  specDraftPMin?: number;
 }
+
+/** Defaults applied when the user turns MTP on but doesn't tune it. */
+export const MTP_DEFAULTS = { specDraftNMax: 2, specDraftPMin: 0.75 } as const;
 
 export const startServer = (
   engineDir: string,

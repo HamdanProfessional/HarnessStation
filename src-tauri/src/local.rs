@@ -617,6 +617,23 @@ pub struct LaunchOpts {
     fit_off: bool,
     /// Memory margin per GPU in MB for auto-fit (`--fit-target`).
     fit_target: Option<u32>,
+    /// Multi-token prediction (`--spec-type draft-mtp`): speculative decoding
+    /// using heads baked into the model, so there's no second draft model and no
+    /// second VRAM budget. Roughly 1.5–2x tokens/sec.
+    ///
+    /// Two hard requirements, both silent when unmet: llama.cpp **build 9200+**
+    /// (merged 2026-05-16), and a **model whose GGUF carries MTP heads** — a
+    /// normal GGUF has none and the flag simply does nothing. The flag was also
+    /// renamed from `--draft-mtp` before the stable merge, so older write-ups
+    /// give a form that errors.
+    mtp: bool,
+    /// Tokens the MTP head drafts per step (`--spec-draft-n-max`). 2 suits dense
+    /// models, 3 MoE. Ignored unless `mtp` is set.
+    spec_draft_n_max: Option<u32>,
+    /// Minimum acceptance probability for a drafted token (`--spec-draft-p-min`).
+    /// Not optional in practice: without it, rejection rates on long contexts eat
+    /// the speedup. ~0.75 is the reported sweet spot. Ignored unless `mtp` is set.
+    spec_draft_p_min: Option<f32>,
 }
 
 /// Build just the optional flag arguments for a set of launch options.
@@ -655,6 +672,22 @@ fn launch_flag_args(o: &LaunchOpts) -> Vec<String> {
     if let Some(m) = o.fit_target {
         a.push("--fit-target".into());
         a.push(m.to_string());
+    }
+    // The draft tuning knobs only mean anything alongside a speculative type, so
+    // they're gated on `mtp` rather than emitted independently — passing them
+    // alone would be a launch that looks configured and isn't.
+    if o.mtp {
+        a.push("--spec-type".into());
+        a.push("draft-mtp".into());
+        if let Some(n) = o.spec_draft_n_max {
+            a.push("--spec-draft-n-max".into());
+            a.push(n.to_string());
+        }
+        if let Some(p) = o.spec_draft_p_min {
+            a.push("--spec-draft-p-min".into());
+            // Trim the float so 0.75 doesn't reach the CLI as "0.75000000000001".
+            a.push(format!("{p}"));
+        }
     }
     a
 }
@@ -791,6 +824,40 @@ mod launch_tests {
         assert_eq!(launch_flag_args(&off), vec!["--fit", "off"]);
         let target = LaunchOpts { fit_target: Some(256), ..Default::default() };
         assert_eq!(launch_flag_args(&target), vec!["--fit-target", "256"]);
+    }
+
+    #[test]
+    fn mtp_uses_the_renamed_spec_type_form() {
+        // Pre-merge llama.cpp took a bare `--draft-mtp`, and one widely-copied
+        // tutorial says `--spec-type mtp`. Both error on a current build. If this
+        // assertion is ever "fixed" to match a tutorial, MTP silently stops.
+        let o = LaunchOpts { mtp: true, ..Default::default() };
+        assert_eq!(launch_flag_args(&o), vec!["--spec-type", "draft-mtp"]);
+    }
+
+    #[test]
+    fn draft_knobs_are_ignored_without_mtp() {
+        // Emitting these alone would produce a launch that looks tuned and isn't.
+        let o = LaunchOpts {
+            spec_draft_n_max: Some(3),
+            spec_draft_p_min: Some(0.75),
+            ..Default::default()
+        };
+        assert!(launch_flag_args(&o).is_empty());
+    }
+
+    #[test]
+    fn mtp_carries_its_draft_knobs() {
+        let o = LaunchOpts {
+            mtp: true,
+            spec_draft_n_max: Some(2),
+            spec_draft_p_min: Some(0.75),
+            ..Default::default()
+        };
+        assert_eq!(
+            launch_flag_args(&o),
+            vec!["--spec-type", "draft-mtp", "--spec-draft-n-max", "2", "--spec-draft-p-min", "0.75"]
+        );
     }
 
     #[test]
