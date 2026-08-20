@@ -103,12 +103,37 @@ export function resolveCatalog(e: CatalogEntry, quant: string): CatalogModel {
 export const CATALOG: CatalogEntry[] = [
   {
     publisher: "LiquidAI",
-    repo: "LFM2-1.2B-GGUF",
-    fileBase: "LFM2-1.2B",
-    displayName: "Liquid LFM2 1.2B",
+    repo: "LFM2.5-1.2B-Instruct-GGUF",
+    fileBase: "LFM2.5-1.2B-Instruct",
+    displayName: "Liquid LFM2.5 1.2B",
     params: "1.2B",
     blurb: "Liquid AI's fast edge model — very small, great on CPU / low RAM.",
-    quants: quantsFor(1.2),
+    // Real byte counts. QAD-Q4_0 (quantization-aware) is the same size as Q4_0
+    // but not offered here: one 4-bit choice is enough for the smallest tier.
+    quants: [
+      { q: "Q4_0", sizeMB: 664 },
+      { q: "Q4_K_M", sizeMB: 697 },
+      { q: "Q5_K_M", sizeMB: 804 },
+      { q: "Q6_K", sizeMB: 918 },
+      { q: "Q8_0", sizeMB: 1189 },
+    ],
+    defaultQuant: "Q4_K_M",
+  },
+  {
+    publisher: "LiquidAI",
+    repo: "LFM2.5-2.6B-GGUF",
+    fileBase: "LFM2.5-2.6B",
+    displayName: "Liquid LFM2.5 2.6B",
+    params: "2.6B",
+    blurb:
+      "Built for on-device agents rather than chat — small enough (~1.6 GB at Q4) to sit alongside everything else already running, and quick at the mechanical work: titling, tool arguments, deciding whether a turn needs a bigger model.",
+    quants: [
+      { q: "Q4_0", sizeMB: 1520 },
+      { q: "Q4_K_M", sizeMB: 1597 },
+      { q: "Q5_K_M", sizeMB: 1850 },
+      { q: "Q6_K", sizeMB: 2119 },
+      { q: "Q8_0", sizeMB: 2742 },
+    ],
     defaultQuant: "Q4_K_M",
   },
   {
