@@ -6,6 +6,7 @@ import {
   CLOUD_CATEGORY_ORDER,
   CLOUD_PROVIDERS,
   fitFor,
+  fitCaveat,
   FIT_LABEL,
   parseHfUrl,
   resolveCatalog,
@@ -326,10 +327,17 @@ export function DiscoverView() {
     start(parsed);
   };
 
-  const fitSpan = (sizeMB: number) => {
+  const fitSpan = (sizeMB: number, name?: string) => {
     if (!hw || !sizeMB) return null;
     const fit = fitFor(sizeMB, hw.total_ram_mb, hw.vram_mb);
-    return <span className={`fit fit-${fit}`}> · {FIT_LABEL[fit]}</span>;
+    // "Fits" is only half the answer for an FP4 build — see fitCaveat.
+    const caveat = name ? fitCaveat(name, hw.gpu_name) : null;
+    return (
+      <>
+        <span className={`fit fit-${fit}`}> · {FIT_LABEL[fit]}</span>
+        {caveat && <span className="fit fit-tight"> · {caveat}</span>}
+      </>
+    );
   };
 
   const dlControl = (m: CatalogModel) => {
@@ -502,7 +510,7 @@ export function DiscoverView() {
                       <div className="grow">
                         {f.path}
                         <span className="hint"> · {(f.sizeMB / 1024).toFixed(1)} GB</span>
-                        {fitSpan(f.sizeMB)}
+                        {fitSpan(f.sizeMB, f.path)}
                       </div>
                       {dlControl(cm)}
                       {dlBar(cm.file)}
@@ -545,7 +553,7 @@ export function DiscoverView() {
                   <b>{e.displayName}</b> <span className="hint">({e.params})</span>
                   <div className="hint">
                     {e.publisher}/{e.repo} · {(m.sizeMB / 1024).toFixed(1)} GB
-                    {fitSpan(m.sizeMB)}
+                    {fitSpan(m.sizeMB, m.file)}
                   </div>
                   <div className="hint">{e.blurb}</div>
                 </div>

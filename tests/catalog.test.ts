@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CATALOG, CLOUD_PROVIDERS, fitFor, parseHfUrl, resolveCatalog } from "../src/lib/catalog";
+import { CATALOG, CLOUD_PROVIDERS, fitCaveat, fitFor, isBlackwellGpu, isFp4, parseHfUrl, resolveCatalog } from "../src/lib/catalog";
 import { dataUrlToAttachment } from "../src/lib/media";
 import { extractArtifact, extractHtml } from "../src/lib/attach";
 
@@ -148,5 +148,42 @@ describe("extractArtifact", () => {
   it("returns null when there is nothing to render", () => {
     expect(extractArtifact("Just a plain answer.")).toBeNull();
     expect(extractArtifact(fence("js", "const x = 1;"))).toBeNull();
+  });
+});
+
+describe("FP4 fit caveat", () => {
+  it("recognises NVFP4 and MXFP4 in a real third-party filename", () => {
+    expect(isFp4("Qwen3.8-27B-NVFP4-MTP-GGUF")).toBe(true);
+    expect(isFp4("model-MXFP4.gguf")).toBe(true);
+    expect(isFp4("nvfp4")).toBe(true);
+  });
+
+  it("does not mistake ordinary quants for FP4", () => {
+    // Q4_K_M and IQ4_XS are 4-bit but not the FP4 tensor-core formats; treating
+    // them as such would put a hardware warning on almost every model we ship.
+    expect(isFp4("Qwen3.8-27B-UD-Q4_K_M.gguf")).toBe(false);
+    expect(isFp4("Qwen3.6-27B-IQ4_XS.gguf")).toBe(false);
+    expect(isFp4("Q4_0")).toBe(false);
+  });
+
+  it("identifies Blackwell cards by series and by name", () => {
+    expect(isBlackwellGpu("NVIDIA GeForce RTX 5090")).toBe(true);
+    expect(isBlackwellGpu("NVIDIA RTX PRO 6000 Blackwell")).toBe(true);
+    expect(isBlackwellGpu("NVIDIA B200")).toBe(true);
+    expect(isBlackwellGpu("NVIDIA GeForce RTX 4090")).toBe(false);
+    expect(isBlackwellGpu("AMD Radeon RX 7900 XTX")).toBe(false);
+  });
+
+  it("treats an unknown GPU as non-Blackwell so the caveat is shown, not withheld", () => {
+    expect(isBlackwellGpu(null)).toBe(false);
+    expect(isBlackwellGpu("Some Future Accelerator")).toBe(false);
+  });
+
+  it("warns only when an FP4 file meets a non-Blackwell card", () => {
+    expect(fitCaveat("Qwen3.8-27B-NVFP4.gguf", "NVIDIA GeForce RTX 4090")).toContain("Blackwell");
+    // Right hardware: nothing to say.
+    expect(fitCaveat("Qwen3.8-27B-NVFP4.gguf", "NVIDIA GeForce RTX 5090")).toBeNull();
+    // Ordinary quant: nothing to say, whatever the card.
+    expect(fitCaveat("Qwen3.8-27B-UD-Q4_K_M.gguf", "NVIDIA GeForce RTX 4090")).toBeNull();
   });
 });

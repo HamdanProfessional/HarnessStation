@@ -57,7 +57,7 @@ Everything below is in the tree and working.
 
 ### Test suite
 
-`npm test` runs Vitest over `tests/` — 755 specs covering the pure logic plus the store's streaming
+`npm test` runs Vitest over `tests/` — 762 specs covering the pure logic plus the store's streaming
 path, tool loop, lazy-hydration invariants, the agent loop, the memory store, the pricing stack and
 the voice stack. It exists because a correctness sweep on 2026-07-31
 found several live bugs, including a `chunkText` infinite loop that hung any knowledge-base import

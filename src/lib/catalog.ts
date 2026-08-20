@@ -811,6 +811,51 @@ export function fitFor(sizeMB: number, ramMB: number, vramMB: number | null): Fi
   return "no";
 }
 
+/**
+ * Is this an FP4-format file (NVFP4 / MXFP4)?
+ *
+ * Matched against the whole filename, not just the quant field, because these
+ * arrive as third-party HF builds — `Qwen3.8-27B-NVFP4-MTP-GGUF` and friends —
+ * pasted in as a URL, where the format only shows up in the name.
+ */
+export function isFp4(nameOrQuant: string): boolean {
+  return /(^|[^a-z0-9])(nvfp4|mxfp4|fp4)([^a-z0-9]|$)/i.test(nameOrQuant);
+}
+
+/**
+ * Does this GPU have FP4 tensor cores?
+ *
+ * Only Blackwell does. Deliberately conservative: an unrecognised name reads as
+ * "no", so the caveat below is shown rather than withheld. Being told to check
+ * on a card that turns out to be fine is a smaller harm than being promised
+ * speed the hardware can't deliver.
+ */
+export function isBlackwellGpu(name: string | null): boolean {
+  if (!name) return false;
+  const n = name.toLowerCase();
+  // RTX PRO 6000 Blackwell and the datacenter parts say so outright.
+  if (n.includes("blackwell")) return true;
+  // GeForce RTX 50-series.
+  if (/\brtx\s*-?\s*50\d0\b/.test(n)) return true;
+  // B100 / B200 / GB200 / GB300.
+  if (/\bg?b[123]00\b/.test(n)) return true;
+  return false;
+}
+
+/**
+ * Caveat to show beside the fit badge, or null when there's nothing to say.
+ *
+ * `fitFor` answers "does it fit", which for an FP4 file is a misleadingly
+ * complete answer: the file is small enough on any card, but only Blackwell
+ * accelerates it. Everyone else gets the memory saving and none of the speed,
+ * and a badge reading "Full GPU offload possible" would quietly overpromise.
+ */
+export function fitCaveat(nameOrQuant: string, gpuName: string | null): string | null {
+  if (!isFp4(nameOrQuant)) return null;
+  if (isBlackwellGpu(gpuName)) return null;
+  return "FP4: fits, but only Blackwell GPUs run it fast — this card gets the smaller download, not the speed-up.";
+}
+
 export const FIT_LABEL: Record<Fit, string> = {
   gpu: "Full GPU offload possible",
   cpu: "Fits in RAM (CPU)",

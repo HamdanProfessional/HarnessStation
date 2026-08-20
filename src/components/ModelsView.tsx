@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { fitFor, FIT_LABEL } from "../lib/catalog";
+import { fitFor, fitCaveat, FIT_LABEL } from "../lib/catalog";
 import {
   hwInfo,
   installEngine,
@@ -712,6 +712,8 @@ export function ModelsView() {
         )}
         {models.map((m) => {
           const fit = hw ? fitFor(m.sizeMB, hw.total_ram_mb, hw.vram_mb) : null;
+          // The filename is where NVFP4/MXFP4 shows up on third-party builds.
+          const caveat = hw ? fitCaveat(m.file, hw.gpu_name) : null;
           const loaded = status.running && status.model === m.relPath;
           return (
             <div key={m.relPath} className="provider-card">
@@ -721,6 +723,7 @@ export function ModelsView() {
                   <div className="hint">
                     {m.publisher}/{m.model} · {(m.sizeMB / 1024).toFixed(1)} GB
                     {fit && <span className={`fit fit-${fit}`}> · {FIT_LABEL[fit]}</span>}
+                    {caveat && <span className={`fit fit-tight`}> · {caveat}</span>}
                   </div>
                 </div>
                 {loaded ? (

@@ -89,3 +89,43 @@ describe("theme cycling", () => {
     expect(settings).toMatch(/role="radiogroup"/);
   });
 });
+
+describe("ui-kit token parity", () => {
+  /**
+   * packages/ui-kit is a *hand* extraction, not a generated artifact:
+   * .design-sync/NOTES.md warns that its token values "were copied from
+   * src/App.css at extraction time and can drift", and nothing in the app
+   * imports the kit, so drift produces no type error, no build failure and no
+   * visible symptom — the design canvas just quietly stops showing what the app
+   * looks like.
+   *
+   * They are in lockstep today. This is the cheap guard that keeps them there:
+   * edit a token in App.css without re-syncing the kit and this fails, naming
+   * the token.
+   */
+  const values = (css: string) => {
+    const out: Record<string, string[]> = {};
+    for (const m of css.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)) {
+      (out[m[1]] ??= []).push(m[2].trim());
+    }
+    return out;
+  };
+
+  const kitCss = readFileSync(resolve(__dirname, "..", "packages", "ui-kit", "styles.css"), "utf8");
+  const appTokens = values(css);
+  const kitTokens = values(kitCss);
+
+  it("defines the same token names in both files", () => {
+    expect(Object.keys(kitTokens).sort()).toEqual(Object.keys(appTokens).sort());
+  });
+
+  it("gives every shared token the same values, theme block by theme block", () => {
+    // Compared as an ordered list per token, so a light-theme override that
+    // drifts is caught as well as the dark default.
+    for (const name of Object.keys(appTokens)) {
+      expect(kitTokens[name], `${name} has drifted between src/App.css and packages/ui-kit/styles.css`).toEqual(
+        appTokens[name],
+      );
+    }
+  });
+});

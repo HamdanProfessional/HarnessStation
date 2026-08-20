@@ -141,8 +141,26 @@ way or the other.
 one item on this list that is a live liability rather than merely a cost.
 
 **Unfreeze when:** decided — either the app imports the kit and the other copies
-go, or the kit is deleted. Note the current branch is `design-sync-ui-kit`, so
-this may already be in progress; if so, finish it or revert it, don't leave it.
+go, or the kit is deleted.
+
+**Update 2026-08-20.** `design-sync-ui-kit` is merged to `main`. Re-checked, and
+the entry above is still accurate on the part that matters: **nothing imports the
+kit**, and the three `Dialog.tsx` copies remain at 81 / 103 / 65 lines. The
+decision this entry asks for has not been made.
+
+What did change: the **tokens** are verifiably in sync. All 24 custom properties
+in `packages/ui-kit/styles.css` match `src/App.css` exactly — same names, same
+values, same theme and accent blocks — and `tests/designInvariants.test.ts` now
+asserts it, so an edit to one without the other fails a normal `npm test`.
+
+That closes the *silent* half of the liability. `.design-sync/NOTES.md` warned the
+tokens "can drift", and because nothing imports the kit, drift would have
+produced no type error and no build failure — the design canvas would simply have
+stopped showing what the app looks like. It can't now.
+
+The *component* duplication is untouched and is still the live risk: a token
+mismatch now fails a test, but three different ideas of what a Dialog is still
+won't. That needs the decision, not another guard.
 
 ---
 
