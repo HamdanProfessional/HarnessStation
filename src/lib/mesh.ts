@@ -224,7 +224,7 @@ export function addressExposure(addr: string): Exposure {
   return "unknown";
 }
 
-/** Should the user be warned before sending unencrypted traffic here? */
+/** Should the user be warned before opening a link to this address? */
 export function needsWarning(exposure: Exposure): boolean {
   return exposure === "public" || exposure === "unknown";
 }
@@ -232,9 +232,9 @@ export function needsWarning(exposure: Exposure): boolean {
 export function exposureNote(exposure: Exposure, what = "That address"): string | null {
   switch (exposure) {
     case "public":
-      return `${what} is on the public internet. Mesh traffic isn't encrypted yet, so anything you send across it — prompts, tool output, knowledge — can be read on the way. Put the link inside a VPN or tunnel (Tailscale, WireGuard, SSH) instead of connecting directly.`;
+      return `${what} is on the public internet. Message bodies are encrypted, so the contents aren't readable in transit — but this still exposes the port to anyone who finds it, there's no forward secrecy (a token stolen later unlocks traffic recorded today), and nothing verifies you reached the machine you meant. Put the link inside a VPN or tunnel (Tailscale, WireGuard, SSH) instead of connecting directly.`;
     case "unknown":
-      return `${what} is a hostname, so there's no telling whether it stays on your network. If it crosses the internet, use a VPN or tunnel — mesh traffic isn't encrypted yet.`;
+      return `${what} is a hostname, so there's no telling whether it stays on your network. Message bodies are encrypted, but if it crosses the internet use a VPN or tunnel anyway — there's no forward secrecy and nothing authenticates the host.`;
     default:
       return null;
   }

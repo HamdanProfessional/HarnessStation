@@ -23,12 +23,18 @@
 //!   the secret by hashing the two together. Pairing has to be armed explicitly
 //!   and expires, so an unpaired machine on the same network gets nothing.
 //!
-//! What this is *not*, yet: encrypted. The proof handshake stops an eavesdropper
-//! stealing credentials or replaying a call, but the request bodies themselves
-//! are plaintext. On a home LAN that's the same exposure as any other local
-//! service; across the internet it is not enough, so the UI tells the user to
-//! put it inside a VPN or tunnel (Tailscale, WireGuard, SSH) rather than
-//! forwarding a port. Transport encryption is the next piece of work here.
+//! * **Bodies are encrypted.** Both ends derive a per-connection key from the
+//!   shared secret and the server's nonce (`body_key`) and seal the request and
+//!   reply with ChaCha20-Poly1305. A listener on the LAN sees that two devices
+//!   talked and how much they said, and nothing else — not the method, not the
+//!   arguments, not the result, and not the token minted during pairing.
+//!
+//!   This is deliberately *not* a substitute for a tunnel when crossing the
+//!   internet. There is no forward secrecy: the key derives from a long-lived
+//!   token, so recording traffic today and stealing that token later reads it
+//!   all. There are no certificates, so this authenticates a *secret*, not a
+//!   host. The UI still says to use a VPN or tunnel (Tailscale, WireGuard, SSH)
+//!   rather than forwarding a port, and that advice stands.
 //!
 //! Nothing executes on its own: an inbound request is handed to the frontend,
 //! which applies the user's sharing rules and answers. Rust only moves bytes.
@@ -57,7 +63,10 @@ const STALE_SECS: u64 = 15;
 const CALL_TIMEOUT_SECS: u64 = 60;
 /// How long an inbound request may wait for the frontend to answer it.
 const HANDLER_TIMEOUT_SECS: u64 = 90;
-const PROTOCOL: u32 = 1;
+/// Bumped to 2 when body encryption landed. There is no negotiation and no
+/// plaintext fallback: a v1 peer gets a clear "update both" error rather than a
+/// silent downgrade, which is the one failure mode worth being rude about.
+const PROTOCOL: u32 = 2;
 
 fn now() -> u64 {
     std::time::SystemTime::now()
@@ -82,6 +91,74 @@ fn proof(nonce: &str, secret: &str) -> String {
     h.update(b":");
     h.update(secret.as_bytes());
     h.finalize().iter().map(|b| format!("{b:02x}")).collect()
+}
+
+/// Body key for one connection: `sha256(nonce : secret : "hs-mesh-body-v2")`.
+///
+/// Separate derivation from `proof` on purpose. `proof` is *sent*, so if the two
+/// shared an input a listener would hold a hash of the encryption key. The
+/// trailing label makes the two hashes structurally different even though both
+/// commit to the same nonce and secret.
+///
+/// Binding to the per-connection nonce means every connection gets a fresh key,
+/// so a key recovered from one call buys nothing on the next.
+fn body_key(nonce: &str, secret: &str) -> [u8; 32] {
+    let mut h = Sha256::new();
+    h.update(nonce.as_bytes());
+    h.update(b":");
+    h.update(secret.as_bytes());
+    h.update(b":hs-mesh-body-v2");
+    h.finalize().into()
+}
+
+/// Encrypt a request or reply body.
+///
+/// Auth was already sound before this — the secret never crosses the wire and a
+/// fresh nonce blocks replay — but the *bodies* went out as readable JSON, so
+/// anyone on the LAN could watch which tools ran, with which arguments, and what
+/// came back. On a product whose entire pitch is that your data stays yours,
+/// that was the gap that mattered.
+///
+/// ChaCha20-Poly1305: AEAD, so this is integrity as well as secrecy. A flipped
+/// byte fails to open rather than decrypting to something plausible.
+fn seal(key: &[u8; 32], plaintext: &[u8]) -> Result<Value, String> {
+    use base64::{engine::general_purpose::STANDARD, Engine};
+    use chacha20poly1305::aead::{Aead, KeyInit};
+    use chacha20poly1305::{ChaCha20Poly1305, Nonce};
+
+    let cipher = ChaCha20Poly1305::new(key.into());
+    // 96-bit nonce, fresh per message. Random rather than a counter because a
+    // connection carries one message each way; there is no sequence to track,
+    // and a counter that restarted would be a nonce reuse.
+    let mut n = [0u8; 12];
+    rand::Rng::fill(&mut rand::thread_rng(), &mut n[..]);
+    let ct = cipher
+        .encrypt(Nonce::from_slice(&n), plaintext)
+        .map_err(|_| "could not encrypt the message body".to_string())?;
+    Ok(json!({ "n": STANDARD.encode(n), "ct": STANDARD.encode(ct) }))
+}
+
+/// Decrypt a body produced by `seal`.
+///
+/// Every failure returns the same message. Distinguishing "wrong key" from
+/// "corrupt ciphertext" from "malformed base64" would hand an attacker a probe.
+fn open_sealed(key: &[u8; 32], envelope: &Value) -> Result<Vec<u8>, String> {
+    use base64::{engine::general_purpose::STANDARD, Engine};
+    use chacha20poly1305::aead::{Aead, KeyInit};
+    use chacha20poly1305::{ChaCha20Poly1305, Nonce};
+
+    let fail = || "could not read the message body — is the other device paired?".to_string();
+    let n = envelope.get("n").and_then(Value::as_str).ok_or_else(fail)?;
+    let ct = envelope.get("ct").and_then(Value::as_str).ok_or_else(fail)?;
+    let n = STANDARD.decode(n).map_err(|_| fail())?;
+    let ct = STANDARD.decode(ct).map_err(|_| fail())?;
+    if n.len() != 12 {
+        return Err(fail());
+    }
+    let cipher = ChaCha20Poly1305::new(key.into());
+    cipher
+        .decrypt(Nonce::from_slice(&n), ct.as_ref())
+        .map_err(|_| fail())
 }
 
 /// Constant-time-ish comparison. These are hex digests of equal length, so the
@@ -366,30 +443,48 @@ async fn serve_one(
     let msg: Value = serde_json::from_str(&text)?;
 
     let reply = match authorize(&mesh, &nonce, &msg).await {
+        // An auth failure is answered in the clear: there is no shared key to
+        // seal with, and the strings are deliberately generic anyway.
         Err(err) => json!({ "t": "err", "error": err }),
-        Ok(Authorized { peer_id, peer_name, issued }) => {
-            let method = msg
-                .get("request")
-                .and_then(|r| r.get("method"))
-                .and_then(Value::as_str)
-                .unwrap_or("ping")
-                .to_string();
-            let params = msg
-                .get("request")
-                .and_then(|r| r.get("params"))
-                .cloned()
-                .unwrap_or(Value::Null);
+        Ok(Authorized { peer_id, peer_name, issued, key }) => {
+            let opened = msg
+                .get("body")
+                .ok_or_else(|| "malformed request".to_string())
+                .and_then(|b| open_sealed(&key, b))
+                .and_then(|pt| {
+                    serde_json::from_slice::<Value>(&pt).map_err(|_| "malformed request".to_string())
+                });
 
-            match dispatch(&mesh, &app, &peer_id, &peer_name, &method, params).await {
-                Ok(result) => {
-                    let mut out = json!({ "t": "ok", "id": my_id, "name": my_name, "result": result });
-                    // The freshly minted token goes back only on the pairing call.
-                    if let Some(token) = issued {
-                        out["token"] = json!(token);
-                    }
-                    out
-                }
+            match opened {
                 Err(e) => json!({ "t": "err", "error": e }),
+                Ok(req) => {
+                    let method = req
+                        .get("method")
+                        .and_then(Value::as_str)
+                        .unwrap_or("ping")
+                        .to_string();
+                    let params = req.get("params").cloned().unwrap_or(Value::Null);
+
+                    match dispatch(&mesh, &app, &peer_id, &peer_name, &method, params).await {
+                        Ok(result) => {
+                            let mut inner = json!({ "result": result });
+                            // The freshly minted token goes back only on the
+                            // pairing call — and inside the sealed body. It used
+                            // to ride in the clear, which handed anyone watching
+                            // the long-term credential for this device.
+                            if let Some(token) = issued {
+                                inner["token"] = json!(token);
+                            }
+                            match seal(&key, inner.to_string().as_bytes()) {
+                                Ok(body) => {
+                                    json!({ "t": "ok", "id": my_id, "name": my_name, "body": body })
+                                }
+                                Err(e) => json!({ "t": "err", "error": e }),
+                            }
+                        }
+                        Err(e) => json!({ "t": "err", "error": e }),
+                    }
+                }
             }
         }
     };
@@ -404,6 +499,10 @@ struct Authorized {
     peer_name: String,
     /// Some(token) when this call just paired the peer.
     issued: Option<String>,
+    /// Body key for this connection, derived from whichever secret authenticated
+    /// the caller. Carried out of `authorize` because that is the only place
+    /// that knows which secret was used — the pairing code or the peer's token.
+    key: [u8; 32],
 }
 
 /// Check the caller's proof, and on a pairing call mint and store their token.
@@ -460,7 +559,11 @@ async fn authorize(mesh: &Arc<Mesh>, nonce: &str, msg: &Value) -> Result<Authori
         // One code, one device: consume it so a code seen over someone's
         // shoulder can't be used twice.
         *mesh.arming.lock().await = None;
-        return Ok(Authorized { peer_id, peer_name, issued: Some(token) });
+        // Keyed on the pairing code, which is the only secret both ends share at
+        // this point. It is short and human-typed, so this leg is the weakest
+        // link in the chain — but it is one connection, it carries a `ping`, and
+        // the full-strength token it returns is sealed rather than sent bare.
+        return Ok(Authorized { peer_id, peer_name, issued: Some(token), key: body_key(nonce, &code) });
     }
 
     let known = {
@@ -478,13 +581,15 @@ async fn authorize(mesh: &Arc<Mesh>, nonce: &str, msg: &Value) -> Result<Authori
         p.name = peer_name.clone();
     }
     // A paired device calling in over the internet is a weaker warning than an
-    // anonymous one, but it's still unencrypted traffic — the UI distinguishes.
+    // anonymous one — the bodies are sealed either way now. What the warning is
+    // about is the port being reachable from the internet at all, plus the lack
+    // of forward secrecy and host authentication. The UI distinguishes.
     if let Some(e) = mesh.exposure.lock().await.as_mut() {
         if e.at + 5 >= now() {
             e.authenticated = true;
         }
     }
-    Ok(Authorized { peer_id, peer_name, issued: None })
+    Ok(Authorized { peer_id, peer_name, issued: None, key: body_key(nonce, &token) })
 }
 
 /// Answer a peer's request.
@@ -581,6 +686,11 @@ async fn request(
         let ident = mesh.identity.lock().await;
         (ident.id.clone(), ident.name.clone())
     };
+    // Everything outside `body` is what the server needs before it can derive a
+    // key: who is calling, and the proof that they hold the secret. The method
+    // and its arguments are sealed.
+    let key = body_key(nonce, secret);
+    let body = seal(&key, json!({ "method": method, "params": params }).to_string().as_bytes())?;
     let payload = json!({
         "t": "auth",
         "v": PROTOCOL,
@@ -588,7 +698,7 @@ async fn request(
         "name": my_name,
         "mode": mode,
         "proof": proof(nonce, secret),
-        "request": { "method": method, "params": params },
+        "body": body,
     });
     write
         .send(Message::Text(payload.to_string()))
@@ -613,7 +723,18 @@ async fn request(
             .unwrap_or("that device refused the request")
             .to_string());
     }
-    Ok(reply)
+
+    // Unseal and fold `result` / `token` back to the top level, so callers see
+    // the same shape they always did and encryption stays a transport concern.
+    let sealed = reply.get("body").ok_or("that device sent an unreadable reply")?;
+    let inner: Value = serde_json::from_slice(&open_sealed(&key, sealed)?)
+        .map_err(|_| "that device sent an unreadable reply".to_string())?;
+    let mut out = reply;
+    out["result"] = inner.get("result").cloned().unwrap_or(Value::Null);
+    if let Some(token) = inner.get("token") {
+        out["token"] = token.clone();
+    }
+    Ok(out)
 }
 
 // ---------------------------------------------------------------------------
@@ -919,6 +1040,83 @@ mod tests {
         // The secret must not be recoverable by inspection.
         assert!(!a.contains("secret"));
         assert_eq!(a.len(), 64);
+    }
+
+    #[test]
+    fn body_key_is_distinct_from_the_proof_that_travels() {
+        // The proof goes out on the wire. If it shared a derivation with the body
+        // key, a listener would be holding a hash of the key.
+        let key_hex: String = body_key("nonce", "secret").iter().map(|b| format!("{b:02x}")).collect();
+        assert_ne!(key_hex, proof("nonce", "secret"));
+    }
+
+    #[test]
+    fn body_key_changes_with_both_nonce_and_secret() {
+        // Per-connection nonce means a key recovered from one call is useless on
+        // the next; the secret half is what makes it a shared key at all.
+        assert_ne!(body_key("a", "s"), body_key("b", "s"));
+        assert_ne!(body_key("a", "s"), body_key("a", "t"));
+        assert_eq!(body_key("a", "s"), body_key("a", "s"));
+    }
+
+    #[test]
+    fn a_sealed_body_round_trips() {
+        let k = body_key("nonce", "token");
+        let sealed = seal(&k, br#"{"method":"ping"}"#).unwrap();
+        assert_eq!(open_sealed(&k, &sealed).unwrap(), br#"{"method":"ping"}"#);
+    }
+
+    #[test]
+    fn the_plaintext_is_not_visible_in_the_envelope() {
+        // The regression this whole change exists to prevent: tool names and
+        // arguments used to travel as readable JSON.
+        let k = body_key("nonce", "token");
+        let secret_arg = "transfer-all-my-money";
+        let sealed = seal(&k, format!(r#"{{"params":"{secret_arg}"}}"#).as_bytes()).unwrap();
+        assert!(!sealed.to_string().contains(secret_arg));
+        assert!(!sealed.to_string().contains("params"));
+    }
+
+    #[test]
+    fn the_wrong_secret_cannot_open_a_body() {
+        let sealed = seal(&body_key("nonce", "token"), b"hello").unwrap();
+        assert!(open_sealed(&body_key("nonce", "wrong-token"), &sealed).is_err());
+        // Right secret, different connection: also no.
+        assert!(open_sealed(&body_key("other-nonce", "token"), &sealed).is_err());
+    }
+
+    #[test]
+    fn tampering_is_detected_rather_than_decrypted() {
+        // AEAD, not a raw stream cipher: a flipped byte must fail to open, not
+        // decrypt to something the dispatcher would then act on.
+        let k = body_key("nonce", "token");
+        let sealed = seal(&k, br#"{"method":"ping"}"#).unwrap();
+        let ct = sealed.get("ct").and_then(Value::as_str).unwrap().to_string();
+        let mut bytes = ct.into_bytes();
+        let mid = bytes.len() / 2;
+        bytes[mid] = if bytes[mid] == b'A' { b'B' } else { b'A' };
+        let tampered = json!({ "n": sealed.get("n").unwrap(), "ct": String::from_utf8(bytes).unwrap() });
+        assert!(open_sealed(&k, &tampered).is_err());
+    }
+
+    #[test]
+    fn two_seals_of_the_same_text_differ() {
+        // Fresh nonce per message, so identical calls aren't linkable by
+        // ciphertext equality.
+        let k = body_key("nonce", "token");
+        let a = seal(&k, b"same").unwrap();
+        let b = seal(&k, b"same").unwrap();
+        assert_ne!(a.get("ct"), b.get("ct"));
+        assert_eq!(open_sealed(&k, &a).unwrap(), open_sealed(&k, &b).unwrap());
+    }
+
+    #[test]
+    fn a_malformed_envelope_is_rejected_without_panicking() {
+        let k = body_key("nonce", "token");
+        assert!(open_sealed(&k, &json!({})).is_err());
+        assert!(open_sealed(&k, &json!({ "n": "!!!", "ct": "!!!" })).is_err());
+        // Right shape, wrong nonce length.
+        assert!(open_sealed(&k, &json!({ "n": "AAAA", "ct": "AAAA" })).is_err());
     }
 
     #[test]

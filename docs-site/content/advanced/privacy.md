@@ -38,8 +38,9 @@ stays signed in, and the model can act on it. Treat that as delegated access.
 **Scheduled runs** act with no one watching. Set [spend caps](../reference/settings),
 and prefer schedules that report over ones that change things.
 
-**The device mesh is not encrypted yet.** See [the warning](devices) — over
-anything but your own network, put it inside a VPN or tunnel.
+**The device mesh encrypts message bodies** but has no forward secrecy and does
+not authenticate the host. See [the detail](devices) — over anything but your own
+network, put it inside a VPN or tunnel.
 
 **Passive memory** stores facts from your conversations on disk. Review it in
 **Settings › Memory** occasionally; it sometimes keeps more than you'd expect.

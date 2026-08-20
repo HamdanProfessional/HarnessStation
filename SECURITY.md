@@ -18,8 +18,14 @@ We aim to acknowledge within a few days.
   working directory. The working directory limits *files*, not the network.
 - **Browser session delegation**: if the model drives a browser you're signed
   into, it can act on any site in that session.
-- **Device mesh**: after the pairing handshake, mesh traffic is **not encrypted**
-  yet. Use it on a trusted LAN, or only inside a VPN/tunnel across the internet.
+- **Device mesh**: message bodies are encrypted (ChaCha20-Poly1305, keyed per
+  connection from the paired secret and the server's nonce), so contents are not
+  readable in transit. It is still **not a replacement for a tunnel**: there is
+  no forward secrecy — the key derives from a long-lived token, so traffic
+  recorded today is readable if that token is stolen later — nothing
+  authenticates the *host*, only the secret, and the size and timing of calls
+  stay visible. Use it on a trusted LAN, or inside a VPN/tunnel across the
+  internet.
 - **Community library**: published content is user-generated. Importing does not
   execute code (a skill is markdown loaded on demand; agents/workflows reference
   only built-in tool ids), but review anything before you rely on it. Report bad

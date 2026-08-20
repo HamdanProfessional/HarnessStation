@@ -172,7 +172,7 @@ earn work:
 | Area | Why it earns investment |
 | --- | --- |
 | **The browser build** (`web/`) | The only thing in this category that runs a real Linux kernel, CPython and a persistent filesystem in a tab. It is both the strongest claim and the zero-friction trial. Now the front door. |
-| **Device mesh** (`src-tauri/src/mesh.rs`) | Rare, and the request bodies are still plaintext — a stated security hole in a product whose whole pitch is privacy. Fixing it is not optional. |
+| **Device mesh** (`src-tauri/src/mesh.rs`) | Rare, and the thing nothing else in the category has. The plaintext-bodies hole called out here is **fixed** (2026-08-20): bodies are sealed with ChaCha20-Poly1305 under a per-connection key. What remains is forward secrecy and host authentication — real, but no longer the open hole. |
 | **Value / price intelligence** (`lib/pricing/`) | Nobody else in the category has it, it needs no key or server, and it depends on upstream schemas that will move — hence the live canary test. |
 | **Core loop** — chat, tools, MCP, memory | The thing everything else hangs off. |
 | **Bundle size** | Worth watching now that a tab is the first impression — but the entry is 241 kB gzipped, not the 6 MB previously claimed, so this is maintenance rather than a fire. Keep the heavy deps (`web-llm`, `three`, `kokoro`, `mermaid`) behind the lazy boundaries they are already behind. |

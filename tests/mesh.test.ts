@@ -211,7 +211,12 @@ describe("how exposed an address is", () => {
 
   it("explains why, and suggests the fix", () => {
     const note = exposureNote(addressExposure("8.8.8.8"));
-    expect(note).toMatch(/isn't encrypted/);
+    // This used to assert the note said traffic "isn't encrypted". Bodies are
+    // sealed now, so claiming otherwise would be scaring the user with something
+    // untrue — but the advice is unchanged, because the reasons behind it are
+    // real and different: no forward secrecy, and nothing authenticates the host.
+    expect(note).not.toMatch(/isn't encrypted|not encrypted/);
+    expect(note).toMatch(/forward secrecy/);
     expect(note).toMatch(/VPN or tunnel/);
     expect(exposureNote("private")).toBeNull();
     expect(exposureNote("vpn")).toBeNull();

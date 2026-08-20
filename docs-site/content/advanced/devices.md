@@ -9,14 +9,19 @@ The mesh lets HarnessStation on one machine reach HarnessStation on another. Use
 the desktop's GPU from the laptop; search a knowledge base that only exists on one
 of them.
 
-> **Warning:** Mesh traffic is **not encrypted yet**. The pairing handshake stops
-> anyone stealing your credentials or replaying a request, but the messages
-> themselves — prompts, tool output, retrieved documents — travel in plain text.
+> **Mesh messages are encrypted.** Both devices derive a key from the secret they
+> agreed at pairing plus a fresh number for each connection, and seal the request
+> and reply with it. Someone watching your network sees that two devices spoke
+> and roughly how much they said — not the prompt, the tool, the arguments, the
+> result, or the token handed over during pairing.
 >
-> On your own home network that's the same exposure as any other local service.
-> Across the internet it is not enough. Use a VPN or tunnel (Tailscale,
+> **This is still not a substitute for a VPN across the internet.** Three
+> honest limits: there's no forward secrecy, so anyone who records traffic today
+> and steals the device token later can read all of it; nothing verifies you
+> reached the machine you meant, only that whoever answered knows the secret; and
+> exposing the port at all invites attention. Use a VPN or tunnel (Tailscale,
 > WireGuard, SSH) rather than forwarding a port. The app detects public addresses
-> and warns you, but the warning is the mitigation, not a fix.
+> and warns you.
 
 ## Turning it on
 

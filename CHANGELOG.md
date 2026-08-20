@@ -44,6 +44,18 @@ All notable changes are recorded here. Versions follow [semantic versioning](htt
   Rollup. The build now names it, so the log can't be misread the same way.
 
 ### Security
+- **The device mesh now encrypts message bodies.** Both ends derive a
+  per-connection key from the paired secret and the server's nonce, and seal the
+  request and reply with ChaCha20-Poly1305. Previously the handshake was sound —
+  the secret never crossed the wire — but bodies travelled as readable JSON, so
+  anyone on the LAN could see which tools ran, with what arguments, and what came
+  back. The token minted during pairing also went back in the clear; it is now
+  sealed with everything else.
+
+  Not a replacement for a tunnel, and the docs still say so: there is no forward
+  secrecy (the key derives from a long-lived token), nothing authenticates the
+  host, and call sizes and timings remain visible. Mesh protocol version is 2;
+  a v1 peer gets "update both" rather than a silent plaintext downgrade.
 - Replaced the compromised dev updater public key in `tauri.conf.json` with a
   placeholder so a build can't ship signed by the leaked key (see `SECURITY.md`).
 

@@ -64,7 +64,7 @@ export function DevicesPanel() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
-  /** A warning the user must acknowledge before an unencrypted link goes out. */
+  /** A warning the user must acknowledge before a link to an exposed address goes out. */
   const [pending, setPending] = useState<string | null>(null);
   const timer = useRef<number | null>(null);
 
@@ -354,7 +354,7 @@ export function DevicesPanel() {
               className="exposure-badge"
               title={exposureNote(p.exposure ?? addressExposure(p.addr), "This device's address") ?? ""}
             >
-              unencrypted link
+              exposed link
             </span>
           )}
           <button className="btn" disabled={busy === `probe:${p.id}`} onClick={() => probe(p)}>
