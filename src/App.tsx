@@ -216,9 +216,14 @@ export default function App() {
 
   return (
     <div className={`app${sidebarOpen ? "" : " left-collapsed"}${configOpen ? "" : " right-collapsed"}`}>
-      {sidebarOpen ? (
-        <Sidebar />
-      ) : (
+      {/* Kept mounted when collapsed so it can slide out instead of vanishing:
+          unmounting removed 262px of layout in a single frame and threw the
+          whole view sideways. CSS slides it under its own edge and then flips
+          it to visibility:hidden, which is what takes it out of the tab order —
+          see `.app.left-collapsed .sidebar`. The reopen handle is
+          position:fixed, so it can coexist without affecting the row. */}
+      <Sidebar />
+      {!sidebarOpen && (
         <button
           className="rail-reopen left"
           title="Show sidebar"
@@ -240,9 +245,9 @@ export default function App() {
           <>
             <ChatWindow />
             <SidePanel />
-            {configOpen ? (
-              <ConfigPanel />
-            ) : (
+            {/* Same treatment as the sidebar — slide, don't disappear. */}
+            <ConfigPanel />
+            {!configOpen && (
               <button
                 className="rail-reopen right"
                 title="Show settings panel"

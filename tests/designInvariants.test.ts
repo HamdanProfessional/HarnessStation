@@ -73,6 +73,37 @@ describe("App.css design invariants", () => {
     expect(chat).toContain("msg-new");
   });
 
+  it("slides the side panels instead of unmounting them", () => {
+    // The slide only works because App.tsx keeps them mounted; if that ternary
+    // comes back the CSS below is dead and the panels snap again.
+    expect(css).toMatch(/\.app\.left-collapsed \.sidebar\s*\{[^}]*margin-left:\s*-262px/);
+    expect(css).toMatch(/\.app\.right-collapsed \.config-panel\s*\{[^}]*margin-right:\s*-272px/);
+
+    const app = readFileSync(resolve(__dirname, "..", "src", "App.tsx"), "utf8");
+    expect(app).toMatch(/\{!sidebarOpen && \(/);
+    expect(app).toMatch(/\{!configOpen && \(/);
+  });
+
+  it("keeps the collapse offsets equal to the panel widths", () => {
+    // A margin that doesn't match the width leaves a sliver of panel on screen
+    // or overshoots into a gap, and neither is visible until someone collapses
+    // the panel and looks closely.
+    const width = (sel: string) => /width:\s*(\d+)px/.exec(RegExp(`\\${sel}\\s*\\{[^}]*`).exec(css)?.[0] ?? "")?.[1];
+    expect(width(".sidebar")).toBe("262");
+    expect(width(".config-panel")).toBe("272");
+  });
+
+  it("takes a collapsed panel out of the tab order", () => {
+    // Off-screen is not hidden: without this a collapsed sidebar still catches
+    // Tab, and focus lands somewhere the user cannot see.
+    expect(css).toMatch(/\.app\.left-collapsed \.sidebar\s*\{[^}]*visibility:\s*hidden/);
+    expect(css).toMatch(/\.app\.right-collapsed \.config-panel\s*\{[^}]*visibility:\s*hidden/);
+  });
+
+  it("clips the shell horizontally so a collapsed panel cannot add a scrollbar", () => {
+    expect(css).toMatch(/\.app\s*\{[^}]*overflow-x:\s*clip/);
+  });
+
   it("gives a dismissed toast an exit to play", () => {
     expect(css).toMatch(/@keyframes toast-out/);
     expect(css).toMatch(/\.toast-slot\.leaving/);

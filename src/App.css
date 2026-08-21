@@ -200,6 +200,12 @@ textarea,
 .app {
   display: flex;
   height: 100vh;
+  /* A collapsed panel is pulled past the shell's edge by a negative margin, and
+     the right-hand one would otherwise extend 272px beyond the viewport and
+     raise a horizontal scrollbar. `clip` rather than `hidden` on purpose:
+     `hidden` would make this a scroll container and break the sticky and
+     absolutely-positioned chrome inside the views. */
+  overflow-x: clip;
 }
 
 /* ---------- Collapsible left/right panels ---------- */
@@ -426,6 +432,11 @@ select:focus {
   gap: 2px;
   margin: 0 -4px;
   padding: 0 4px;
+  /* Mounted only while the section is expanded, so this plays on disclosure.
+     No max-height unfold here the way tool args get one: the list is as tall as
+     the chat history and any cap large enough to be safe would be too large to
+     read as movement. */
+  animation: fade-in var(--t-base) var(--ease);
 }
 
 .chat-empty {
@@ -5032,6 +5043,59 @@ textarea {
 @keyframes rail-in {
   from {
     height: 0;
+    opacity: 0;
+  }
+}
+
+/* ---- collapsing the side panels ----------------------------------------
+   Both panels used to unmount when collapsed, so 262px (or 272px) of layout
+   disappeared between two frames and the view snapped sideways. They now stay
+   mounted and slide under their own edge.
+
+   Negative margin rather than width, deliberately: animating width reflows the
+   panel's own contents every frame, so the text inside re-wraps as it goes.
+   Margin moves the box and leaves the contents alone, which is both smoother
+   and much cheaper.
+
+   `visibility` is what actually removes a collapsed panel from the tab order —
+   a merely off-screen panel is still focusable, and tabbing into an invisible
+   sidebar is worse than the jump we started with. It flips at the *end* of the
+   slide out (delay --t-base) and at the *start* of the slide in (no delay), so
+   the panel is visible for the whole of both animations.                     */
+
+.sidebar,
+.config-panel {
+  transition:
+    margin var(--t-base) var(--ease),
+    visibility 0s;
+}
+
+.app.left-collapsed .sidebar {
+  margin-left: -262px;
+  visibility: hidden;
+  transition:
+    margin var(--t-base) var(--ease),
+    visibility 0s linear var(--t-base);
+}
+
+.app.right-collapsed .config-panel {
+  margin-right: -272px;
+  visibility: hidden;
+  transition:
+    margin var(--t-base) var(--ease),
+    visibility 0s linear var(--t-base);
+}
+
+/* The chat's own side panel mounts on demand, so it only needs an entrance.
+   Animating margin-right from its own width means the conversation is pushed
+   aside over the same beat rather than being displaced instantly. */
+.side-panel {
+  animation: panel-in var(--t-base) var(--ease);
+}
+
+@keyframes panel-in {
+  from {
+    margin-right: -380px;
     opacity: 0;
   }
 }

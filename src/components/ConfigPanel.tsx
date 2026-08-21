@@ -36,12 +36,19 @@ export function ConfigPanel() {
     streaming,
     setView,
     setConfigOpen,
+    configOpen,
   } = useStore();
 
   // Knowledge bases load on demand — this picker is one of the triggers.
+  //
+  // Gated on configOpen because the panel is now kept mounted while collapsed,
+  // so it can slide out rather than vanish. Without the guard, anyone who had
+  // collapsed this panel would start paying the embedding-vector read on every
+  // launch — the exact cost ensureKnowledgeBases exists to defer.
   useEffect(() => {
+    if (!configOpen) return;
     void ensureKnowledgeBases();
-  }, [ensureKnowledgeBases]);
+  }, [ensureKnowledgeBases, configOpen]);
   const chat = chats.find((c) => c.id === currentId);
   const projectOfChat = chat?.projectId ? projects.find((p) => p.id === chat.projectId) : undefined;
   const [loadingModels, setLoadingModels] = useState(false);

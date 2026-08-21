@@ -15,6 +15,7 @@ import { InlineBrowser } from "./InlineBrowser";
 import { AskUserPrompt } from "./AskUserPrompt";
 import { MultiAgentBar } from "./MultiAgentBar";
 import { TrajectoryView } from "./TrajectoryView";
+import { planScroll, prefersReducedMotion } from "../lib/autoscroll";
 
 const STARTER_PROMPTS = [
   "Summarize the latest news on a topic I choose, with sources.",
@@ -254,9 +255,24 @@ export function ChatWindow() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<ComposerHandle>(null);
 
+  // Which chat this scroller last painted. Switching chats has to jump rather
+  // than glide — see planScroll.
+  const paintedChat = useRef<string | null>(null);
+
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [chat?.messages, streaming]);
+    const el = scrollRef.current;
+    if (!el) return;
+    const firstPaint = paintedChat.current !== (chat?.id ?? null);
+    paintedChat.current = chat?.id ?? null;
+
+    const { scroll, behavior } = planScroll({
+      viewport: el,
+      streaming,
+      firstPaint,
+      reducedMotion: prefersReducedMotion(),
+    });
+    if (scroll) el.scrollTo({ top: el.scrollHeight, behavior });
+  }, [chat?.messages, chat?.id, streaming]);
 
   if (!chat) return <main className="chat-main" />;
 
