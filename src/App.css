@@ -2141,6 +2141,13 @@ select:focus {
   accent-color: var(--accent);
 }
 
+/* A checkbox sitting in a header row beside buttons rather than stacked in a
+   settings column: no vertical padding, and it must not wrap mid-label. */
+.agent-check.inline {
+  padding: 0;
+  white-space: nowrap;
+}
+
 .switch-wrap {
   display: inline-flex;
   cursor: pointer;

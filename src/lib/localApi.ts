@@ -3,6 +3,7 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { isWeb } from "./web";
 import { useStore } from "./store";
 import { streamChat } from "./providers";
+import { rotate } from "./rotation";
 import type { Agent, Message, Provider } from "./types";
 
 /**
@@ -131,7 +132,13 @@ function resolve(modelId: string): Resolved {
   }
 
   // Bare model name — first provider that lists it, else the default provider.
-  const owner = providers.find((p) => p.models.includes(modelId)) ?? providers[0];
+  // With round-robin on, share it out between every provider that lists it;
+  // an API client sending the same bare id in a loop is exactly the traffic
+  // that pins one key to its rate limit while the others idle.
+  const owner =
+    (settings.roundRobin ? rotate(modelId, providers) : null) ??
+    providers.find((p) => p.models.includes(modelId)) ??
+    providers[0];
   return { provider: owner, model: modelId, system: "", temperature: 0.7, maxTokens: 2048 };
 }
 

@@ -4,6 +4,7 @@ import { toOpenAITools } from "../tools";
 import { readSSE } from "./sse";
 import { gatewayUrl } from "../gateway";
 import { isWeb } from "../web";
+import { rotate } from "../rotation";
 
 // Some providers' HTTPS APIs send no CORS headers, so a browser can't call them
 // directly (Ollama Cloud, notably). On the web build we route those through the
@@ -131,13 +132,20 @@ function streamOnce(p: ChatParams): Promise<ChatResult> {
  */
 export async function streamChat(p: ChatParams): Promise<ChatResult> {
   let all: Provider[] = [];
+  let roundRobin = false;
   try {
     const { useStore } = await import("../store");
-    all = useStore.getState().settings.providers;
+    const s = useStore.getState().settings;
+    all = s.providers;
+    roundRobin = s.roundRobin === true;
   } catch {
     /* store unavailable (tests / workflows) — just use the one provider */
   }
-  const attempts = buildAttempts(p.provider, all);
+  // Round-robin picks the *entry* provider; failover still owns what happens
+  // after an error. Keeping them separate means a rotation can never mask a
+  // provider that is down — it just changes which working one goes first.
+  const entry = roundRobin ? (rotate(p.model, all) ?? p.provider) : p.provider;
+  const attempts = buildAttempts(entry, all);
   let lastErr: unknown;
   for (let i = 0; i < attempts.length; i++) {
     const a = attempts[i];

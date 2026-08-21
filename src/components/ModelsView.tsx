@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { fitFor, fitCaveat, FIT_LABEL } from "../lib/catalog";
 import {
   hwInfo,
@@ -433,6 +433,19 @@ export function ModelsView() {
    *  empty state offers to fill these in. */
   const unkeyedProviders = settings.providers.filter((p) => p.id !== "local" && !p.apiKey.trim());
   const hasAnyKey = settings.providers.some((p) => p.id !== "local" && p.apiKey.trim().length > 0);
+  /**
+   * How many model ids more than one usable provider serves. Rotation does
+   * nothing at all when this is zero, so the toggle stays hidden rather than
+   * offering a switch that silently has no effect.
+   */
+  const sharedModels = useMemo(() => {
+    const seen = new Map<string, number>();
+    for (const p of settings.providers) {
+      if (p.id !== "local" && !p.apiKey.trim()) continue;
+      for (const m of new Set(p.models)) seen.set(m, (seen.get(m) ?? 0) + 1);
+    }
+    return [...seen.values()].filter((n) => n > 1).length;
+  }, [settings.providers]);
 
   return (
     <main className="settings-main">
@@ -487,6 +500,27 @@ export function ModelsView() {
       <section>
         <div className="provider-row">
           <h2 className="grow">Connected providers</h2>
+          {sharedModels > 0 && (
+            <label
+              className="agent-check inline"
+              title={
+                `${sharedModels} model${sharedModels === 1 ? " is" : "s are"} served by more than one of your providers. ` +
+                "Rotating spreads turns evenly between them so one key does not hit its rate limit alone. " +
+                "Only providers listing the identical model id are used, so the reply comes from the same weights."
+              }
+            >
+              <input
+                type="checkbox"
+                checked={settings.roundRobin === true}
+                onChange={(e) => {
+                  const next = structuredClone(useStore.getState().settings);
+                  next.roundRobin = e.target.checked;
+                  void useStore.getState().saveSettings(next);
+                }}
+              />
+              Round-robin <span className="hint">({sharedModels} shared)</span>
+            </label>
+          )}
           {remoteProviders.length > 1 && (
             <button
               className="btn small"

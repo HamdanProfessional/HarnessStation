@@ -83,6 +83,13 @@ export interface Settings {
   dailyCapUsd?: number;
   /** Same, for the calendar month. */
   monthlyCapUsd?: number;
+  /**
+   * Spread turns across every connected provider that lists the same model,
+   * instead of always sending to the first one. Providers rate-limit their own
+   * keys, so an idle second key is wasted headroom. Only rotates between
+   * providers advertising the identical model id, so the weights never change.
+   */
+  roundRobin?: boolean;
   /** Keep running in the tray when the window is closed. */
   backgroundMode?: boolean;
   /** Remember facts across every chat automatically, with no memory tool calls. */
