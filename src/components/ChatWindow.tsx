@@ -437,7 +437,12 @@ export function ChatWindow() {
             return (
               <div
                 key={key}
-                className={`msg ${m.role} ${m.author && chat.mode === "battle" ? "battle-col" : ""}`}
+                className={`msg ${m.role} ${m.author && chat.mode === "battle" ? "battle-col" : ""} ${
+                  // Only the newest message animates in. Marking it here rather
+                  // than with :last-child because the transcript's last node is
+                  // often a tool result or the Working indicator, not a .msg.
+                  i === chat.messages.length - 1 ? "msg-new" : ""
+                }`}
               >
                 <div className="msg-role">
                   {m.role === "user" ? "You" : m.author ?? agentName ?? "Assistant"}

@@ -1335,7 +1335,6 @@ select:focus {
 
 .msg {
   max-width: 100%;
-  animation: rise 0.18s ease;
 }
 
 @keyframes rise {
@@ -1954,6 +1953,28 @@ select:focus {
   overflow-y: auto;
   border-top: 1px solid var(--border);
   color: var(--text);
+  animation: args-open var(--t-base) var(--ease);
+}
+
+/*
+ * Tool args unfold rather than appear.
+ *
+ * The arrow beside them already rotates over --t-base, so a body that snapped
+ * open left the two halves of one gesture out of step. Animating to the same
+ * 240px the rule caps at, instead of to `auto`, is what makes this animatable
+ * at all; content shorter than the cap simply stops growing when it runs out,
+ * which is invisible against an ease-out.
+ *
+ * Only opening is animated — closing unmounts the element, and keeping it
+ * mounted to play it out would mean the collapsed card still owned its height.
+ */
+@keyframes args-open {
+  from {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+  }
 }
 
 .error-banner {
@@ -3254,6 +3275,49 @@ select:focus {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+/*
+ * Leaving.
+ *
+ * A toast used to be deleted from the array the moment it expired, so it
+ * disappeared between two frames and anything below it jumped up into the hole.
+ * The store now flags it `leaving` and drops it a beat later (TOAST_EXIT_MS),
+ * which is the window these two rules animate in.
+ *
+ * The slot collapses 1fr -> 0fr rather than animating `height`, because the
+ * height is whatever the message wrapped to and there is no value to animate
+ * towards. The negative margin cancels the parent's row gap on the way out;
+ * without it the stack holds an 8px space that only closes on removal.
+ */
+.toast-slot {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    grid-template-rows var(--t-base) var(--ease),
+    margin-bottom var(--t-base) var(--ease);
+}
+
+.toast-slot.leaving {
+  grid-template-rows: 0fr;
+  margin-bottom: -8px;
+}
+
+/* A 0fr row only clips if the item in it can shrink below its content. */
+.toast-slot > .toast {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.toast-slot.leaving > .toast {
+  animation: toast-out var(--t-base) var(--ease) forwards;
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateX(16px);
   }
 }
 
@@ -5014,9 +5078,15 @@ textarea {
 
 /* ---- streaming ---------------------------------------------------------
    The assistant bubble grows constantly while a reply streams. Animating its
-   height would fight the scroll, so only the newest message fades in.        */
+   height would fight the scroll, so only the newest message fades in.
 
-.msg {
+   That last sentence was the intent, but the rule was `.msg`, which is every
+   message in the transcript. Opening a chat remounts the whole list, so a
+   fifty-message history played fifty simultaneous rise animations — the thing
+   the comment said it was avoiding. ChatWindow now marks the final message,
+   and only that one moves.                                                   */
+
+.msg.msg-new {
   animation: rise var(--t-base) var(--ease);
 }
 

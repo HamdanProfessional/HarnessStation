@@ -61,6 +61,34 @@ describe("App.css design invariants", () => {
   it("respects prefers-reduced-motion", () => {
     expect(css).toMatch(/prefers-reduced-motion:\s*reduce/);
   });
+
+  it("animates only the newest message, not the whole transcript", () => {
+    // A bare `.msg { animation }` replays on every message when a chat mounts,
+    // so opening a long history animates all of it at once. The class is added
+    // in ChatWindow to the last message only; both halves have to agree.
+    expect(css).toMatch(/\.msg\.msg-new\s*\{[^}]*animation:\s*rise/);
+    expect(css).not.toMatch(/^\.msg\s*\{[^}]*animation:/m);
+
+    const chat = readFileSync(resolve(__dirname, "..", "src", "components", "ChatWindow.tsx"), "utf8");
+    expect(chat).toContain("msg-new");
+  });
+
+  it("gives a dismissed toast an exit to play", () => {
+    expect(css).toMatch(/@keyframes toast-out/);
+    expect(css).toMatch(/\.toast-slot\.leaving/);
+  });
+
+  it("keeps the toast exit duration in step with the store", () => {
+    // The store holds the element for TOAST_EXIT_MS and the CSS animates it for
+    // --t-base. If those drift apart the toast is either cut off mid-fade or
+    // sits invisible for a beat, and neither shows up as a failure anywhere
+    // else.
+    const base = /--t-base:\s*(\d+)ms/.exec(css)?.[1];
+    const toast = readFileSync(resolve(__dirname, "..", "src", "lib", "toast.ts"), "utf8");
+    const exit = /TOAST_EXIT_MS\s*=\s*(\d+)/.exec(toast)?.[1];
+    expect(base).toBeDefined();
+    expect(exit).toBe(base);
+  });
 });
 
 describe("theme cycling", () => {
