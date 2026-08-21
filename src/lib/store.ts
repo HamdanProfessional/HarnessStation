@@ -2,6 +2,9 @@ import { create } from "zustand";
 import { streamChat } from "./providers";
 import * as storage from "./storage";
 import { composeSystemPrompt } from "./styles";
+import { environmentNote } from "./environment";
+import { isWeb } from "./web";
+import { os } from "./platform";
 import { buildParticipantContext } from "./multiAgent";
 import { BUILTIN_TOOLS, executeTool } from "./tools";
 import { runAgent, syntheticTools } from "./agents";
@@ -1406,9 +1409,23 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
       if (!base) break; // chat was deleted mid-turn — nothing left to write to
       const history = base.messages.slice(startIdx, -1);
 
+      // Facts about now that the model cannot know and will otherwise invent:
+      // the date (it answers from its cutoff), the platform (run_terminal is
+      // PowerShell on Windows), and which model is actually answering.
+      // Rebuilt each round so a mid-chat model switch is reflected.
+      const envNote = environmentNote({
+        os: os(),
+        workingDir: base.workingDir,
+        model: base.model,
+        providerName: settings.providers.find((x) => x.id === base.providerId)?.name,
+        now: new Date(),
+        web: isWeb(),
+      });
+
       // Compose once so the exact prompt the model receives can also be traced.
       const systemStr = [
         composeSystemPrompt(settings, base),
+        envNote,
         projectNote,
         agentsNote,
         skillIndex,
