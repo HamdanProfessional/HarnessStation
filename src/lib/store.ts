@@ -1,9 +1,11 @@
 import { create } from "zustand";
-import { streamChat } from "./providers";
+import { ProviderError, streamChat } from "./providers";
 import * as storage from "./storage";
 import { composeSystemPrompt } from "./styles";
 import { environmentNote } from "./environment";
 import { basePrompt } from "./basePrompt";
+import { contextWindowOf } from "./modelFacts";
+import { isContextOverflow } from "./providers/overflow";
 import { isWeb } from "./web";
 import { os } from "./platform";
 import { buildParticipantContext } from "./multiAgent";
@@ -1329,7 +1331,13 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
   // auto-compaction: fold old turns into a summary when the chat grows too large
   if (settings.autoCompact) {
     const est = chat.messages.reduce((n, m) => n + m.content.length, 0) / 4;
-    if (est > (settings.compactThreshold ?? 8000)) {
+    // Prefer the model's real context window over the fixed threshold. 8000 is
+    // wrong for every model we ship — it compacts a 200k-context model twenty
+    // times too early, and never saves a 4k one. Compact at 70%, leaving room
+    // for the reply and for the estimate being an estimate.
+    const window = contextWindowOf(chat.model);
+    const limit = window ? window * 0.7 : (settings.compactThreshold ?? 8000);
+    if (est > limit) {
       await get().compactChat(chat.id);
     }
   }
@@ -1451,19 +1459,50 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
         .join("\n\n");
       const turnStart = Date.now();
 
-      const result = await streamChat({
-        provider,
-        model: chat.model,
-        system: systemStr,
-        messages: history,
-        temperature: chat.temperature,
-        maxTokens: chat.maxTokens,
-        tools: enabledTools,
-        jsonSchema: chat.jsonSchema,
-        signal: abortController.signal,
-        onDelta: (delta) => patchLast((m) => ({ ...m, content: m.content + delta })),
-        onReasoning: (delta) => patchLast((m) => ({ ...m, reasoning: (m.reasoning ?? "") + delta })),
-      });
+      // Captured once per round: moving the call into a closure loses the
+      // narrowing the surrounding code already did on abortController.
+      const ac = abortController;
+      const send = () =>
+        streamChat({
+          provider,
+          model: chat.model,
+          system: systemStr,
+          messages: history,
+          temperature: chat.temperature,
+          maxTokens: chat.maxTokens,
+          tools: enabledTools,
+          jsonSchema: chat.jsonSchema,
+          signal: ac.signal,
+          onDelta: (delta) => patchLast((m) => ({ ...m, content: m.content + delta })),
+          onReasoning: (delta) => patchLast((m) => ({ ...m, reasoning: (m.reasoning ?? "") + delta })),
+        });
+
+      let result;
+      try {
+        result = await send();
+      } catch (e) {
+        // "Your prompt is too long" is the one failure with an obvious fix, and
+        // failing over to another key cannot help — the next key receives the
+        // same oversized prompt. Compact once and resend. Only once: if the
+        // compacted prompt still overflows, something else is wrong and looping
+        // would burn a summarisation call per attempt.
+        const msg = (e as Error)?.message ?? "";
+        const status = (e as ProviderError)?.status;
+        const alreadySummarised = !!(live() ?? chat).summary;
+        if (!isContextOverflow(msg, status) || alreadySummarised || ac.signal.aborted) {
+          throw e;
+        }
+        set({ activity: "Conversation too long — summarising and retrying..." });
+        await get().compactChat(chat.id);
+        const after = live();
+        if (!after) throw e;
+        // compactChat rewrites where the sent history starts, so rebuild it.
+        let from = after.summaryUpto ?? 0;
+        while (from > 0 && from < after.messages.length && after.messages[from].role !== "user") from++;
+        history.length = 0;
+        history.push(...after.messages.slice(from, -1));
+        result = await send();
+      }
 
       if (result.usage) {
         recordUsage(
