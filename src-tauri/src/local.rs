@@ -598,6 +598,37 @@ fn find_server_exe(dir: &Path) -> Option<PathBuf> {
 /// All are opt-in: only what the caller sets is passed. Newer flags
 /// (`--n-cpu-moe`, `--fit-target`, `--flash-attn on`) fail on an old engine
 /// that doesn't know them, so leaving a field unset keeps the launch compatible.
+/// Which llama.cpp lineage the engine directory holds.
+///
+/// They share a binary name (`llama-server`), a port, and an OpenAI-compatible
+/// API, so everything downstream of the launch is identical. What differs is the
+/// command line, and the differences are silent failures rather than warnings:
+/// an unknown flag makes the server exit during load, which surfaces here as
+/// "exited while loading — model may not fit in memory" and sends the user off
+/// hunting a memory problem they don't have.
+///
+/// Verified against ik_llama.cpp's `common/common.cpp` rather than assumed, and
+/// the overlap is larger than the fork's age suggests: `--threads`, `--cpu-moe`,
+/// `--n-cpu-moe`, `--flash-attn on`, `--mlock`, `--no-mmap`, `--jinja`,
+/// `--ctx-size` and `--n-gpu-layers` all parse identically. Three things do not,
+/// and each is handled in `launch_flag_args`.
+#[derive(serde::Deserialize, Default, Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Engine {
+    /// Upstream ggml-org/llama.cpp. The default, and what `install_engine` downloads.
+    #[default]
+    #[serde(rename = "llama.cpp")]
+    LlamaCpp,
+    /// ikawrakow/ik_llama.cpp — the CPU-focused fork.
+    #[serde(rename = "ik_llama")]
+    IkLlama,
+}
+
+impl Engine {
+    fn is_ik(self) -> bool {
+        self == Engine::IkLlama
+    }
+}
+
 #[derive(serde::Deserialize, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct LaunchOpts {
@@ -634,6 +665,24 @@ pub struct LaunchOpts {
     /// Not optional in practice: without it, rejection rates on long contexts eat
     /// the speedup. ~0.75 is the reported sweet spot. Ignored unless `mtp` is set.
     spec_draft_p_min: Option<f32>,
+
+    // ---- ik_llama.cpp only. Ignored on upstream builds, which would reject them. ----
+    /// Run-time repack (`-rtr`): rewrites tensors into row-interleaved layout as
+    /// the model loads, so CPU GEMM hits the fast IQK kernels. The headline
+    /// reason to run this fork on a CPU-only box.
+    ///
+    /// Costs load time and disables mmap (the fork forces `use_mmap = false`
+    /// itself, since a repacked tensor can't be shared with the file on disk),
+    /// so the model is read in full and held in RAM.
+    rtr: bool,
+    /// Smart expert reduction (`-ser`), as the fork's `min_experts,thresh` pair,
+    /// e.g. `"5,1"`. Drops MoE experts below a probability threshold: fewer
+    /// experts per token, some quality given up for speed. Passed through as a
+    /// string because the shape is the fork's, not ours to reinterpret.
+    ser: Option<String>,
+    /// Attention max batch in MB (`-amb`) — caps the attention compute buffer.
+    /// The fork silently raises anything below 128 to 128.
+    amb: Option<u32>,
 }
 
 /// Build just the optional flag arguments for a set of launch options.
@@ -641,7 +690,7 @@ pub struct LaunchOpts {
 /// Pure and separate so the flag translation — the part that silently breaks a
 /// launch if a name or shape is wrong — can be unit-tested without spawning a
 /// process. Nothing is emitted for an unset field, keeping older engines happy.
-fn launch_flag_args(o: &LaunchOpts) -> Vec<String> {
+fn launch_flag_args(o: &LaunchOpts, engine: Engine) -> Vec<String> {
     let mut a: Vec<String> = Vec::new();
     if let Some(t) = o.threads {
         a.push("--threads".into());
@@ -665,12 +714,19 @@ fn launch_flag_args(o: &LaunchOpts) -> Vec<String> {
     if o.no_mmap {
         a.push("--no-mmap".into());
     }
-    if o.fit_off {
+    // Auto-fit is the sharpest divergence. Upstream has it *on* by default and
+    // takes a value (`--fit off`); the fork has it *off* by default and takes
+    // none (`--fit` opts in). So "the user asked for fit off" is a flag upstream
+    // and silence on the fork — pushing `--fit off` there would leave a bare
+    // `off` as a positional argument and abort the launch.
+    if o.fit_off && !engine.is_ik() {
         a.push("--fit".into());
         a.push("off".into());
     }
     if let Some(m) = o.fit_target {
-        a.push("--fit-target".into());
+        // Same knob, different name: `--fit-target` upstream, `--fit-margin` on
+        // the fork.
+        a.push(if engine.is_ik() { "--fit-margin".into() } else { "--fit-target".into() });
         a.push(m.to_string());
     }
     // The draft tuning knobs only mean anything alongside a speculative type, so
@@ -678,7 +734,14 @@ fn launch_flag_args(o: &LaunchOpts) -> Vec<String> {
     // alone would be a launch that looks configured and isn't.
     if o.mtp {
         a.push("--spec-type".into());
-        a.push("draft-mtp".into());
+        // The stage is named `draft-mtp` upstream and plain `mtp` on the fork.
+        a.push(if engine.is_ik() { "mtp".into() } else { "draft-mtp".into() });
+        // The fork has no `--spec-draft-*` flags at all — it tunes stages with
+        // an inline `key=value` syntax on --spec-type instead. Emitting them
+        // would abort the launch, so MTP there is on-or-off with no knobs.
+        if engine.is_ik() {
+            return a;
+        }
         if let Some(n) = o.spec_draft_n_max {
             a.push("--spec-draft-n-max".into());
             a.push(n.to_string());
@@ -689,7 +752,37 @@ fn launch_flag_args(o: &LaunchOpts) -> Vec<String> {
             a.push(format!("{p}"));
         }
     }
+
+    // Fork-only flags. Guarded rather than merely unset by default, so a config
+    // carried over from an ik_llama engine can't abort an upstream launch.
+    if engine.is_ik() {
+        if o.rtr {
+            a.push("-rtr".into());
+        }
+        if let Some(s) = o.ser.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+            a.push("-ser".into());
+            a.push(s.to_string());
+        }
+        if let Some(m) = o.amb {
+            a.push("-amb".into());
+            a.push(m.to_string());
+        }
+    }
     a
+}
+
+/// Report whether an engine directory actually contains a `llama-server`.
+///
+/// Worth a round trip before launching. An engine path that resolves to nothing
+/// fails at spawn, and the failure the user sees is the *next* check —
+/// "llama-server exited while loading, model may not fit in memory" — which
+/// sends them off tuning context size for a problem that is a wrong folder.
+/// Especially so for ik_llama.cpp, where the path is hand-typed rather than
+/// produced by the installer.
+#[tauri::command]
+pub fn probe_engine(engine_dir: String) -> Option<String> {
+    let root = harness_root().join(&engine_dir);
+    find_server_exe(&root).map(|p| p.to_string_lossy().into_owned())
 }
 
 #[tauri::command]
@@ -701,6 +794,7 @@ pub fn start_server(
     ctx: u32,
     gpu_layers: i32,
     opts: Option<LaunchOpts>,
+    engine: Option<Engine>,
 ) -> Result<(), String> {
     stop_inner(&state);
     let engine_root = harness_root().join(&engine_dir);
@@ -727,7 +821,7 @@ pub fn start_server(
     ];
 
     // Optional performance flags, added only when requested.
-    args.extend(launch_flag_args(&opts.unwrap_or_default()));
+    args.extend(launch_flag_args(&opts.unwrap_or_default(), engine.unwrap_or_default()));
 
     let mut cmd = Command::new(&exe);
     cmd.args(&args).stdout(Stdio::null()).stderr(Stdio::null());
@@ -790,40 +884,40 @@ mod launch_tests {
     fn unset_options_emit_nothing() {
         // The compatibility guarantee: a default launch adds no new flags, so an
         // older engine that doesn't know them still starts.
-        assert!(launch_flag_args(&LaunchOpts::default()).is_empty());
+        assert!(launch_flag_args(&LaunchOpts::default(), Engine::LlamaCpp).is_empty());
     }
 
     #[test]
     fn cpu_moe_zero_means_all_experts() {
         let o = LaunchOpts { cpu_moe: Some(0), ..Default::default() };
-        assert_eq!(launch_flag_args(&o), vec!["--cpu-moe"]);
+        assert_eq!(launch_flag_args(&o, Engine::LlamaCpp), vec!["--cpu-moe"]);
     }
 
     #[test]
     fn cpu_moe_n_offloads_first_n_layers() {
         let o = LaunchOpts { cpu_moe: Some(24), ..Default::default() };
-        assert_eq!(launch_flag_args(&o), vec!["--n-cpu-moe", "24"]);
+        assert_eq!(launch_flag_args(&o, Engine::LlamaCpp), vec!["--n-cpu-moe", "24"]);
     }
 
     #[test]
     fn flash_attention_is_on_not_a_bare_flag() {
         // --flash-attn takes on/off in recent llama.cpp; a bare --flash-attn errors.
         let o = LaunchOpts { flash_attn: true, ..Default::default() };
-        assert_eq!(launch_flag_args(&o), vec!["--flash-attn", "on"]);
+        assert_eq!(launch_flag_args(&o, Engine::LlamaCpp), vec!["--flash-attn", "on"]);
     }
 
     #[test]
     fn boolean_flags_are_bare() {
         let o = LaunchOpts { mlock: true, no_mmap: true, ..Default::default() };
-        assert_eq!(launch_flag_args(&o), vec!["--mlock", "--no-mmap"]);
+        assert_eq!(launch_flag_args(&o, Engine::LlamaCpp), vec!["--mlock", "--no-mmap"]);
     }
 
     #[test]
     fn fit_controls() {
         let off = LaunchOpts { fit_off: true, ..Default::default() };
-        assert_eq!(launch_flag_args(&off), vec!["--fit", "off"]);
+        assert_eq!(launch_flag_args(&off, Engine::LlamaCpp), vec!["--fit", "off"]);
         let target = LaunchOpts { fit_target: Some(256), ..Default::default() };
-        assert_eq!(launch_flag_args(&target), vec!["--fit-target", "256"]);
+        assert_eq!(launch_flag_args(&target, Engine::LlamaCpp), vec!["--fit-target", "256"]);
     }
 
     #[test]
@@ -832,7 +926,7 @@ mod launch_tests {
         // tutorial says `--spec-type mtp`. Both error on a current build. If this
         // assertion is ever "fixed" to match a tutorial, MTP silently stops.
         let o = LaunchOpts { mtp: true, ..Default::default() };
-        assert_eq!(launch_flag_args(&o), vec!["--spec-type", "draft-mtp"]);
+        assert_eq!(launch_flag_args(&o, Engine::LlamaCpp), vec!["--spec-type", "draft-mtp"]);
     }
 
     #[test]
@@ -843,7 +937,7 @@ mod launch_tests {
             spec_draft_p_min: Some(0.75),
             ..Default::default()
         };
-        assert!(launch_flag_args(&o).is_empty());
+        assert!(launch_flag_args(&o, Engine::LlamaCpp).is_empty());
     }
 
     #[test]
@@ -855,7 +949,7 @@ mod launch_tests {
             ..Default::default()
         };
         assert_eq!(
-            launch_flag_args(&o),
+            launch_flag_args(&o, Engine::LlamaCpp),
             vec!["--spec-type", "draft-mtp", "--spec-draft-n-max", "2", "--spec-draft-p-min", "0.75"]
         );
     }
@@ -870,8 +964,110 @@ mod launch_tests {
             ..Default::default()
         };
         assert_eq!(
-            launch_flag_args(&o),
+            launch_flag_args(&o, Engine::LlamaCpp),
             vec!["--threads", "8", "--cpu-moe", "--flash-attn", "on", "--mlock"]
         );
+    }
+    // ---- ik_llama.cpp ----
+    //
+    // Every expectation below was read out of the fork's common/common.cpp, not
+    // inferred from the flag's upstream meaning.
+
+    #[test]
+    fn shared_flags_are_identical_on_both_engines() {
+        // The reason this integration is small: most of the command line needs
+        // no translation at all.
+        let o = LaunchOpts {
+            threads: Some(8),
+            cpu_moe: Some(24),
+            flash_attn: true,
+            mlock: true,
+            no_mmap: true,
+            ..Default::default()
+        };
+        assert_eq!(
+            launch_flag_args(&o, Engine::IkLlama),
+            launch_flag_args(&o, Engine::LlamaCpp)
+        );
+    }
+
+    #[test]
+    fn fit_off_is_silence_on_ik_not_a_flag() {
+        // The fork's --fit takes no value and defaults off, so "off" is already
+        // the state; upstream's takes one and defaults on. Passing `--fit off`
+        // to the fork leaves a bare `off` positional and kills the launch.
+        let o = LaunchOpts { fit_off: true, ..Default::default() };
+        assert_eq!(launch_flag_args(&o, Engine::LlamaCpp), vec!["--fit", "off"]);
+        assert!(launch_flag_args(&o, Engine::IkLlama).is_empty());
+    }
+
+    #[test]
+    fn fit_target_is_renamed_not_dropped() {
+        let o = LaunchOpts { fit_target: Some(256), ..Default::default() };
+        assert_eq!(launch_flag_args(&o, Engine::LlamaCpp), vec!["--fit-target", "256"]);
+        assert_eq!(launch_flag_args(&o, Engine::IkLlama), vec!["--fit-margin", "256"]);
+    }
+
+    #[test]
+    fn mtp_uses_the_forks_stage_name_and_drops_knobs_it_lacks() {
+        let o = LaunchOpts {
+            mtp: true,
+            spec_draft_n_max: Some(2),
+            spec_draft_p_min: Some(0.75),
+            ..Default::default()
+        };
+        assert_eq!(
+            launch_flag_args(&o, Engine::LlamaCpp),
+            vec!["--spec-type", "draft-mtp", "--spec-draft-n-max", "2", "--spec-draft-p-min", "0.75"]
+        );
+        // The fork names the stage `mtp` and has no --spec-draft-* flags at all.
+        assert_eq!(launch_flag_args(&o, Engine::IkLlama), vec!["--spec-type", "mtp"]);
+    }
+
+    #[test]
+    fn ik_only_flags_never_reach_upstream() {
+        let o = LaunchOpts {
+            rtr: true,
+            ser: Some("5,1".into()),
+            amb: Some(512),
+            ..Default::default()
+        };
+        assert_eq!(
+            launch_flag_args(&o, Engine::IkLlama),
+            vec!["-rtr", "-ser", "5,1", "-amb", "512"]
+        );
+        // Carrying an ik config to an upstream engine must not abort the launch.
+        assert!(launch_flag_args(&o, Engine::LlamaCpp).is_empty());
+    }
+
+    #[test]
+    fn a_blank_ser_is_not_a_flag() {
+        // The field is a free-text box in the UI; an empty one means "unset",
+        // not "-ser with no value" (which would eat the next argument).
+        let o = LaunchOpts { ser: Some("  ".into()), ..Default::default() };
+        assert!(launch_flag_args(&o, Engine::IkLlama).is_empty());
+    }
+
+    #[test]
+    fn a_cpu_only_ik_launch_composes_in_order() {
+        let o = LaunchOpts {
+            threads: Some(16),
+            rtr: true,
+            cpu_moe: Some(0),
+            flash_attn: true,
+            ..Default::default()
+        };
+        assert_eq!(
+            launch_flag_args(&o, Engine::IkLlama),
+            vec!["--threads", "16", "--cpu-moe", "--flash-attn", "on", "-rtr"]
+        );
+    }
+
+    #[test]
+    fn engine_deserializes_from_the_names_the_ui_sends() {
+        assert_eq!(serde_json::from_str::<Engine>("\"ik_llama\"").unwrap(), Engine::IkLlama);
+        assert_eq!(serde_json::from_str::<Engine>("\"llama.cpp\"").unwrap(), Engine::LlamaCpp);
+        // An absent engine must mean upstream, so old callers keep working.
+        assert_eq!(Engine::default(), Engine::LlamaCpp);
     }
 }

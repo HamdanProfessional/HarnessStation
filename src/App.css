@@ -2803,6 +2803,22 @@ select:focus {
   font-size: 12px;
 }
 
+/* A short, copyable list of shell commands — the ik_llama.cpp build steps.
+   Not .code-block: that one carries a language header and a copy button, which
+   a four-line build recipe doesn't need. */
+.build-steps {
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 12px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  overflow-x: auto;
+  color: var(--text);
+  user-select: all;
+}
+
 /* ---------- Code editor (highlighted textarea) ---------- */
 .code-editor {
   position: relative;

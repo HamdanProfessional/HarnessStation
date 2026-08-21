@@ -1,4 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ENGINE_BLURB,
+  ENGINE_LABEL,
+  IK_BUILD_OUTPUT,
+  IK_BUILD_STEPS,
+  ikDir,
+  isIk,
+  normalizeEngineDir,
+  setIkDir,
+  supportsMtpTuning,
+  type EngineKind,
+} from "../lib/engines";
 import { fitFor, fitCaveat, FIT_LABEL } from "../lib/catalog";
 import { chatCapable, classifyModel, groupByModality, MODALITY_LABEL, MODALITY_TAG } from "../lib/modality";
 import { toast } from "../lib/toast";
@@ -8,6 +20,7 @@ import {
   LOCAL_PORT,
   serverStatus,
   startServer,
+  probeEngine,
   stopServer,
   MTP_DEFAULTS,
   type HwInfo,
@@ -75,6 +88,18 @@ export function ModelsView() {
   // no-op (not an error) when either is missing — so it can't be a default.
   const [mtp, setMtp] = useState(false);
   const [mtpDraft, setMtpDraft] = useState<string>(String(MTP_DEFAULTS.specDraftNMax));
+  /**
+   * Which engine to launch with. Upstream llama.cpp is downloaded on demand;
+   * ik_llama.cpp is a CPU-focused fork that publishes no binaries, so its
+   * directory is one the user built and points us at.
+   */
+  const [engineKind, setEngineKind] = useState<EngineKind>("llama.cpp");
+  const [ikPath, setIkPath] = useState<string>(() => ikDir());
+  /** null = not checked yet, "" = checked and nothing there, else the exe path. */
+  const [ikExe, setIkExe] = useState<string | null>(null);
+  const [rtr, setRtr] = useState(true);
+  const [ser, setSer] = useState<string>("");
+  const [amb, setAmb] = useState<string>("");
   const [notice, setNotice] = useState<string | null>(null);
   const [colibriUrl, setColibriUrl] = useState("http://localhost:8080/v1");
   /** When true, the Colibri section is rendered. Off by default so a new user
@@ -253,11 +278,34 @@ export function ModelsView() {
   }, [refresh]);
 
   const ensureEngine = async (): Promise<string> => {
+    if (isIk(engineKind)) {
+      // Nothing to install: ik_llama.cpp ships no binaries. Verify the folder
+      // instead, so a wrong path fails here with a clear message rather than as
+      // a server that exits during load and looks like an out-of-memory.
+      const dir = normalizeEngineDir(ikPath);
+      if (!dir) throw new Error("Set the folder holding your ik_llama.cpp build first.");
+      const exe = await probeEngine(dir);
+      setIkExe(exe ?? "");
+      if (!exe) throw new Error(`No llama-server found under ${dir} — check the path, or build it first.`);
+      return dir;
+    }
     if (engines.length) return engines[0];
     if (!hw) throw new Error("hardware info not ready yet");
     const dir = await installEngine(hw, (s) => setBusy(s));
     setEngines([dir]);
     return dir;
+  };
+
+  /** Check a pasted ik_llama path without launching anything. */
+  const verifyIk = async () => {
+    const dir = normalizeEngineDir(ikPath);
+    setIkPath(dir);
+    setIkDir(dir);
+    if (!dir) {
+      setIkExe(null);
+      return;
+    }
+    setIkExe(await probeEngine(dir).then((e) => e ?? ""));
   };
 
   const load = async (m: LocalModel) => {
@@ -274,13 +322,22 @@ export function ModelsView() {
         mtp,
         // p-min isn't exposed: it has one sensible value and getting it wrong
         // quietly turns MTP into a slowdown, which is not a knob worth offering.
-        ...(mtp
+        // The fork has no --spec-draft-* flags, so there is nothing to send it
+        // here; the Rust side drops them anyway, this just keeps intent local.
+        ...(mtp && supportsMtpTuning(engineKind)
           ? {
               specDraftNMax: mtpDraft.trim() === "" ? MTP_DEFAULTS.specDraftNMax : Number(mtpDraft),
               specDraftPMin: MTP_DEFAULTS.specDraftPMin,
             }
           : {}),
-      });
+        ...(isIk(engineKind)
+          ? {
+              rtr,
+              ser: ser.trim() || undefined,
+              amb: amb.trim() === "" ? undefined : Number(amb),
+            }
+          : {}),
+      }, engineKind);
       // wait for the server to answer, then register the Local provider
       let modelIds: string[] = [];
       for (let i = 0; i < 60; i++) {
@@ -826,6 +883,68 @@ export function ModelsView() {
         </div>
         <div className="load-opts">
           <label>
+            Engine{" "}
+            <select
+              value={engineKind}
+              onChange={(e) => setEngineKind(e.target.value as EngineKind)}
+              title="Which llama.cpp build to run the model with"
+            >
+              {(["llama.cpp", "ik_llama"] as const).map((k) => (
+                <option key={k} value={k}>
+                  {ENGINE_LABEL[k]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <span className="hint">{ENGINE_BLURB[engineKind]}</span>
+        </div>
+
+        {isIk(engineKind) && (
+          <div className="load-opts-advanced">
+            <label>
+              Build folder{" "}
+              <input
+                className="grow"
+                placeholder={`path to ik_llama.cpp/${IK_BUILD_OUTPUT}`}
+                value={ikPath}
+                onChange={(e) => setIkPath(e.target.value)}
+                onBlur={() => void verifyIk()}
+              />
+              <button className="btn small" onClick={() => void verifyIk()}>
+                Check
+              </button>
+            </label>
+            {ikExe !== null &&
+              (ikExe ? (
+                <p className="hint">Found <code>{ikExe}</code></p>
+              ) : (
+                <div className="error-banner" role="alert">
+                  <span>No llama-server in that folder.</span>
+                </div>
+              ))}
+            {/* ik_llama.cpp attaches no binaries to its releases and the README
+                says to compile locally, so there is no download button to offer
+                here — only the build, and the one flag that matters. Without
+                -DGGML_NATIVE=ON the quantized CPU kernels fall back to a generic
+                path and the fork loses the speed it exists for. */}
+            <details>
+              <summary className="link-btn">No build yet? Compile it</summary>
+              <pre className="build-steps">
+                {IK_BUILD_STEPS.map((line) => (
+                  <div key={line}>{line}</div>
+                ))}
+              </pre>
+              <p className="hint">
+                Then point the box above at <code>{IK_BUILD_OUTPUT}</code> inside the clone. Needs
+                git, cmake and a C++ compiler. <code>-DGGML_NATIVE=ON</code> is what turns on the
+                quantized CPU kernels — without it the fork is no faster than upstream.
+              </p>
+            </details>
+          </div>
+        )}
+
+        <div className="load-opts">
+          <label>
             Context <input type="number" value={ctx} min={512} step={512} onChange={(e) => setCtx(Number(e.target.value) || 4096)} />
           </label>
           <label>
@@ -851,7 +970,7 @@ export function ModelsView() {
               <input type="checkbox" checked={mtp} onChange={(e) => setMtp(e.target.checked)} />
               Multi-token prediction — ~1.5–2x faster, no extra memory
             </label>
-            {mtp && (
+            {mtp && supportsMtpTuning(engineKind) && (
               <>
                 <label>
                   Draft tokens{" "}
@@ -897,6 +1016,42 @@ export function ModelsView() {
               />
               <span className="hint"> Blank = engine default. Around your physical core count.</span>
             </label>
+
+            {isIk(engineKind) && (
+              <>
+                <label className="check">
+                  <input type="checkbox" checked={rtr} onChange={(e) => setRtr(e.target.checked)} />
+                  Repack tensors on load (-rtr) — the fork's main CPU win
+                </label>
+                <p className="hint">
+                  Rewrites weights into the layout the fast CPU kernels want. Costs load time and
+                  turns off memory-mapping, so the whole model is read into RAM — leave it on unless
+                  you are short of memory.
+                </p>
+                <label>
+                  Expert reduction (-ser){" "}
+                  <input
+                    placeholder="off"
+                    value={ser}
+                    style={{ width: 70 }}
+                    onChange={(e) => setSer(e.target.value)}
+                  />
+                  <span className="hint"> MoE only, as min,threshold — e.g. 5,1. Fewer experts per token: faster, slightly worse.</span>
+                </label>
+                <label>
+                  Attention buffer MB (-amb){" "}
+                  <input
+                    type="number"
+                    min={128}
+                    placeholder="off"
+                    value={amb}
+                    style={{ width: 70 }}
+                    onChange={(e) => setAmb(e.target.value)}
+                  />
+                  <span className="hint"> Caps attention scratch memory on long contexts. Under 128 is raised to 128.</span>
+                </label>
+              </>
+            )}
           </div>
         )}
         {models.length === 0 && (

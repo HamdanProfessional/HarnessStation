@@ -172,6 +172,7 @@ pub fn run() {
             local::download,
             local::extract_zip,
             local::start_server,
+            local::probe_engine,
             local::stop_server,
             local::server_status,
             local::transcribe,

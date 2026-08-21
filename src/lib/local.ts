@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { fetch } from "@tauri-apps/plugin-http";
+import type { EngineKind } from "./engines";
 
 export const LOCAL_PORT = 1244;
 
@@ -60,6 +61,21 @@ export interface LaunchOpts {
    * Effectively required: without it, rejection on long contexts eats the gain.
    */
   specDraftPMin?: number;
+
+  // ---- ik_llama.cpp only. Dropped before the command line on other engines. ----
+  /**
+   * Run-time repack (`-rtr`): rewrite tensors into row-interleaved layout during
+   * load so CPU matmul hits the fork's IQK kernels. The main reason to run
+   * ik_llama on a CPU-only machine.
+   *
+   * Trades load time and memory for throughput — the fork turns mmap off when
+   * this is set, so the model is read in full rather than paged from disk.
+   */
+  rtr?: boolean;
+  /** Smart expert reduction (`-ser`) as the fork's `min,threshold` pair, e.g. "5,1". */
+  ser?: string;
+  /** Attention compute buffer cap in MB (`-amb`). The fork raises anything under 128. */
+  amb?: number;
 }
 
 /** Defaults applied when the user turns MTP on but doesn't tune it. */
@@ -71,6 +87,7 @@ export const startServer = (
   ctx: number,
   gpuLayers: number,
   opts: LaunchOpts = {},
+  engine: EngineKind = "llama.cpp",
 ) =>
   invoke("start_server", {
     engineDir,
@@ -79,7 +96,16 @@ export const startServer = (
     ctx,
     gpuLayers,
     opts,
+    engine,
   });
+
+/**
+ * Resolve the `llama-server` inside an engine directory, or null if there
+ * isn't one. Cheap, and it turns "wrong folder" into a clear message instead of
+ * a spawn failure that reads like the model didn't fit in memory.
+ */
+export const probeEngine = (engineDir: string) =>
+  invoke<string | null>("probe_engine", { engineDir });
 
 export const downloadFile = (url: string, dest: string, id: string) =>
   invoke("download", { url, dest, id });
