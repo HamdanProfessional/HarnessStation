@@ -1,5 +1,6 @@
 mod audio;
 mod browser;
+mod claudecode;
 mod inapp_browser;
 mod local;
 mod localapi;
@@ -112,6 +113,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(local::LocalServer(Mutex::new(None)))
+        .manage(claudecode::ClaudeCode::default())
         .manage(local::SttServer(Mutex::new(None)))
         .manage(mcp::McpState(Mutex::new(HashMap::new())))
         .manage(audio::Recorder(Mutex::new(None)))
@@ -173,6 +175,12 @@ pub fn run() {
             local::extract_zip,
             local::start_server,
             local::probe_engine,
+            claudecode::claude_start,
+            claudecode::claude_send,
+            claudecode::claude_end_input,
+            claudecode::claude_stop,
+            claudecode::claude_status,
+            claudecode::claude_probe,
             local::stop_server,
             local::server_status,
             local::transcribe,
@@ -244,6 +252,7 @@ pub fn run() {
         .run(|app, event| {
             if let tauri::RunEvent::Exit = event {
                 local::kill_on_exit(app);
+                claudecode::kill_on_exit(app);
                 local::kill_stt(app);
                 let state: tauri::State<mcp::McpState> = tauri::Manager::state(app);
                 mcp::kill_all(&state);

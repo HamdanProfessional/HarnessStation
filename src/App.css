@@ -1591,6 +1591,42 @@ select:focus {
   color: var(--code-fg);
 }
 
+/* ---------- Claude Code session transcript ---------- */
+
+.cc-line {
+  display: flex;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  align-items: baseline;
+}
+
+.cc-tag {
+  flex-shrink: 0;
+  width: 62px;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  font-family: "Cascadia Code", Consolas, monospace;
+}
+
+.cc-text {
+  /* min-width:0 or a long unbroken tool argument stretches the flex row and
+     scrolls the whole panel sideways. */
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cc-you .cc-tag { color: var(--accent); }
+.cc-tool .cc-tag { color: var(--warn); }
+.cc-notice .cc-tag { color: var(--danger); }
+.cc-subagent .cc-tag { color: var(--ok); }
+.cc-tool .cc-text,
+.cc-notice .cc-text { color: var(--text-dim); }
+
 /* ---------- "Working" indicator ---------- */
 
 .working {

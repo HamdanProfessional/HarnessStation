@@ -98,6 +98,7 @@ export type View =
   | "mcp"
   | "community"
   | "browser"
+  | "claudecode"
   | "files";
 
 /** What `deleteItem` removes: a whole message, its text, its reasoning, or one tool call. */

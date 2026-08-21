@@ -46,6 +46,10 @@ export const ESSENTIALS_HIDDEN = [
   "mcp",
   "community",
   "files",
+  // Needs the `claude` CLI installed separately, and only means anything once
+  // you have agents or skills worth injecting — both of which live in views
+  // that are themselves hidden here.
+  "claudecode",
 ] as const;
 
 export const DEFAULT_SETTINGS: Settings = {
