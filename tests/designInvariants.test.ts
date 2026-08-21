@@ -157,3 +157,34 @@ describe("ui-kit component parity", () => {
     ).toEqual(read(`src/components/${name}.tsx`));
   });
 });
+
+describe("no dangling custom properties", () => {
+  /**
+   * Every var(--x) must resolve to a --x defined somewhere in the sheet.
+   *
+   * An undefined custom property is the quietest bug in CSS: the declaration is
+   * simply dropped, so the element keeps whatever it inherited and the page
+   * still renders. Nothing errors, nothing logs. This sheet has already carried
+   * --text-2 and --accent-soft, both of which were referenced and never
+   * defined, and both of which looked "fine" until someone compared themes.
+   *
+   * A var() with a fallback is exempt: that is a deliberate default, not a typo.
+   */
+  const defined = new Set(Array.from(css.matchAll(/(--[a-z0-9-]+)\s*:/g), (m) => m[1]));
+  const referenced = Array.from(
+    css.matchAll(/var\(\s*(--[a-z0-9-]+)\s*\)/g),
+    (m) => m[1],
+  );
+
+  it("defines every token the sheet references without a fallback", () => {
+    const dangling = [...new Set(referenced.filter((n) => !defined.has(n)))].sort();
+    expect(dangling, `referenced but never defined in src/App.css: ${dangling.join(", ")}`).toEqual([]);
+  });
+
+  it("is actually looking at something", () => {
+    // Guards the guard: a regex that silently matched nothing would pass above
+    // forever.
+    expect(defined.size).toBeGreaterThan(20);
+    expect(referenced.length).toBeGreaterThan(100);
+  });
+});

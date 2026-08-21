@@ -191,8 +191,35 @@ function ToolResult({
   );
 }
 
+/**
+ * The "it is working" indicator, shown under the thread for as long as a turn
+ * is in flight.
+ *
+ * The chat had no live signal of its own. Waiting for the first token rendered
+ * a literal "..." — three static full stops, indistinguishable from a model
+ * that had actually replied with an ellipsis — and once a tool call started,
+ * the assistant bubble was hidden entirely and nothing replaced it. The only
+ * real indicator lived in ConfigPanel, which is closed by default.
+ *
+ * `activity` is already maintained by the store for every phase of a turn
+ * ("Running read file...", "Conversation too long — summarising and
+ * retrying..."), so this is a second reader of it rather than new state.
+ */
+function Working({ activity }: { activity: string | null }) {
+  return (
+    <div className="working" role="status" aria-live="polite">
+      <span className="working-dots" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </span>
+      <span className="working-text">{activity ?? "Working…"}</span>
+    </div>
+  );
+}
+
 export function ChatWindow() {
-  const { chats, currentId, streaming, error, clearError, branchAt, editUserMessage, rewindTo, deleteItem, agents, settings, browserDock, setView, updateChatById } =
+  const { chats, currentId, streaming, activity, error, clearError, branchAt, editUserMessage, rewindTo, deleteItem, agents, settings, browserDock, setView, updateChatById } =
     useStore();
   const [editIdx, setEditIdx] = useState<number | null>(null);
   /**
@@ -489,7 +516,7 @@ export function ChatWindow() {
                       prettyJson(m.content) ? (
                         <pre className="code-view">{prettyJson(m.content)}</pre>
                       ) : (
-                        <Markdown>{m.content || (streaming ? "..." : "")}</Markdown>
+                        <Markdown>{m.content}</Markdown>
                       )
                     ) : (
                       m.content
@@ -502,6 +529,7 @@ export function ChatWindow() {
             );
           });
         })()}
+        {streaming && <Working activity={activity} />}
         {error && (
           // role="alert" so the failure is announced, and a real button so it can
           // be dismissed without a mouse.

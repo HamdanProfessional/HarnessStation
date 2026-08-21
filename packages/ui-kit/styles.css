@@ -4,6 +4,15 @@
   --radius: 12px;
   --radius-sm: 8px;
 
+  /* Code surfaces. Dark in both themes — the syntax colors come from
+     highlight.js's github-dark stylesheet, which cannot be swapped per theme
+     without shipping a second sheet. Mirrored from src/App.css. */
+  --code-bg: #0a0c11;
+  --code-head: #151924;
+  --code-fg: #c9d1d9;
+  --code-fg-dim: #8b949e;
+  --code-border: rgba(201, 209, 217, 0.14);
+
   /*
    * Motion tokens. One vocabulary so everything moves at the same speed and with
    * the same feel — mixed ad-hoc durations are what make an interface feel

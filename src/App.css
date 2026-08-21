@@ -5,6 +5,26 @@
   --radius-sm: 8px;
 
   /*
+   * Code surfaces. Dark in both themes, on purpose.
+   *
+   * The syntax colors come from highlight.js's github-dark stylesheet, which
+   * Markdown.tsx imports once at module scope. There is no way to swap it per
+   * theme without shipping a second sheet and toggling it at runtime, so the
+   * surface it was designed against has to stay dark — which is also what most
+   * light-mode editors do with code.
+   *
+   * These exist because .code-block used to hardcode the background and take
+   * its *header* from --bg-3. In light mode that produced a pale header over a
+   * black body, and any fence without a language got no .hljs class at all, so
+   * its text fell through to --text (#14172a) — near-black on near-black.
+   */
+  --code-bg: #0a0c11;
+  --code-head: #151924;
+  --code-fg: #c9d1d9;
+  --code-fg-dim: #8b949e;
+  --code-border: rgba(201, 209, 217, 0.14);
+
+  /*
    * Motion tokens. One vocabulary so everything moves at the same speed and with
    * the same feel — mixed ad-hoc durations are what make an interface feel
    * assembled rather than designed.
@@ -1516,10 +1536,11 @@ select:focus {
 /* code blocks */
 .code-block {
   margin: 12px 0;
-  border: 1px solid var(--border);
+  border: 1px solid var(--code-border);
   border-radius: 10px;
   overflow: hidden;
-  background: #0a0c11;
+  background: var(--code-bg);
+  color: var(--code-fg);
 }
 
 .code-block-head {
@@ -1527,15 +1548,15 @@ select:focus {
   justify-content: space-between;
   align-items: center;
   padding: 5px 12px;
-  background: var(--bg-3);
-  border-bottom: 1px solid var(--border);
+  background: var(--code-head);
+  border-bottom: 1px solid var(--code-border);
 }
 
 .code-lang {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: var(--text-dim);
+  color: var(--code-fg-dim);
   font-family: "Cascadia Code", Consolas, monospace;
 }
 
@@ -1543,15 +1564,15 @@ select:focus {
   font-size: 11px;
   background: none;
   border: none;
-  color: var(--text-dim);
+  color: var(--code-fg-dim);
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 5px;
 }
 
 .code-copy:hover {
-  background: var(--bg-2);
-  color: var(--text);
+  background: color-mix(in srgb, var(--code-fg) 14%, transparent);
+  color: var(--code-fg);
 }
 
 .code-block pre {
@@ -1565,6 +1586,61 @@ select:focus {
   font-size: 12.5px;
   line-height: 1.55;
   background: none;
+  /* Explicit, not inherited: a fence with no language gets no .hljs class, so
+     highlight.js never sets a color and it would fall through to --text. */
+  color: var(--code-fg);
+}
+
+/* ---------- "Working" indicator ---------- */
+
+.working {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 2px 4px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  animation: fade-in var(--t-base) var(--ease);
+}
+
+.working-dots {
+  display: inline-flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.working-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--grad);
+  animation: working-bounce 1.25s var(--ease) infinite;
+}
+
+/* Staggered so the three dots read as one travelling wave rather than three
+   things blinking together. */
+.working-dots i:nth-child(2) { animation-delay: 0.16s; }
+.working-dots i:nth-child(3) { animation-delay: 0.32s; }
+
+@keyframes working-bounce {
+  0%, 70%, 100% { transform: translateY(0); opacity: 0.35; }
+  35% { transform: translateY(-4px); opacity: 1; }
+}
+
+.working-text {
+  /* The activity string is model- and tool-driven, so it can be long. Truncate
+     rather than let it wrap and shove the composer down mid-turn. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Motion here is decorative — the text says the same thing, and role="status"
+   announces it. Hold the dots still rather than removing them. */
+@media (prefers-reduced-motion: reduce) {
+  .working { animation: none; }
+  .working-dots i { animation: none; opacity: 0.7; }
 }
 
 /* ---------- Attachments ---------- */
@@ -2822,9 +2898,10 @@ select:focus {
 /* ---------- Code editor (highlighted textarea) ---------- */
 .code-editor {
   position: relative;
-  border: 1px solid var(--border);
+  border: 1px solid var(--code-border);
   border-radius: 10px;
-  background: #0a0c11;
+  background: var(--code-bg);
+  color: var(--code-fg);
   overflow: hidden;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
