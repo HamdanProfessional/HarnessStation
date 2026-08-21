@@ -5,6 +5,7 @@ import { readSSE } from "./sse";
 import { gatewayUrl } from "../gateway";
 import { isWeb } from "../web";
 import { keysOf, rotate, rotateKeys } from "../rotation";
+import { backoffMs, retryAfterMs, shouldWait } from "./backoff";
 
 // Some providers' HTTPS APIs send no CORS headers, so a browser can't call them
 // directly (Ollama Cloud, notably). On the web build we route those through the
@@ -71,9 +72,12 @@ export interface ChatResult {
 /** A provider request that failed with an HTTP status, so failover can classify it. */
 export class ProviderError extends Error {
   status?: number;
-  constructor(message: string, status?: number) {
+  /** Response headers, kept so failover can read Retry-After off a 429. */
+  headers?: Headers;
+  constructor(message: string, status?: number, headers?: Headers) {
     super(message);
     this.status = status;
+    this.headers = headers;
   }
 }
 
@@ -146,6 +150,9 @@ export async function streamChat(p: ChatParams): Promise<ChatResult> {
   const entry = roundRobin ? rotateKeys(picked) : picked;
   const attempts = buildAttempts(entry, all);
   let lastErr: unknown;
+  // Counts only the attempts we actually paused for, so the exponential curve
+  // tracks how long we have been rate-limited rather than how many keys exist.
+  let waited = 0;
   for (let i = 0; i < attempts.length; i++) {
     const a = attempts[i];
     let emitted = false;
@@ -163,6 +170,21 @@ export async function streamChat(p: ChatParams): Promise<ChatResult> {
       // Once tokens have reached the user, or the error isn't transient, or
       // there's nothing left to try — surface it.
       if (emitted || !isRetryableError(e) || i === attempts.length - 1) throw e;
+
+      // A 429 or an overloaded 5xx means "this key works, just not yet". Moving
+      // straight to the next key spends the whole pool inside a second and
+      // rate-limits all of it; the provider usually said how long to wait, so
+      // wait. Auth failures fall through with no delay — waiting on a bad key
+      // helps nobody.
+      const status = e instanceof ProviderError ? e.status : undefined;
+      if (shouldWait(status)) {
+        const headers = e instanceof ProviderError ? e.headers : undefined;
+        const delay = backoffMs(waited, retryAfterMs(headers));
+        waited++;
+        if (p.signal?.aborted) throw e;
+        await new Promise((r) => setTimeout(r, delay));
+        if (p.signal?.aborted) throw e;
+      }
     }
   }
   throw lastErr;
@@ -374,7 +396,7 @@ async function streamOpenAI(p: ChatParams): Promise<ChatResult> {
   }
   if (!res.ok) {
     const detail = await res.text().catch(() => res.statusText);
-    throw new ProviderError(`${p.provider.name}: ${res.status} ${detail.slice(0, 300)}`, res.status);
+    throw new ProviderError(`${p.provider.name}: ${res.status} ${detail.slice(0, 300)}`, res.status, res.headers);
   }
 
   // accumulate streamed tool-call fragments by index
@@ -472,7 +494,7 @@ async function streamAnthropic(p: ChatParams): Promise<ChatResult> {
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => res.statusText);
-    throw new ProviderError(`${p.provider.name}: ${res.status} ${detail.slice(0, 300)}`, res.status);
+    throw new ProviderError(`${p.provider.name}: ${res.status} ${detail.slice(0, 300)}`, res.status, res.headers);
   }
   let promptTokens = 0;
   let completionTokens = 0;
