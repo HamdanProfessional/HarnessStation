@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, type RefObject } from "react";
 import { Markdown } from "./Markdown";
 import { Canvas } from "./Canvas";
 import { prettyName } from "../lib/format";
 import { formatCost, messageCost } from "../lib/cost";
 import { fileToAttachment, extractArtifact } from "../lib/attach";
 import { startRecording, type Recorder } from "../lib/audio";
-import type { Attachment } from "../lib/types";
+import type { Attachment, Chat } from "../lib/types";
 import { useStore } from "../lib/store";
 import { ensureWhisper, transcribePath } from "../lib/whisper";
 import { IconX, IconSpeaker, LogoMark } from "./icons";
@@ -192,7 +192,7 @@ function ToolResult({
 }
 
 export function ChatWindow() {
-  const { chats, currentId, streaming, error, sendMessage, regenerate, stop, clearError, branchAt, editUserMessage, rewindTo, deleteItem, agents, compactChat, settings, browserDock, setView, updateChatById } =
+  const { chats, currentId, streaming, error, clearError, branchAt, editUserMessage, rewindTo, deleteItem, agents, settings, browserDock, setView, updateChatById } =
     useStore();
   const [editIdx, setEditIdx] = useState<number | null>(null);
   /**
@@ -205,13 +205,8 @@ export function ChatWindow() {
    */
   const [editId, setEditId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
-  const [compacting, setCompacting] = useState(false);
   const [showTrace, setShowTrace] = useState(false);
   const chat = chats.find((c) => c.id === currentId);
-  const [draft, setDraft] = useState("");
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [recorder, setRecorder] = useState<Recorder | null>(null);
-  const [voiceState, setVoiceState] = useState<string | null>(null);
   /** Voice-first is the default empty state. The "Type instead" link toggles
    *  to the text-mode starter prompts. Persisted per-chat so a user who
    *  prefers text doesn't have to flip it every chat. The persisted choice
@@ -230,7 +225,7 @@ export function ChatWindow() {
   const resolvedTextMode =
     textMode !== null ? textMode : micStatus === "unavailable";
   const scrollRef = useRef<HTMLDivElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const composerRef = useRef<ComposerHandle>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -239,55 +234,6 @@ export function ChatWindow() {
   if (!chat) return <main className="chat-main" />;
 
   const agentName = chat.agentId ? agents.find((a) => a.id === chat.agentId)?.name : undefined;
-
-  const submit = () => {
-    const text = draft.trim();
-    if ((!text && !attachments.length) || streaming) return;
-    const atts = attachments;
-    setDraft("");
-    setAttachments([]);
-    void sendMessage(text, atts.length ? atts : undefined);
-  };
-
-  const addFiles = async (files: FileList | null) => {
-    if (!files?.length) return;
-    for (const f of Array.from(files)) {
-      try {
-        const att = await fileToAttachment(f);
-        setAttachments((prev) => [...prev, att]);
-      } catch (e) {
-        useStore.setState({ error: `Could not read ${f.name}: ${(e as Error).message}` });
-      }
-    }
-  };
-
-  const toggleDictation = async () => {
-    if (recorder) {
-      // stop and transcribe
-      const rec = recorder;
-      setRecorder(null);
-      try {
-        setVoiceState("Processing audio...");
-        const wavPath = await rec.stopPath();
-        await ensureWhisper((s) => setVoiceState(s));
-        setVoiceState("Transcribing...");
-        const text = await transcribePath(wavPath);
-        if (text) setDraft((d) => (d ? `${d} ${text}` : text));
-        setVoiceState(null);
-      } catch (e) {
-        setVoiceState(null);
-        useStore.setState({ error: `Dictation failed: ${(e as Error).message || String(e)}` });
-      }
-      return;
-    }
-    try {
-      setVoiceState(null);
-      const rec = await startRecording(useStore.getState().settings.voice?.micDevice);
-      setRecorder(rec);
-    } catch (e) {
-      useStore.setState({ error: `Microphone unavailable: ${(e as Error).message || String(e)}` });
-    }
-  };
 
   return (
     <main className="chat-main">
@@ -354,7 +300,7 @@ export function ChatWindow() {
                   <p className="empty-hint">Try one of these to get started:</p>
                   <div className="prompt-chips">
                     {STARTER_PROMPTS.map((p) => (
-                      <button key={p} className="prompt-chip" onClick={() => setDraft(p)}>
+                      <button key={p} className="prompt-chip" onClick={() => composerRef.current?.setDraft(p)}>
                         {p}
                       </button>
                     ))}
@@ -570,10 +516,98 @@ export function ChatWindow() {
       {/* Below the thread and above the composer — inside the conversation, but
           deliberately *not* inside the scrolling list. See InlineBrowser. */}
       {browserDock && <InlineBrowser />}
-      {voiceState && <div className="voice-state">{voiceState}</div>}
       {/* A paused turn waiting on an answer. Above the composer and outside the
           scrolling list, so it cannot scroll away while it is blocking. */}
       <AskUserPrompt chatId={chat.id} />
+      <Composer chat={chat} composerRef={composerRef} />
+     </main>
+   );
+ }
+
+export type ComposerHandle = {
+  /** Replace the draft from outside — used by the empty-state starter chips. */
+  setDraft: (text: string) => void;
+};
+
+/**
+ * The message box, and every piece of state that only it cares about: the
+ * draft text, staged attachments, the dictation recorder, and the compaction
+ * flag.
+ *
+ * This is a child rather than part of ChatWindow for one reason. `draft` used
+ * to live in ChatWindow, so every keystroke re-rendered the whole component —
+ * including the transcript, where each message runs ReactMarkdown with syntax
+ * highlighting. On a long conversation that is a lot of work per character
+ * typed. Moving the state down here means a keystroke re-renders the composer
+ * and nothing else; the transcript above is untouched.
+ *
+ * The starter chips in the empty state still need to write into the draft, so
+ * the one way in is `composerRef.setDraft` rather than a prop — a `draft` prop
+ * would put the state back in the parent and undo the whole point.
+ */
+function Composer({ chat, composerRef }: { chat: Chat; composerRef: RefObject<ComposerHandle | null> }) {
+  const { streaming, sendMessage, regenerate, stop, compactChat, setView, updateChatById } = useStore();
+  const [draft, setDraft] = useState("");
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [recorder, setRecorder] = useState<Recorder | null>(null);
+  const [voiceState, setVoiceState] = useState<string | null>(null);
+  const [compacting, setCompacting] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useImperativeHandle(composerRef, () => ({ setDraft }), []);
+
+  const submit = () => {
+    const text = draft.trim();
+    if ((!text && !attachments.length) || streaming) return;
+    const atts = attachments;
+    setDraft("");
+    setAttachments([]);
+    void sendMessage(text, atts.length ? atts : undefined);
+  };
+
+  const addFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    for (const f of Array.from(files)) {
+      try {
+        const att = await fileToAttachment(f);
+        setAttachments((prev) => [...prev, att]);
+      } catch (e) {
+        useStore.setState({ error: `Could not read ${f.name}: ${(e as Error).message}` });
+      }
+    }
+  };
+
+  const toggleDictation = async () => {
+    if (recorder) {
+      // stop and transcribe
+      const rec = recorder;
+      setRecorder(null);
+      try {
+        setVoiceState("Processing audio...");
+        const wavPath = await rec.stopPath();
+        await ensureWhisper((s) => setVoiceState(s));
+        setVoiceState("Transcribing...");
+        const text = await transcribePath(wavPath);
+        if (text) setDraft((d) => (d ? `${d} ${text}` : text));
+        setVoiceState(null);
+      } catch (e) {
+        setVoiceState(null);
+        useStore.setState({ error: `Dictation failed: ${(e as Error).message || String(e)}` });
+      }
+      return;
+    }
+    try {
+      setVoiceState(null);
+      const rec = await startRecording(useStore.getState().settings.voice?.micDevice);
+      setRecorder(rec);
+    } catch (e) {
+      useStore.setState({ error: `Microphone unavailable: ${(e as Error).message || String(e)}` });
+    }
+  };
+
+  return (
+    <>
+      {voiceState && <div className="voice-state">{voiceState}</div>}
       {attachments.length > 0 && (
         <div className="att-tray">
           {attachments.map((a, i) => (
@@ -711,9 +745,9 @@ export function ChatWindow() {
            </div>
          </div>
        </div>
-     </main>
-   );
- }
+    </>
+  );
+}
 
 /**
  * One-line trust signal under the voice-first empty state. Three states:

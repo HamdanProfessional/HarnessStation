@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
@@ -31,7 +31,16 @@ function CodeBlock({ className, children }: { className?: string; children?: Rea
   );
 }
 
-export function Markdown({ children }: { children: string }) {
+/**
+ * Memoised on `children`, which is the whole prop surface.
+ *
+ * Every assistant token restreams the open message, and the store update
+ * re-renders the entire transcript. Without this, a 60-message conversation
+ * re-parsed 60 markdown documents and re-ran syntax highlighting over every
+ * code block in them, per token. The one message whose text actually changed
+ * still re-renders; the other 59 now bail out on a string compare.
+ */
+export const Markdown = memo(function Markdown({ children }: { children: string }) {
   return (
     <div className="md">
       <ReactMarkdown
@@ -69,4 +78,4 @@ export function Markdown({ children }: { children: string }) {
       </ReactMarkdown>
     </div>
   );
-}
+});
