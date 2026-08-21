@@ -8,6 +8,7 @@ import { STYLE_PRESETS } from "../lib/styles";
 import { BUILTIN_TOOLSETS } from "../lib/tools";
 import { buildShareLink } from "../lib/deeplink";
 import { toast } from "../lib/toast";
+import { ModelOptions } from "./ModelOptions";
 
 export function ConfigPanel() {
   const {
@@ -191,11 +192,12 @@ export function ConfigPanel() {
                 {!provider.models.includes(chat.model) && chat.model && (
                   <option value={chat.model}>{chat.model}</option>
                 )}
-                {provider.models.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
+                {/* Providers return one flat list with speech, image, embedding
+                    and guardrail models mixed into the chat ones. Grouped, not
+                    filtered: the classifier reads ids, so it can be wrong, and a
+                    hidden model looks like the provider dropped it. The ones a
+                    chat cannot send to say so in the heading instead. */}
+                <ModelOptions models={provider.models} />
               </select>
             ) : (
               <input

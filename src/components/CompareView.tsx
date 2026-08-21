@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Markdown } from "./Markdown";
 import { streamChat } from "../lib/providers";
 import { useStore } from "../lib/store";
+import { ModelOptions } from "./ModelOptions";
 
 interface Slot {
   providerId: string;
@@ -132,11 +133,7 @@ export function CompareView() {
                 </select>
                 {provider && provider.models.length ? (
                   <select value={slot.model} onChange={(e) => setSlot(i, { model: e.target.value })}>
-                    {provider.models.map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
+                    <ModelOptions models={provider.models} />
                   </select>
                 ) : (
                   <input value={slot.model} placeholder="model" onChange={(e) => setSlot(i, { model: e.target.value })} />

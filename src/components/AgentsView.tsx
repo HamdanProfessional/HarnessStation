@@ -8,6 +8,7 @@ import { toast } from "../lib/toast";
 import { BUILTIN_TOOLS } from "../lib/tools";
 import { AGENT_PRESETS } from "../lib/agentPresets";
 import { useStore } from "../lib/store";
+import { ModelOptions } from "./ModelOptions";
 import type { Agent } from "../lib/types";
 
 function emptyAgent(): Agent {
@@ -147,11 +148,7 @@ export function AgentsView() {
             {provider && provider.models.length ? (
               <select value={a.model} onChange={(e) => set({ model: e.target.value })}>
                 <option value="">(default)</option>
-                {provider.models.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
+                <ModelOptions models={provider.models} />
               </select>
             ) : (
               <input value={a.model} placeholder="model name" onChange={(e) => set({ model: e.target.value })} />

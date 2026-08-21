@@ -4595,6 +4595,29 @@ select:focus {
   }
 }
 
+/* Models a chat cannot send to — speech, image, embedding. Dimmed rather than
+   hidden: the modality is guessed from the id, so a wrong guess must cost
+   contrast, not access. */
+.model-chip.other {
+  opacity: 0.62;
+}
+
+.model-chip.other:hover {
+  opacity: 1;
+}
+
+.chip-tag {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
 /* The model this chat is actually using, so the list shows state and not just
    options. */
 .model-chip.active {

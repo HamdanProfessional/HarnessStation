@@ -2,6 +2,7 @@ import { useState } from "react";
 import { confirmDialog } from "../lib/dialog";
 import { runEval, modelKey, type CellResult } from "../lib/evals";
 import { useStore } from "../lib/store";
+import { ModelOptions } from "./ModelOptions";
 import type { Eval, EvalCase, EvalModel, EvalScoring } from "../lib/types";
 import { EmptyState } from "./EmptyState";
 import { IconChart } from "./icons";
@@ -113,7 +114,7 @@ export function EvalsView() {
                 </select>
                 {provider && provider.models.length ? (
                   <select className="grow" value={m.model} onChange={(e) => patchModel(i, { model: e.target.value })}>
-                    {provider.models.map((mm) => <option key={mm} value={mm}>{mm}</option>)}
+                    <ModelOptions models={provider.models} />
                   </select>
                 ) : (
                   <input className="grow" value={m.model} placeholder="model" onChange={(e) => patchModel(i, { model: e.target.value })} />

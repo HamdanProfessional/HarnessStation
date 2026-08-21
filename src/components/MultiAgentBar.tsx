@@ -1,4 +1,5 @@
 import { useStore } from "../lib/store";
+import { ModelOptions } from "./ModelOptions";
 import type { Participant } from "../lib/types";
 import { IconPlus, IconX } from "./icons";
 
@@ -128,11 +129,7 @@ export function MultiAgentBar() {
                   ))}
                 </select>
                 <select value={p.model} onChange={(e) => updateP(p.id, { model: e.target.value })}>
-                  {models.map((mo) => (
-                    <option key={mo} value={mo}>
-                      {mo}
-                    </option>
-                  ))}
+                  <ModelOptions models={models} />
                   {p.model && !models.includes(p.model) && <option value={p.model}>{p.model}</option>}
                 </select>
                 <select

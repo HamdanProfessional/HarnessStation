@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fitFor, fitCaveat, FIT_LABEL } from "../lib/catalog";
+import { chatCapable, groupByModality, modalityOf, MODALITY_LABEL, MODALITY_TAG } from "../lib/modality";
+import { toast } from "../lib/toast";
 import {
   hwInfo,
   installEngine,
@@ -387,9 +389,15 @@ export function ModelsView() {
 
   const useInChat = (providerId: string, model: string) => {
     const chat = chats[0];
-    if (chat) {
-      selectChat(chat.id);
-      updateChat({ providerId, model });
+    if (!chat) return;
+    selectChat(chat.id);
+    updateChat({ providerId, model });
+    // Still switches to it — the classifier reads ids and can be wrong, so
+    // refusing would sometimes block a perfectly good chat model. Saying what
+    // it looks like turns a silent failure on send into a warning up front.
+    const kind = modalityOf(model);
+    if (!chatCapable(kind)) {
+      toast.info(`${model} looks like a ${MODALITY_LABEL[kind].toLowerCase()} model — a chat may not be able to send to it.`);
     }
   };
 
@@ -703,19 +711,39 @@ export function ModelsView() {
                 </div>
               ) : (
                 <div className="model-chips">
-                  {(expanded[p.id] ? p.models : p.models.slice(0, 12)).map((m) => {
-                    const inUse = current?.providerId === p.id && current?.model === m;
-                    return (
-                      <button
-                        key={m}
-                        className={`model-chip${inUse ? " active" : ""}`}
-                        title={inUse ? "This chat is using this model" : "Use this model in the current chat"}
-                        onClick={() => useInChat(p.id, m)}
-                      >
-                        {m}
-                      </button>
+                  {/* Chat models first. The list is cut at 12, and a provider
+                      whose speech and embedding models happen to sort earlier
+                      would otherwise spend the whole preview on models a chat
+                      cannot even send to. */}
+                  {(() => {
+                    const ordered = groupByModality(p.models).flatMap((g) =>
+                      g.models.map((m) => ({ id: m, modality: g.modality })),
                     );
-                  })}
+                    return (expanded[p.id] ? ordered : ordered.slice(0, 12)).map((entry) => {
+                      const m = entry.id;
+                      const inUse = current?.providerId === p.id && current?.model === m;
+                      const usable = chatCapable(entry.modality);
+                      return (
+                        <button
+                          key={m}
+                          className={`model-chip${inUse ? " active" : ""}${usable ? "" : " other"}`}
+                          title={
+                            inUse
+                              ? "This chat is using this model"
+                              : usable
+                                ? "Use this model in the current chat"
+                                : `${MODALITY_LABEL[entry.modality]} model — a chat cannot send to this one`
+                          }
+                          onClick={() => useInChat(p.id, m)}
+                        >
+                          {m}
+                          {entry.modality !== "text" && (
+                            <span className="chip-tag">{MODALITY_TAG[entry.modality]}</span>
+                          )}
+                        </button>
+                      );
+                    });
+                  })()}
                   {/* Was a dead "+N more" label. With OpenRouter or Ollama Cloud
                       that hid most of the list behind nothing at all. */}
                   {p.models.length > 12 && (
