@@ -162,6 +162,37 @@ The *component* duplication is untouched and is still the live risk: a token
 mismatch now fails a test, but three different ideas of what a Dialog is still
 won't. That needs the decision, not another guard.
 
+**Decision 2026-08-21 — keep the kit; it is a mirror, not a candidate.** The
+entry above framed this as "adopt it or delete it". Both halves were wrong,
+because the premise ("nothing imports it") measured the wrong thing.
+
+*Delete* is off the table: `.design-sync/config.json` pins a live
+`projectId`, and `.design-sync/NOTES.md` records that the converter bundles
+straight from `packages/ui-kit/src/index.ts`. The kit is not an orphaned copy
+— it is the build input for the design canvas, along with the bundled Inter
+subset, the pinned Playwright build, and the 27 curated icon exclusions. The
+app not importing it is the *point*, not the defect.
+
+*Adopt* is also off the table, and cheaply demonstrated: `src/lib/views.tsx`
+imports `IconFolder`, which the kit's `icons.tsx` does not export, so the
+first line of adoption fails to build. The kit's `Markdown` drops Mermaid;
+its `Dialog`, `ContextMenu` and `Toast` take props where ours read the
+`lib/dialog` and `lib/toast` stores. Those are deliberate — the canvas has no
+Zustand — and undoing them would mean rewriting working app code to suit a
+preview target.
+
+So the divergence is a *feature boundary*, and the standing question was
+malformed. What was actually missing is a statement of which way facts flow:
+**`src/components/` is the source of truth; the kit mirrors it, decoupled
+where the canvas requires it.** `tests/designInvariants.test.ts` now pins the
+two components that have not diverged at all (`EmptyState`, `Loading`)
+alongside the 24 tokens. The rest are intentionally different, and that is
+recorded here rather than guarded.
+
+**Unfrozen.** Design-system work can proceed; mirror token and primitive
+changes into the kit, and the tests will say so if you forget.
+
+
 ---
 
 ## Not frozen — where the investment goes

@@ -129,3 +129,31 @@ describe("ui-kit token parity", () => {
     }
   });
 });
+
+describe("ui-kit component parity", () => {
+  /**
+   * The kit is the bundle source for the design canvas (.design-sync/config.json
+   * pins a projectId), so it is a maintained mirror of the app's primitives —
+   * not dead code, and not a second implementation the app is meant to adopt.
+   * Most of its components have deliberately diverged: the kit's Dialog and
+   * Toast take props where the app's read Zustand stores, because the canvas
+   * renders them standalone.
+   *
+   * Two have not diverged at all. Those are the ones worth pinning: an edit to
+   * the app copy that isn't mirrored is drift, and drift here is silent for the
+   * same reason token drift was — nothing imports the kit, so nothing breaks
+   * except the canvas quietly ceasing to show what the app looks like.
+   */
+  const IDENTICAL = ["EmptyState", "Loading"];
+
+  // CRLF in one copy and LF in the other is not drift; compare by content.
+  const read = (p: string) => readFileSync(resolve(__dirname, "..", p), "utf8").replace(/\r\n/g, "\n");
+
+  it.each(IDENTICAL)("keeps %s identical between the app and the kit", (name) => {
+    expect(
+      read(`packages/ui-kit/src/${name}.tsx`),
+      `${name}.tsx has drifted between src/components and packages/ui-kit/src — ` +
+        `mirror the change into the kit, or move it out of IDENTICAL if the split is intentional`,
+    ).toEqual(read(`src/components/${name}.tsx`));
+  });
+});
