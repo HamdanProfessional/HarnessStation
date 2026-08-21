@@ -171,17 +171,31 @@ export const BUILTIN_TOOLS: Tool[] = [
   {
     id: "http_get",
     name: "http_get",
-    description: "Fetches a URL with HTTP GET and returns the response body text (truncated to 6000 chars).",
+    description:
+      "Fetches a URL with HTTP GET and returns the raw response body.\n\n" +
+      "Usage:\n" +
+      "- Returns up to 6000 characters starting at `offset` (default 0); if it ends in [truncated], call again with the offset it reports.\n" +
+      "- This returns the body verbatim, including HTML. For an article or docs page, use fetch_page instead — it strips the markup.\n" +
+      "- Fetching several URLs? Call this tool once per URL in the same response.",
     parameters: {
       type: "object",
       properties: {
         url: { type: "string", description: "The URL to fetch" },
+        offset: {
+          type: "number",
+          description: "Character offset to start from. Omit to start at the beginning.",
+        },
       },
       required: ["url"],
     },
     code: `const res = await ctx.fetch(args.url);
 const text = await res.text();
-return text.slice(0, 6000);`,
+const start = Math.max(0, Math.floor(args.offset || 0));
+const slice = text.slice(start, start + 6000);
+const end = start + slice.length;
+return end < text.length
+  ? slice + "\\n...[truncated at character " + end + " of " + text.length + "; call again with offset=" + end + "]"
+  : slice;`,
     builtin: true,
   },
   {
@@ -221,14 +235,37 @@ return "Wrote " + args.content.length + " chars to " + args.path;`,
     id: "read_file",
     name: "read_file",
     description:
-      "Reads a text file and returns its content (truncated to 8000 chars). Path is relative to the user's home folder.",
+      "Reads a text file. Path is relative to the user's home folder.\n\n" +
+      "Usage:\n" +
+      "- Returns up to 8000 characters starting at `offset` (default 0).\n" +
+      "- If the result ends in [truncated], the file continues — call again with `offset` set to the character number it reports.\n" +
+      "- To find something specific in a large file, use grep_files first and read around the line it reports, rather than paging through the whole file.\n" +
+      "- Reading several files? Call this tool once per file in the same response, not one per turn.\n" +
+      "- Prefer one large read over repeated small ones.",
     parameters: {
       type: "object",
-      properties: { path: { type: "string", description: "File path relative to home" } },
+      properties: {
+        path: { type: "string", description: "File path relative to home" },
+        offset: {
+          type: "number",
+          description: "Character offset to start from. Omit to start at the beginning.",
+        },
+      },
       required: ["path"],
     },
+    // Paging exists because the previous version sliced at 8000 and discarded
+    // the rest, which made anything longer permanently unreadable however the
+    // model was prompted.
     code: `const text = await ctx.fs.read(args.path);
-return text.length > 8000 ? text.slice(0, 8000) + "\\n...[truncated]" : text;`,
+const start = Math.max(0, Math.floor(args.offset || 0));
+if (start >= text.length && text.length > 0) {
+  return "[offset " + start + " is past the end of the file, which is " + text.length + " characters]";
+}
+const slice = text.slice(start, start + 8000);
+const end = start + slice.length;
+return end < text.length
+  ? slice + "\\n...[truncated at character " + end + " of " + text.length + "; call again with offset=" + end + "]"
+  : slice;`,
     builtin: true,
   },
   {
@@ -339,12 +376,20 @@ return out.length ? out.join("\\n\\n") : "No results found.";`,
     id: "fetch_page",
     name: "fetch_page",
     description:
-      "Fetches a web page and returns its readable text with HTML/scripts stripped (truncated). Use to read an article or docs page found via web_search.",
+      "Fetches a web page and returns its readable text, with scripts, styles and markup stripped. This is the right tool for an article or docs page found via web_search.\n\n" +
+      "Usage:\n" +
+      "- Returns up to `max` characters (default 8000) starting at `offset` (default 0); if it ends in [truncated], call again with the offset it reports.\n" +
+      "- Reading several pages? Call this tool once per URL in the same response.\n" +
+      "- Use http_get instead when you need the raw HTML, and http_request when you need a method other than GET.",
     parameters: {
       type: "object",
       properties: {
         url: { type: "string", description: "The URL to read" },
         max: { type: "integer", description: "Max characters to return (default 8000)" },
+        offset: {
+          type: "number",
+          description: "Character offset into the stripped text. Omit to start at the beginning.",
+        },
       },
       required: ["url"],
     },
@@ -352,7 +397,12 @@ return out.length ? out.join("\\n\\n") : "No results found.";`,
 let html = await res.text();
 html = html.replace(/<script[\\s\\S]*?<\\/script>/gi, " ").replace(/<style[\\s\\S]*?<\\/style>/gi, " ").replace(/<!--[\\s\\S]*?-->/g, " ");
 const text = html.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/\\s+/g, " ").trim();
-return text.slice(0, args.max || 8000);`,
+const start = Math.max(0, Math.floor(args.offset || 0));
+const slice = text.slice(start, start + (args.max || 8000));
+const end = start + slice.length;
+return end < text.length
+  ? slice + "\\n...[truncated at character " + end + " of " + text.length + "; call again with offset=" + end + "]"
+  : slice;`,
     builtin: true,
   },
   {
