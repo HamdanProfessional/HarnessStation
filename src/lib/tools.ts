@@ -3,6 +3,7 @@ import { fetch } from "@tauri-apps/plugin-http";
 import { BROWSER_TOOLS, isBrowserTool, runBrowserTool } from "./browserTools";
 import { MCP_GATEWAY_TOOLS } from "./mcpGateway";
 import type { Tool, ToolSet } from "./types";
+import { capOutput, PREVIEW, readStash } from "./toolOutputStore";
 
 /** Ready-made tool sets shipped with the app (always available, non-deletable). */
 export const BUILTIN_TOOLSETS: ToolSet[] = [
@@ -98,6 +99,27 @@ async function runTerminal(base: string, command: string): Promise<string> {
 
 /** Built-in system tools. Their code is visible/copyable in the Tools tab. */
 export const BUILTIN_TOOLS: Tool[] = [
+  {
+    id: "read_tool_output",
+    name: "read_tool_output",
+    description:
+      "Reads the rest of a tool result that was too long to return in full." +
+      "\n\nUsage:" +
+      "\n- When a tool result ends with a read_tool_output hint, call this with the id it gave you to continue from where it stopped." +
+      "\n- Returns up to `limit` characters (default 8000) from `offset`, and reports the next offset when more remains." +
+      "\n- Ids last for this session only. If one has expired, run the original tool again.",
+    parameters: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "The id from the truncation notice, e.g. out_3" },
+        offset: { type: "number", description: "Character offset to read from (default 0)" },
+        limit: { type: "number", description: "How many characters to return (default 8000)" },
+      },
+      required: ["id"],
+    },
+    code: "", // handled directly in executeTool — it reads process-local state
+    builtin: true,
+  },
   {
     id: "get_current_time",
     name: "get_current_time",
@@ -733,6 +755,21 @@ export async function executeTool(
   target?: import("./toolDiscovery").ToolTarget,
   sessionId?: string,
 ): Promise<string> {
+  if (tool.id === "read_tool_output") {
+    const page = readStash(
+      String(args.id ?? ""),
+      Number(args.offset ?? 0),
+      Number(args.limit ?? PREVIEW),
+    );
+    if (!page) {
+      return `No stored output with id "${args.id}". Ids last for this session only — run the original tool again.`;
+    }
+    return page.next === null
+      ? page.text
+      : `${page.text}
+
+...[more remains; continue with offset=${page.next} of ${page.length}]`;
+  }
   if (tool.id === "list_secrets") {
     const { listSecretsForModel } = await import("./secrets");
     return listSecretsForModel();
@@ -868,7 +905,11 @@ async function executeToolInner(
     new Promise((_, rej) => setTimeout(() => rej(new Error("tool timed out after 30s")), 30000)),
   ]);
   if (result === undefined || result === null) return "";
-  return typeof result === "string" ? result : JSON.stringify(result);
+  const text = typeof result === "string" ? result : JSON.stringify(result);
+  // One cap for every tool, including MCP tools and ones the user wrote. Tools
+  // that page themselves rarely reach it; run_terminal dumping a build log
+  // does, and used to lose everything past the cut.
+  return capOutput(text, tool.name);
 }
 
 /** OpenAI tools array for the request body. */
