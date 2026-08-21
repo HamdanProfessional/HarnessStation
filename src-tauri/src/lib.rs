@@ -7,6 +7,7 @@ mod localapi;
 mod mesh;
 mod mcp;
 mod oauth;
+mod opencode;
 mod py;
 mod secret;
 mod speech;
@@ -114,6 +115,7 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(local::LocalServer(Mutex::new(None)))
         .manage(claudecode::ClaudeCode::default())
+        .manage(opencode::Opencode::default())
         .manage(local::SttServer(Mutex::new(None)))
         .manage(mcp::McpState(Mutex::new(HashMap::new())))
         .manage(audio::Recorder(Mutex::new(None)))
@@ -181,6 +183,9 @@ pub fn run() {
             claudecode::claude_stop,
             claudecode::claude_status,
             claudecode::claude_probe,
+            opencode::opencode_run,
+            opencode::opencode_stop,
+            opencode::opencode_probe,
             local::stop_server,
             local::server_status,
             local::transcribe,
@@ -253,6 +258,7 @@ pub fn run() {
             if let tauri::RunEvent::Exit = event {
                 local::kill_on_exit(app);
                 claudecode::kill_on_exit(app);
+                opencode::kill_on_exit(app);
                 local::kill_stt(app);
                 let state: tauri::State<mcp::McpState> = tauri::Manager::state(app);
                 mcp::kill_all(&state);

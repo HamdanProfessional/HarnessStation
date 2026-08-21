@@ -47,7 +47,7 @@ pub struct ClaudeCode(pub Mutex<Option<ClaudeSession>>);
 ///
 /// Everything here is optional and omitted when unset, so a default launch is
 /// the CLI's own default. The fields map one-to-one onto documented flags —
-/// see the table in `docs/claude-code-wrapper.md`.
+/// see the table in `docs/coding-cli-wrappers.md`.
 #[derive(Deserialize, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct LaunchSpec {

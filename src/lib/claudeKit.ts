@@ -7,7 +7,7 @@ import type { Agent } from "./types";
  * Agents go in as one `--agents` JSON object. Skills have no flag of their own:
  * the only session-scoped route is `--plugin-dir`, pointing at a directory laid
  * out as a plugin. Both were verified against CLI 2.1.239 by reading them back
- * out of the `system/init` event — see `docs/claude-code-wrapper.md`.
+ * out of the `system/init` event — see `docs/coding-cli-wrappers.md`.
  *
  * Pure string/JSON building, no filesystem and no Tauri, so the mapping is
  * testable on its own. `writeKit` in the view layer does the writing.
@@ -148,6 +148,60 @@ export function claudeSkillFile(name: string, s: SkillSource): string {
   ].join("\n");
 }
 
+// ---------- opencode ----------
+
+/**
+ * The same agents and skills, laid out the way opencode wants them.
+ *
+ * Worth doing here rather than in a separate module because the expensive part
+ * is shared: opencode reads Claude Code's SKILL.md verbatim — a live run
+ * confirmed it loads `.claude/skills/<name>/SKILL.md` alongside its own — so
+ * `claudeSkillFile` is reused unchanged. Only the directory layout and the
+ * agent representation differ.
+ *
+ * Agents are markdown with frontmatter, one file per agent, where the filename
+ * is the agent name. There is no `--agents` flag to pass JSON to.
+ */
+export function opencodeKitFiles(agents: Agent[], skills: SkillSource[]): KitFile[] {
+  const files: KitFile[] = [];
+
+  const agentNames = new Set<string>();
+  for (const a of agents) {
+    if (!a.instructions.trim()) continue;
+    const name = agentKey(a.name, agentNames);
+    agentNames.add(name);
+    files.push({ path: `agent/${name}.md`, content: opencodeAgentFile(a) });
+  }
+
+  const skillNames = new Set<string>();
+  for (const s of skills) {
+    if (!s.body.trim()) continue;
+    const name = agentKey(s.name, skillNames);
+    skillNames.add(name);
+    files.push({ path: `skills/${name}/SKILL.md`, content: claudeSkillFile(name, s) });
+  }
+  return files;
+}
+
+/**
+ * One agent as an opencode markdown file.
+ *
+ * `mode: subagent` because these are specialists the primary agent delegates
+ * to; marking them `primary` would put every one of them in the rotation for
+ * driving the whole session.
+ *
+ * The model is dropped unless it carries a provider prefix. opencode resolves
+ * models as `provider/model` and a bare id is not a valid reference — it would
+ * fail at dispatch rather than fall back.
+ */
+export function opencodeAgentFile(a: Agent): string {
+  const desc = a.description.trim().replace(/\s+/g, " ") || `The ${a.name} agent from HarnessStation.`;
+  const lines = ["---", `description: ${JSON.stringify(desc)}`, "mode: subagent"];
+  if (a.model.includes("/")) lines.push(`model: ${a.model}`);
+  lines.push("---", "", a.instructions.trim(), "");
+  return lines.join("\n");
+}
+
 // ---------- writing the kit ----------
 
 /**
@@ -162,21 +216,21 @@ export function claudeSkillFile(name: string, s: SkillSource): string {
  * runs, and a stale kit would inject the previous set with nothing to indicate
  * it had.
  */
-export async function writeKit(skills: SkillSource[]): Promise<string> {
+export async function writeKit(skills: SkillSource[], dirName = `${KIT_NAME}-kit`, files?: KitFile[]): Promise<string> {
   const { BaseDirectory, mkdir, remove, writeTextFile, exists } = await import("@tauri-apps/plugin-fs");
   const { homeDir, join } = await import("@tauri-apps/api/path");
-  const rel = `.harnessx/${KIT_NAME}-kit`;
+  const rel = `.harnessx/${dirName}`;
   const opts = { baseDir: BaseDirectory.Home };
 
   // Clear first: a skill deleted in the app must disappear from the kit, and
   // writing over the top would leave the old SKILL.md in place.
   if (await exists(rel, opts)) await remove(rel, { ...opts, recursive: true });
 
-  for (const file of kitFiles(skills)) {
+  for (const file of files ?? kitFiles(skills)) {
     const path = `${rel}/${file.path}`;
     const dir = path.slice(0, path.lastIndexOf("/"));
     await mkdir(dir, { ...opts, recursive: true });
     await writeTextFile(path, file.content, opts);
   }
-  return join(await homeDir(), ".harnessx", `${KIT_NAME}-kit`);
+  return join(await homeDir(), ".harnessx", dirName);
 }

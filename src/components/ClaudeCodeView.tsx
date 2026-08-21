@@ -16,7 +16,18 @@ import {
   type ClaudeResult,
   type SystemInit,
 } from "../lib/claudeCode";
-import { agentsArg, writeKit } from "../lib/claudeKit";
+import { agentsArg, opencodeKitFiles, writeKit } from "../lib/claudeKit";
+import {
+  describeError,
+  isOpencodeError,
+  isStepFinish,
+  nextRunId as nextOcRunId,
+  onOpencodeEvent,
+  opencodeProbe,
+  opencodeRun,
+  opencodeStop,
+  opencodeText,
+} from "../lib/opencode";
 import { listSkills, loadSkillBody } from "../lib/skills";
 import { useStore } from "../lib/store";
 import { EmptyState } from "./EmptyState";
@@ -40,7 +51,17 @@ interface Line {
  */
 export function ClaudeCodeView() {
   const { agents, chats, currentId } = useStore();
+  /**
+   * Which CLI to drive. Both are wrapped the same way from the outside, but
+   * their protocols differ: Claude Code holds one process and takes turns over
+   * stdin, opencode runs a process per turn chained by session id.
+   */
+  const [engine, setEngine] = useState<"claude" | "opencode">("claude");
   const [version, setVersion] = useState<string | null | "checking">("checking");
+  const [ocVersion, setOcVersion] = useState<string | null>(null);
+  /** opencode's session id, carried from one turn's events into the next call. */
+  const ocSession = useRef("");
+  const ocKitDir = useRef("");
   // Seeded from the open chat's working directory: the folder the user is
   // already pointing the app's own tools at is the one they mean here too.
   const [cwd, setCwd] = useState(chats.find((c) => c.id === currentId)?.workingDir ?? "");
@@ -67,11 +88,13 @@ export function ClaudeCodeView() {
 
   useEffect(() => {
     void claudeProbe().then(setVersion);
+    void opencodeProbe().then(setOcVersion);
     // The listener outlives a render but not the view; without this a closed
     // view keeps receiving events and setting state on an unmounted tree.
     return () => {
       unlisten.current?.();
       void claudeStop();
+      void opencodeStop();
     };
   }, []);
 
@@ -87,18 +110,35 @@ export function ClaudeCodeView() {
     try {
       // Rewritten every launch: skills are edited between runs, and a stale kit
       // would inject the previous set with nothing to show it had.
-      let pluginDirs: string[] = [];
-      if (injectSkills) {
-        const enabled = (await listSkills()).filter((s) => s.enabled);
-        const sources = await Promise.all(
-          enabled.map(async (s) => ({
-            name: s.name,
-            description: s.description,
-            body: await loadSkillBody(s.slug).catch(() => ""),
-          })),
+      const sources = injectSkills
+        ? await Promise.all(
+            (await listSkills())
+              .filter((s) => s.enabled)
+              .map(async (s) => ({
+                name: s.name,
+                description: s.description,
+                body: await loadSkillBody(s.slug).catch(() => ""),
+              })),
+          )
+        : [];
+
+      if (engine === "opencode") {
+        // No process yet — opencode spawns one per turn. All that happens here
+        // is writing the kit and clearing the previous session, so the next
+        // send starts a fresh conversation rather than extending the old one.
+        ocSession.current = "";
+        ocKitDir.current = await writeKit(
+          sources,
+          "opencode-kit",
+          opencodeKitFiles(injectAgents ? agents : [], sources),
         );
-        if (sources.some((s) => s.body.trim())) pluginDirs = [await writeKit(sources)];
+        setRunning(true);
+        return;
       }
+
+      const pluginDirs = sources.some((s) => s.body.trim())
+        ? [await writeKit(sources)]
+        : [];
 
       const id = nextRunId();
       runId.current = id;
@@ -148,28 +188,107 @@ export function ClaudeCodeView() {
     push("you", text);
     setResult(null);
     try {
+      if (engine === "opencode") {
+        await runOpencodeTurn(text);
+        return;
+      }
       await claudeSend(text);
     } catch (e) {
       setError((e as Error).message || String(e));
     }
   };
 
+  /**
+   * One opencode turn: a fresh process, chained to the last by session id.
+   *
+   * Each turn gets its own listener because each turn is its own run — leaving
+   * the previous one attached would double every line once a second turn began.
+   */
+  const runOpencodeTurn = async (text: string) => {
+    const id = nextOcRunId();
+    runId.current = id;
+    unlisten.current?.();
+    unlisten.current = await onOpencodeEvent(id, {
+      onEvent: (e) => {
+        // Every event carries the session id, and the first turn is where we
+        // learn it. Without capturing it here each turn would start over.
+        if (e.sessionID) ocSession.current = e.sessionID;
+        if (isOpencodeError(e)) {
+          setError(describeError(e.error));
+          return;
+        }
+        const t = opencodeText(e);
+        if (t) push("claude", t);
+        if (isStepFinish(e)) {
+          setResult({
+            type: "result",
+            subtype: "success",
+            is_error: false,
+            result: "",
+            session_id: e.sessionID,
+            num_turns: 1,
+            duration_ms: 0,
+            total_cost_usd: e.part.cost ?? 0,
+            stop_reason: e.part.reason ?? null,
+            usage: {},
+          });
+        }
+      },
+      onNotice: (t) => push("notice", t),
+      onDone: () => {},
+    });
+
+    await opencodeRun(
+      {
+        message: text,
+        cwd,
+        model,
+        session: ocSession.current,
+        configDir: ocKitDir.current,
+      },
+      id,
+    );
+  };
+
   const stop = async () => {
-    await claudeStop();
+    await (engine === "opencode" ? opencodeStop() : claudeStop());
     setRunning(false);
   };
 
-  if (version === "checking") return <main className="view"><p className="hint">Looking for Claude Code…</p></main>;
+  const selectedVersion = engine === "opencode" ? ocVersion : version;
+  const engineName = engine === "opencode" ? "opencode" : "Claude Code";
+  const binName = engine === "opencode" ? "opencode" : "claude";
 
-  if (version === null) {
+  if (version === "checking") {
+    return <main className="view"><p className="hint">Looking for the coding CLIs…</p></main>;
+  }
+
+  // Only the *selected* engine has to be present. Blocking on both would hide a
+  // working opencode behind a missing claude, and vice versa.
+  if (selectedVersion === null) {
     return (
       <main className="view">
-        <h1>Claude Code</h1>
+        <h1>Coding CLIs</h1>
+        <div className="load-opts">
+          <label>
+            Engine{" "}
+            <select value={engine} onChange={(e) => setEngine(e.target.value as "claude" | "opencode")}>
+              <option value="claude">Claude Code</option>
+              <option value="opencode">opencode</option>
+            </select>
+          </label>
+        </div>
         <EmptyState
           icon={<IconBolt size={22} />}
-          title="Claude Code isn't installed"
-          hint="This runs the `claude` CLI on your machine — it isn't bundled. Install it, make sure `claude` is on your PATH, then reopen this view."
-          action={{ label: "Re-check", onClick: () => void claudeProbe().then(setVersion) }}
+          title={`${engineName} isn't installed`}
+          hint={`This runs the \`${binName}\` CLI on your machine — it isn't bundled. Install it, make sure \`${binName}\` is on your PATH, then re-check.`}
+          action={{
+            label: "Re-check",
+            onClick: () => {
+              void claudeProbe().then(setVersion);
+              void opencodeProbe().then(setOcVersion);
+            },
+          }}
         />
       </main>
     );
@@ -177,14 +296,25 @@ export function ClaudeCodeView() {
 
   return (
     <main className="view">
-      <h1>Claude Code</h1>
+      <h1>Coding CLIs</h1>
       <p className="hint">
-        Runs the <code>claude</code> CLI ({version}) as a session here, with this app's agents and
-        skills injected into it.
+        Runs the <code>{binName}</code> CLI ({selectedVersion}) as a session here, with this app's
+        agents and skills injected into it.
       </p>
 
       <section>
         <div className="load-opts">
+          <label>
+            Engine{" "}
+            <select
+              value={engine}
+              onChange={(e) => setEngine(e.target.value as "claude" | "opencode")}
+              disabled={running}
+            >
+              <option value="claude">Claude Code{version ? "" : " (not installed)"}</option>
+              <option value="opencode">opencode{ocVersion ? "" : " (not installed)"}</option>
+            </select>
+          </label>
           <label>
             Folder{" "}
             <input
@@ -226,23 +356,37 @@ export function ClaudeCodeView() {
             />
             Inject this app's enabled skills
           </label>
-          <label className="check">
-            <input
-              type="checkbox"
-              checked={isolate}
-              onChange={(e) => setIsolate(e.target.checked)}
-              disabled={running}
-            />
-            Ignore my own Claude Code config
-          </label>
-          {/* Not a detail. Left on, a session inherits whatever skills, agents,
-              output style and MCP servers the machine happens to have — so the
-              same run behaves differently per machine, invisibly from in here. */}
-          <p className="hint">
-            On, the session ignores your settings files — your own agents, output style and MCP
-            servers stay out of it. Claude Code's own built-in agents and bundled skills still load
-            either way.
-          </p>
+          {engine === "claude" ? (
+            <>
+              <label className="check">
+                <input
+                  type="checkbox"
+                  checked={isolate}
+                  onChange={(e) => setIsolate(e.target.checked)}
+                  disabled={running}
+                />
+                Ignore my own Claude Code config
+              </label>
+              {/* Not a detail. Left off, a session inherits whatever skills,
+                  agents, output style and MCP servers the machine happens to
+                  have — so the same run behaves differently per machine,
+                  invisibly from in here. */}
+              <p className="hint">
+                On, the session ignores your settings files — your own agents, output style and MCP
+                servers stay out of it. Claude Code's own built-in agents and bundled skills still
+                load either way.
+              </p>
+            </>
+          ) : (
+            /* opencode has no equivalent switch, and offering a dead control
+               would be worse than saying so. --pure sounds like one but only
+               drops external plugins: a live run confirmed skills and agents
+               still load under it. */
+            <p className="hint">
+              opencode has no setting to ignore your own config, so your existing agents, skills and
+              providers load alongside the injected ones. Ours are added, not substituted.
+            </p>
+          )}
         </div>
 
         <div className="provider-row">
