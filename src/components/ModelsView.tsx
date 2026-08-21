@@ -14,6 +14,7 @@ import {
 import { fitFor, fitCaveat, FIT_LABEL } from "../lib/catalog";
 import { chatCapable, classifyModel, groupByModality, MODALITY_LABEL, MODALITY_TAG } from "../lib/modality";
 import { toast } from "../lib/toast";
+import { dotState, pageStats, providerBadges } from "../lib/providerStatus";
 import {
   hwInfo,
   installEngine,
@@ -521,6 +522,7 @@ export function ModelsView() {
     return { models: [...seen.values()].filter((n) => n > 1).length, multiKey };
   }, [settings.providers]);
   const canRotate = rotatable.models > 0 || rotatable.multiKey > 0;
+  const stats = pageStats(remoteProviders, probes);
   /** Plain-language summary of what a turn would be shared between. */
   const rotateSummary = [
     rotatable.models > 0 ? `${rotatable.models} shared model${rotatable.models === 1 ? "" : "s"}` : "",
@@ -543,6 +545,37 @@ export function ModelsView() {
       )}
       {notice && <p className="hint">{notice}</p>}
 
+      {/* The page opened with no orientation: you could not tell how many
+          providers were reachable, how many models that came to, or whether
+          anything was running locally without reading every card. Three numbers
+          answer all of it, and each one is a fact the page already knew. */}
+      {(remoteProviders.length > 0 || status.running) && (
+        <div className="model-stats">
+          <div className="model-stat">
+            <span className="model-stat-n">
+              {stats.connected}
+              <span className="model-stat-of">/{stats.total}</span>
+            </span>
+            <span className="model-stat-label">
+              providers checked
+              {stats.needKey > 0 && <> · {stats.needKey} need a key</>}
+            </span>
+          </div>
+          <div className="model-stat">
+            <span className="model-stat-n">{stats.models}</span>
+            <span className="model-stat-label">models available</span>
+          </div>
+          <div className="model-stat">
+            <span className={`model-stat-n ${status.running ? "live" : ""}`}>
+              {status.running ? "On" : "Off"}
+            </span>
+            <span className="model-stat-label">
+              {status.running ? `local server :${status.port}` : "no local model loaded"}
+            </span>
+          </div>
+        </div>
+      )}
+
       {hasAnyKey && (
         <p className="hint">
           <b>Ready when you are.</b> Pick a model in any chat, or add another provider below.
@@ -559,21 +592,22 @@ export function ModelsView() {
               {hw.avx2 ? "" : " · Warning: CPU lacks AVX2 — standard llama.cpp builds will not run"}
             </p>
           )}
-          <section className="server-card">
-            {status.running ? (
-              <>
-                <span className="dot on" /> Local server running on port {status.port} —{" "}
-                <code>{status.model}</code>{" "}
-                <button className="btn danger small" onClick={() => void eject()}>
-                  Eject
-                </button>
-              </>
-            ) : (
-              <>
-                <span className="dot" /> No local model loaded
-              </>
-            )}
-          </section>
+          {/* Only rendered while something is loaded. The idle case is already
+              the third tile in the summary strip, and a card that existed only
+              to say "nothing here" was taking the most prominent space on the
+              page to report the absence of a feature most users never turn on.
+              What this card adds over the tile is the two things the tile has no
+              room for: which model, and how to stop it. */}
+          {status.running && (
+            <section className="server-card">
+              <span className="dot on" /> Local server on port {status.port} —{" "}
+              <code>{status.model}</code>
+              <div className="grow" />
+              <button className="btn danger small" onClick={() => void eject()}>
+                Eject
+              </button>
+            </section>
+          )}
           {busy && <p className="hint">{busy}</p>}
           {error && <div className="error-banner">{error}</div>}
         </>
@@ -692,38 +726,27 @@ export function ModelsView() {
           const probe = probes[p.id];
           return (
             <div key={p.id} className="provider-card">
-              <div className="provider-row">
-                <span
-                  className={`conn-dot ${probe?.state === "ok" ? "on" : probe?.state === "checking" ? "checking" : probe?.state === "error" ? "bad" : "unknown"}`}
-                  aria-hidden="true"
-                />
-                <div className="grow">
-                  <b>{p.name}</b>{" "}
-                  <span className="hint">
-                    {p.models.length} model{p.models.length === 1 ? "" : "s"} · {p.baseUrl}
+              <div className="provider-head">
+                <span className={`conn-dot ${dotState(probe)}`} aria-hidden="true" />
+                <div className="provider-ident">
+                  <span className="provider-title">{p.name}</span>
+                  {/* The base URL is the field that tells two similar providers
+                      apart, but it is also the longest thing on the card. Mono
+                      and dim, on its own line, so it can be read when wanted and
+                      ignored otherwise. */}
+                  <span className="provider-url" title={p.baseUrl}>
+                    {p.baseUrl}
                   </span>
-                  <div className="hint">
-                    {/* Three separate facts, previously collapsed into one line:
-                        how it authenticates, whether it answered, and when. */}
-                    {localish ? "Local server — no key needed" : hasKey ? "API key set" : "No API key set"}
-                    {probe?.state === "checking" && <> · checking…</>}
-                    {probe?.state === "ok" && (
-                      <>
-                        {" · "}
-                        <span className="fit-gpu">
-                          answered with {probe.count} model{probe.count === 1 ? "" : "s"}
-                        </span>
-                        {probe.error && <> · {probe.error}</>}
-                      </>
-                    )}
-                    {probe?.state === "error" && (
-                      <>
-                        {" · "}
-                        <span className="fit-no">{probe.error}</span>
-                      </>
-                    )}
-                    {!probe && !localish && !hasKey && <> — add one to use it</>}
-                  </div>
+                </div>
+                <div className="provider-badges">
+                  <span className="pill">
+                    {p.models.length} model{p.models.length === 1 ? "" : "s"}
+                  </span>
+                  {providerBadges({ localish, hasKey, probe }).map((b) => (
+                    <span key={b.label} className={`pill ${b.tone}`} title={b.title}>
+                      {b.label}
+                    </span>
+                  ))}
                 </div>
                 <button
                   className="btn small"

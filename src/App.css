@@ -2864,6 +2864,108 @@ select:focus {
   margin-top: 2px;
 }
 
+/* ---------- My Models: the summary strip ----------
+   Three numbers the page already knew but never showed, so the only way to
+   tell whether anything was reachable was to read every card. */
+.model-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 4px 0 16px;
+}
+
+.model-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+}
+
+.model-stat-n {
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.1;
+  /* Tabular figures so the counts don't shift width as they change — these
+     update live while providers are being checked. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* The denominator is context, not the number itself. */
+.model-stat-of {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.model-stat-n.live {
+  color: var(--ok);
+}
+
+.model-stat-label {
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+/* ---------- My Models: provider card header ----------
+   Was a flex row with everything competing on one baseline. Now: dot, identity
+   (name over URL), status pills, then the actions. */
+.provider-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.provider-ident {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  /* Takes the slack so the pills and buttons settle against the right edge. */
+  flex: 1 1 180px;
+}
+
+.provider-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.provider-url {
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.provider-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* The third pill tone. `.pill` and `.pill.ok/.warn` already existed for the
+   channels and sync panels; a failed probe is the first thing on this page that
+   needs to read as an actual error rather than a caution. */
+.pill.danger {
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+}
+
+/* An error can be long even after truncation; let it shrink rather than force
+   the card wider than the column. */
+.provider-badges .pill.danger {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+}
+
 /* Quick-add cards (the "tap a provider to add your key" UI on the Models page).
    Skinnier than provider-card because they're tiles, not detail rows. */
 .quick-add {
