@@ -111,3 +111,58 @@ describe("notifying the UI", () => {
     expect(seen).not.toHaveBeenCalled();
   });
 });
+
+describe("the getSnapshot contract useSyncExternalStore relies on", () => {
+  /**
+   * These are not style points. `pending` is passed straight to
+   * useSyncExternalStore, which re-reads it on every render and compares with
+   * Object.is. A getter that derives a fresh object each call never compares
+   * equal, so every render schedules another; React gives up with "The result
+   * of getSnapshot should be cached to avoid an infinite loop" and unmounts the
+   * tree — the window goes white.
+   *
+   * It only reproduces while a question is outstanding, which is why the app
+   * looked fine until the first time a model called ask_user. The existing
+   * tests above all use toMatchObject, which compares structurally and is blind
+   * to the reference changing.
+   */
+  it("returns the identical object across repeated reads", () => {
+    void ask({ question: "Which one?", options: ["A", "B"], chatId: "c1" }).catch(() => {});
+    const first = pending();
+    expect(pending()).toBe(first);
+    expect(pending()).toBe(first);
+  });
+
+  it("returns a stable null when nothing is pending", () => {
+    expect(pending()).toBe(pending());
+  });
+
+  it("hands out a new reference only when the question actually changes", () => {
+    void ask({ question: "First?", chatId: "c1" }).catch(() => {});
+    const first = pending();
+    void ask({ question: "Second?", chatId: "c1" }).catch(() => {});
+    const second = pending();
+    expect(second).not.toBe(first);
+    expect(second?.question).toBe("Second?");
+    // ...and is stable again once settled.
+    expect(pending()).toBe(second);
+  });
+
+  it("settles back to the stable null after an answer", async () => {
+    const p = ask({ question: "Q", options: ["A"], chatId: "c1" });
+    answer(pending()!.id, "A");
+    await expect(p).resolves.toBe("A");
+    expect(pending()).toBe(null);
+    expect(pending()).toBe(pending());
+  });
+
+  it("notifies subscribers exactly once per change", () => {
+    // A snapshot that changed without a notify (or vice versa) would show a
+    // stale question until some other render happened to flush it.
+    const seen: (string | null)[] = [];
+    subscribe(() => seen.push(pending()?.question ?? null));
+    void ask({ question: "Q1", chatId: "c1" }).catch(() => {});
+    cancel();
+    expect(seen).toEqual(["Q1", null]);
+  });
+});

@@ -37,8 +37,32 @@ interface Live extends PendingQuestion {
 }
 
 let current: Live | null = null;
+/**
+ * The public view of `current`, rebuilt only when `current` changes.
+ *
+ * `pending` is a `useSyncExternalStore` getSnapshot, and React compares
+ * snapshots with `Object.is` on every render. Deriving the object inside the
+ * getter returned a new reference each call, so the snapshot never compared
+ * equal, every render scheduled another, and React bailed out of the tree with
+ * "The result of getSnapshot should be cached" — a blank window. It only bit
+ * once a question was outstanding, because a null snapshot is stable by
+ * accident.
+ */
+let snapshot: PendingQuestion | null = null;
 let seq = 0;
 const listeners = new Set<() => void>();
+
+/** Point `current` at a new question (or none) and publish it as one step. */
+function setCurrent(next: Live | null): void {
+  current = next;
+  if (next) {
+    const { resolve: _r, reject: _j, ...rest } = next;
+    snapshot = rest;
+  } else {
+    snapshot = null;
+  }
+  notify();
+}
 
 function notify(): void {
   for (const l of listeners) l();
@@ -52,9 +76,7 @@ export function subscribe(fn: () => void): () => void {
 
 /** The question awaiting an answer, or null. */
 export function pending(): PendingQuestion | null {
-  if (!current) return null;
-  const { resolve: _r, reject: _j, ...rest } = current;
-  return rest;
+  return snapshot;
 }
 
 export interface AskSpec {
@@ -78,7 +100,7 @@ export function ask(spec: AskSpec): Promise<string> {
 
   const options = (spec.options ?? []).map((o) => String(o).trim()).filter(Boolean);
   return new Promise<string>((resolve, reject) => {
-    current = {
+    setCurrent({
       id: `q_${++seq}`,
       question: spec.question.trim(),
       // With no options there is nothing to click, so the free-text box is the
@@ -88,8 +110,7 @@ export function ask(spec: AskSpec): Promise<string> {
       chatId: spec.chatId,
       resolve,
       reject,
-    };
-    notify();
+    });
   });
 }
 
@@ -97,8 +118,7 @@ export function ask(spec: AskSpec): Promise<string> {
 export function answer(id: string, text: string): void {
   if (!current || current.id !== id) return;
   const done = current;
-  current = null;
-  notify();
+  setCurrent(null);
   done.resolve(text);
 }
 
@@ -106,14 +126,14 @@ export function answer(id: string, text: string): void {
 export function cancel(reason = "The user dismissed the question."): void {
   if (!current) return;
   const done = current;
-  current = null;
-  notify();
+  setCurrent(null);
   done.reject(new Error(reason));
 }
 
 /** Test seam: drop any pending question without resolving or rejecting it. */
 export function resetAsk(): void {
   current = null;
+  snapshot = null;
   seq = 0;
   listeners.clear();
 }
