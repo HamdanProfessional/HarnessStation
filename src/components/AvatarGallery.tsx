@@ -51,12 +51,22 @@ export function AvatarGallery({
 
   // The Rust downloader streams progress events; show them on the busy card.
   useEffect(() => {
+    // The cleanup below runs synchronously on unmount, but `un` is only
+    // assigned after the awaited chain settles. Closing the gallery before
+    // then used to register a listener that was never removed.
+    let cancelled = false;
     let un: (() => void) | undefined;
     void onDownloadProgress((p) => {
       if (!p.id.startsWith("avatar-")) return;
       setPct(p.total ? Math.round((p.received / p.total) * 100) : 0);
-    }).then((f) => (un = f));
-    return () => un?.();
+    }).then((f) => {
+      if (cancelled) f();
+      else un = f;
+    });
+    return () => {
+      cancelled = true;
+      un?.();
+    };
   }, []);
 
   const shown = useMemo(() => {

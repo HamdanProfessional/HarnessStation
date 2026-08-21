@@ -1174,7 +1174,10 @@ export function SettingsView() {
               ))}
             </select>
           </label>
-          <label className="field grow">
+          {/* A div, not a label: the only labelable descendant here is the
+              button, so the label bound to it and clicking the word "Test"
+              started or stopped microphone recording. */}
+          <div className="field grow">
             <span>Test {testing ? "— speak now" : ""}</span>
             <div className="mic-test-row">
               <button className={`btn ${testing ? "danger" : ""}`} onClick={() => void toggleMicTest()}>
@@ -1187,7 +1190,7 @@ export function SettingsView() {
                 />
               </div>
             </div>
-          </label>
+          </div>
         </div>
         <p className="hint">
           Pick the mic you actually speak into (headset, not the webcam). Hit <b>Test mic</b> and

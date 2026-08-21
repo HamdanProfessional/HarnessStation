@@ -236,6 +236,11 @@ export function VoiceView() {
 
   // Global push-to-talk (Ctrl+Shift+V held) — works even when the window isn't focused.
   useEffect(() => {
+    // The cleanup below runs synchronously on unmount, but `un` is only
+    // assigned after the awaited chain settles. Leaving the view before
+    // then used to register a listener that was never removed, so bouncing
+    // in and out accumulated one handler per visit.
+    let cancelled = false;
     let un: (() => void) | undefined;
     void import("@tauri-apps/api/event").then(({ listen }) =>
       listen<boolean>("voice-ptt", (e) => {
@@ -248,9 +253,15 @@ export function VoiceView() {
           setHolding(false);
           void s.pttUp();
         }
-      }).then((f) => (un = f)),
+      }).then((f) => {
+        if (cancelled) f();
+        else un = f;
+      }),
     );
-    return () => un?.();
+    return () => {
+      cancelled = true;
+      un?.();
+    };
   }, []);
 
   // Leaving the view only stops the avatar when background mode is off — otherwise

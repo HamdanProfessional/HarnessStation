@@ -178,8 +178,12 @@ export function ConfigPanel() {
             </select>
           </label>
 
-          <label className="field">
-            <span>
+          {/* A div, not a label: a label binds to its first labelable
+              descendant and <button> is labelable, so clicking the word
+              "Model" fired the refresh call and the select had no accessible
+              name at all. */}
+          <div className="field">
+            <span id="cfg-model-label">
               Model{" "}
               {provider?.kind === "openai-compatible" && (
                 <button className="link-btn" onClick={() => void refreshModels()} disabled={loadingModels}>
@@ -188,7 +192,7 @@ export function ConfigPanel() {
               )}
             </span>
             {provider && provider.models.length > 0 ? (
-              <select value={chat.model} onChange={(e) => updateChat({ model: e.target.value })}>
+              <select aria-labelledby="cfg-model-label" value={chat.model} onChange={(e) => updateChat({ model: e.target.value })}>
                 {!provider.models.includes(chat.model) && chat.model && (
                   <option value={chat.model}>{chat.model}</option>
                 )}
@@ -201,18 +205,19 @@ export function ConfigPanel() {
               </select>
             ) : (
               <input
+                aria-labelledby="cfg-model-label"
                 value={chat.model}
                 placeholder="model name"
                 onChange={(e) => updateChat({ model: e.target.value })}
               />
             )}
             {modelError && <small className="field-error">{modelError}</small>}
-          </label>
+          </div>
         </>
       )}
 
-      <label className="field">
-        <span>
+      <div className="field">
+        <span id="cfg-preset-label">
           Preset{" "}
           <button
             className="link-btn"
@@ -226,7 +231,7 @@ export function ConfigPanel() {
           </button>
         </span>
         <div className="preset-row">
-          <select
+          <select aria-labelledby="cfg-preset-label"
             className="grow"
             value=""
             onChange={(e) => e.target.value && applyPreset(e.target.value)}
@@ -254,7 +259,7 @@ export function ConfigPanel() {
             </button>
           )}
         </div>
-      </label>
+      </div>
 
       <label className="field">
         <span>Style</span>
@@ -288,8 +293,8 @@ export function ConfigPanel() {
         </label>
       </div>
 
-      <label className="field">
-        <span>
+      <div className="field">
+        <span id="cfg-system-label">
           System prompt (this chat){" "}
           <button
             className="link-btn"
@@ -311,7 +316,7 @@ export function ConfigPanel() {
         />
         {templates.length > 0 && (
           <div className="preset-row">
-            <select
+            <select aria-labelledby="cfg-system-label"
               className="grow"
               value=""
               onChange={(e) => {
@@ -342,7 +347,7 @@ export function ConfigPanel() {
           </div>
         )}
         <small className="hint">Templates are JSON files in ~\.harnessx\templates (drop files there to import).</small>
-      </label>
+      </div>
 
       {provider?.kind === "openai-compatible" &&
         (() => {
@@ -615,8 +620,8 @@ export function ConfigPanel() {
       </label>
 
       {provider?.kind === "openai-compatible" && (
-        <label className="field">
-          <span>
+        <div className="field">
+          <span id="cfg-schema-label">
             Structured output{" "}
             <button
               className="link-btn"
@@ -644,7 +649,7 @@ export function ConfigPanel() {
               </button>
             ) : null}
           </span>
-          <textarea
+          <textarea aria-labelledby="cfg-schema-label"
             rows={5}
             className="code"
             value={chat.jsonSchema ?? ""}
@@ -654,7 +659,7 @@ export function ConfigPanel() {
           {chat.jsonSchema?.trim() && !isValidJson(chat.jsonSchema) && (
             <small className="field-error">Not valid JSON — will be ignored until fixed.</small>
           )}
-        </label>
+        </div>
       )}
     </aside>
   );
