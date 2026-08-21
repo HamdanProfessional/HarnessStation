@@ -16,6 +16,8 @@
  * like the provider had stopped offering it.
  */
 
+import { factsFor } from "./modelFacts";
+
 export type Modality =
   | "text"
   | "guard"
@@ -95,12 +97,60 @@ const RULES: [Modality, RegExp][] = [
   ],
 ];
 
-/** Classify a model id. Anything unrecognised is text — the safe default. */
+/** Classify a model id by name alone. Anything unrecognised is text. */
 export function modalityOf(id: string): Modality {
   const s = (id ?? "").trim();
   if (!s) return "text";
   for (const [modality, re] of RULES) if (re.test(s)) return modality;
   return "text";
+}
+
+/**
+ * Derive a modality from published input/output lists.
+ *
+ * Returns null when the lists do not pin it down, so the caller falls back to
+ * the name. Output is checked before input because it is the more decisive
+ * signal: a model that *emits* audio is a speech model whatever it accepts,
+ * while a model that *accepts* audio and emits text is a transcriber — and a
+ * vision chat model also accepts images but is emphatically not an image model.
+ */
+export function modalityFromLists(input?: string[], output?: string[]): Modality | null {
+  const out = new Set((output ?? []).map((s) => s.toLowerCase()));
+  const inp = new Set((input ?? []).map((s) => s.toLowerCase()));
+  if (out.size === 0 && inp.size === 0) return null;
+
+  if (out.has("audio") || out.has("speech")) return "speech-out";
+  if (out.has("video")) return "video";
+  if (out.has("image")) return "image";
+  if (out.has("embedding")) return "embed";
+
+  // Emits text. What it takes in decides between chat and transcription.
+  if (out.has("text")) {
+    if ((inp.has("audio") || inp.has("speech")) && !inp.has("text")) return "speech-in";
+    return "text";
+  }
+  return null;
+}
+
+/**
+ * Classify a model, preferring what the provider published over its name.
+ *
+ * The name-based rules are good but they are guesses; models.dev states the
+ * answer for the models it covers. It does not cover everything — Groq's
+ * `playai-tts` and `llama-guard` are absent while `whisper-large-v3` is present
+ * — so the regexes remain the fallback rather than being retired.
+ *
+ * Guardrails are the one case the published data cannot express: a safety
+ * classifier takes text and emits text, so it is indistinguishable from a chat
+ * model by modality alone. The name check runs first for those.
+ */
+export function classifyModel(id: string): Modality {
+  const named = modalityOf(id);
+  if (named === "guard") return named;
+
+  const facts = factsFor(id);
+  const published = facts ? modalityFromLists(facts.in, facts.out) : null;
+  return published ?? named;
 }
 
 /**
@@ -118,7 +168,7 @@ export function chatCapable(m: Modality): boolean {
 export function groupByModality(models: string[]): { modality: Modality; models: string[] }[] {
   const buckets = new Map<Modality, string[]>();
   for (const m of models) {
-    const k = modalityOf(m);
+    const k = classifyModel(m);
     const at = buckets.get(k);
     if (at) at.push(m);
     else buckets.set(k, [m]);

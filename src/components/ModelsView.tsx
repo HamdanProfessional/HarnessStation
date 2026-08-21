@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fitFor, fitCaveat, FIT_LABEL } from "../lib/catalog";
-import { chatCapable, groupByModality, modalityOf, MODALITY_LABEL, MODALITY_TAG } from "../lib/modality";
+import { chatCapable, classifyModel, groupByModality, MODALITY_LABEL, MODALITY_TAG } from "../lib/modality";
 import { toast } from "../lib/toast";
 import {
   hwInfo,
@@ -395,7 +395,7 @@ export function ModelsView() {
     // Still switches to it — the classifier reads ids and can be wrong, so
     // refusing would sometimes block a perfectly good chat model. Saying what
     // it looks like turns a silent failure on send into a warning up front.
-    const kind = modalityOf(model);
+    const kind = classifyModel(model);
     if (!chatCapable(kind)) {
       toast.info(`${model} looks like a ${MODALITY_LABEL[kind].toLowerCase()} model — a chat may not be able to send to it.`);
     }

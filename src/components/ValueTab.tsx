@@ -25,6 +25,7 @@ import { PRESETS, rank, type Weights } from "../lib/pricing/score";
 import { calculate, DEFAULT_WORKLOAD, savingsPct, type Workload } from "../lib/pricing/tco";
 import type { PriceCatalog, PricedModel } from "../lib/pricing/types";
 import { invalidatePrices, primeCostIndex } from "../lib/cost";
+import { invalidateModelFacts, primeModelFacts } from "../lib/modelFacts";
 import { useStore } from "../lib/store";
 import { toast } from "../lib/toast";
 
@@ -91,6 +92,10 @@ export function ValueTab() {
       // Exact per-message costs everywhere else in the app come from this index.
       primeCostIndex(next.models);
       invalidatePrices();
+      // Same feed, different consumer: the modality and context-window facts the
+      // chat path would otherwise have to infer from a model's name.
+      primeModelFacts(next.models);
+      invalidateModelFacts();
       const failed = sources.filter((s) => !s.ok);
       if (failed.length && failed.length === sources.length) {
         setError(`Every source failed. ${failed[0].error ?? ""}`);
@@ -115,6 +120,7 @@ export function ValueTab() {
       if (cached) {
         setCatalog(cached);
         primeCostIndex(cached.models);
+        primeModelFacts(cached.models);
         const history = await loadHistory();
         if (cancelled) return;
         setDays(historyDays(history));
