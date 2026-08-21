@@ -6,6 +6,7 @@ import { gatewayUrl } from "../gateway";
 import { isWeb } from "../web";
 import { keysOf, rotate, rotateKeys } from "../rotation";
 import { backoffMs, retryAfterMs, shouldWait } from "./backoff";
+import { withCacheBreakpoint } from "./cache";
 
 // Some providers' HTTPS APIs send no CORS headers, so a browser can't call them
 // directly (Ollama Cloud, notably). On the web build we route those through the
@@ -468,6 +469,10 @@ async function streamAnthropic(p: ChatParams): Promise<ChatResult> {
       }
       return { role: m.role as "user" | "assistant", content: textWithAttachments(m) };
     });
+  // Second cache breakpoint, on the latest user turn: the system prompt below
+  // is a fixed few hundred tokens, but the conversation grows without limit and
+  // was being re-read at full price every turn.
+  const cached = withCacheBreakpoint(messages);
   // Prompt caching: mark the system prompt as an ephemeral cache breakpoint so a
   // tool loop (which resends the same system on every round) pays for it once and
   // reads it back cheaply for ~5 minutes. Always on — it only ever saves money.
@@ -484,7 +489,7 @@ async function streamAnthropic(p: ChatParams): Promise<ChatResult> {
     body: JSON.stringify({
       model: p.model,
       system,
-      messages,
+      messages: cached,
       max_tokens: p.maxTokens > 0 ? p.maxTokens : 4096,
       temperature: p.temperature,
       stream: true,
