@@ -146,3 +146,111 @@ only part worth copying.
    regex guessing in `modality.ts`.
 4. **Overflow detection → compact and retry** (2 + 3).
 5. **Retrievable tool output** (6) — largest, do last.
+
+
+---
+
+# Part 2 — system prompts and tool descriptions
+
+The first pass looked at plumbing. This is the prompt layer, which is where the
+larger gap actually is.
+
+## The headline: we ship no base system prompt
+
+- **Them:** `session/system.ts` always sends a base prompt, picked by model
+  family — `anthropic.txt` (105 lines), `gpt.txt` (107), `gemini.txt` (155),
+  `kimi.txt` (95), `codex.txt` (79), `beast.txt` (147 for gpt-4/o1/o3),
+  `default.txt` (95) as the fallback. Selection is a chain of `model.api.id`
+  checks.
+- **Us:** `styles.ts:26` — `composeSystemPrompt` is `globalInstructions` +
+  a style snippet + the per-chat prompt. **All three default to empty.** Out of
+  the box our model receives no system prompt at all, only the appended notes
+  (project / AGENTS.md / skills / memory / RAG / summary).
+- **Consequence:** every behaviour opencode states explicitly — tone, when to
+  use which tool, parallel tool calls, not inventing URLs, `file:line`
+  references — we are leaving to whatever the model happens to do.
+
+Their per-family split exists because the same instructions do not work on
+every model; the Gemini prompt is 60% longer than the Anthropic one and far more
+prescriptive. We do not need eight variants. We need one.
+
+## No environment block
+
+- **Them:** an `<env>` section on every request — working directory, workspace
+  root, whether it is a git repo, platform, **today's date**, and
+  `You are powered by the model named X`.
+- **Us:** nothing. Grep for "Today's date" or "Platform:" across `src/lib`
+  returns only unrelated hits.
+- **Three live consequences:**
+  - The model does not know today's date and will answer from its cutoff.
+  - The model does not know the platform. `run_terminal` runs **PowerShell**,
+    and nothing in the prompt says so — the description carries a hint, but the
+    model has no general knowledge that it is on Windows.
+  - We ship a `get_current_time` **tool**, which is a whole round-trip to learn
+    something that costs one line of system prompt. That tool exists because the
+    env block does not.
+
+## Tool descriptions: one sentence vs. a usage contract
+
+Compare `read`:
+
+- **Them** (`tool/read.txt`, 14 lines): absolute paths, 2000-line default,
+  `offset` for paging, "use grep for large files", "use glob if unsure of the
+  path", the exact `<line>: <content>` return format, long-line truncation,
+  **"call this tool in parallel when you know there are multiple files"**, and an
+  explicit anti-pattern — *"avoid tiny repeated slices (30 line chunks); if you
+  need more context, read a larger window."*
+- **Us** (`tools.ts:224`): *"Reads a text file and returns its content
+  (truncated to 8000 chars). Path is relative to the user's home folder."* No
+  paging — so a file over 8000 chars is simply unreadable past that point, and
+  nothing tells the model to narrow with grep instead.
+
+We have 36 tools. Their descriptions are held in `.txt` files beside the code,
+which is why they can afford to be long; ours are string literals inside
+`tools.ts`, which is why they are short.
+
+## No tool-usage policy at all
+
+Their `# Tool usage policy` section, none of which we have an equivalent of:
+
+- Call independent tools **in parallel** in one response; call dependent ones
+  sequentially; never guess a missing parameter. (We say nothing about
+  parallelism anywhere — grep confirms zero hits.)
+- Prefer the specialised tool over the shell — `read` not `cat`, `edit` not
+  `sed`, `write` not a heredoc. We have both `read_file` and `run_terminal` and
+  never say which to reach for.
+- Never use a shell command to talk to the user.
+- Delegate broad exploration to a subagent to save context. We have
+  `swarm_spawn`; nothing tells the model when to use it.
+
+Also worth stealing, both a single line each:
+
+- **`file_path:line_number` for code references**, so the UI can make them
+  clickable.
+- **Professional objectivity** — a paragraph instructing the model to disagree
+  when warranted rather than validate. Applies to a chat app more than to a
+  coding agent.
+
+## Tools they have that change behaviour
+
+- **`question`** (`tool/question.txt`) — the model asks the user a structured
+  multiple-choice question mid-turn. The one tool here that most suits a chat
+  app, and we have no equivalent.
+- **`todowrite`** — the largest tool prompt they have (44 lines), and the base
+  prompt pushes it hard. Visible progress on long tasks.
+- **`plan`** — an explicit read-only mode with its own prompt and a reminder
+  injected per turn.
+
+## Suggested order
+
+1. **Env block** — one function, four facts, fixes the date and platform
+   problems immediately and makes `get_current_time` redundant.
+2. **A real base prompt** — one file, not eight. Tone, objectivity, tool-usage
+   policy, `file:line` references.
+3. **Rewrite the top ~8 tool descriptions** as usage contracts, starting with
+   `read_file` (add paging), `run_terminal` and `web_search`.
+4. **Parallel tool-call instruction** — one paragraph, applies to all 36 tools.
+5. **`question` tool** — new capability, worth its own decision.
+
+Nothing above is a port. Their prompts are MIT and written for a coding CLI;
+the content that transfers is the *structure*, not the text.
