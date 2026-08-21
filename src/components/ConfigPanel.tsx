@@ -476,13 +476,21 @@ export function ConfigPanel() {
                             {onCount}/{list.length}
                           </span>
                         </button>
-                        <span
-                          className={`switch sm ${onCount === list.length ? "on" : ""}`}
-                          title="Toggle all in group"
+                        {/* Was a clickable <span>: mouse-only, and its on/off
+                            state lived entirely in a CSS class, so nothing but
+                            colour conveyed it. */}
+                        <button
+                          type="button"
+                          className="switch-wrap"
+                          role="switch"
+                          aria-checked={onCount === list.length}
+                          aria-label={`Turn ${onCount === list.length ? "off" : "on"} all tools in this group`}
                           onClick={() => setGroup(list, onCount !== list.length)}
                         >
-                          <span className="knob" />
-                        </span>
+                          <span className={`switch sm ${onCount === list.length ? "on" : ""}`}>
+                            <span className="knob" />
+                          </span>
+                        </button>
                       </div>
                       {open && (
                         <div className="tool-list">

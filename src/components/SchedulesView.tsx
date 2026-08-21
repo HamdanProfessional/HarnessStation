@@ -261,11 +261,21 @@ export function SchedulesView() {
                   {s.lastError ? ` · error: ${s.lastError}` : ""}
                 </div>
               </div>
-              <label className="switch-wrap" title="Enable/disable">
-                <span className={`switch ${s.enabled ? "on" : ""}`} onClick={() => void saveSchedule({ ...s, enabled: !s.enabled, nextRun: computeNextRun(s.cadence, Date.now()) ?? s.nextRun })}>
+              {/* Was a <label> wrapping a clickable <span> — the label had no
+                  control to bind to, and the span was mouse-only with its state
+                  carried entirely by a CSS class. */}
+              <button
+                type="button"
+                className="switch-wrap"
+                role="switch"
+                aria-checked={s.enabled}
+                aria-label={`${s.enabled ? "Disable" : "Enable"} schedule ${s.name}`}
+                onClick={() => void saveSchedule({ ...s, enabled: !s.enabled, nextRun: computeNextRun(s.cadence, Date.now()) ?? s.nextRun })}
+              >
+                <span className={`switch ${s.enabled ? "on" : ""}`}>
                   <span className="knob" />
                 </span>
-              </label>
+              </button>
               <button className="btn small" disabled={busy === s.id} onClick={() => void runNow(s.id)}>
                 {busy === s.id ? "Running..." : "Run now"}
               </button>

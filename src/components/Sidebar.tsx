@@ -129,10 +129,23 @@ export function Sidebar() {
   const folderNames = Object.keys(byFolder).sort();
 
   const chatItem = (c: (typeof filtered)[number]) => (
+    // Not a <button>: it contains the options button, and nested buttons are
+    // invalid HTML. role + tabIndex + a key handler gets the same behaviour.
     <div
       key={c.id}
+      role="button"
+      tabIndex={0}
+      aria-current={c.id === currentId && view === "chat" ? "true" : undefined}
       className={`chat-item ${c.id === currentId && view === "chat" ? "active" : ""}`}
       onClick={() => selectChat(c.id)}
+      onKeyDown={(e) => {
+        // Space scrolls the list by default, which is not what pressing a
+        // control should do.
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          selectChat(c.id);
+        }
+      }}
     >
       <span className="chat-icon">
         {c.kind === "voice" || c.voiceMode ? <IconSpeaker size={14} /> : <IconChat size={14} />}

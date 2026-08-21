@@ -481,7 +481,23 @@ export function DiscoverView() {
         {results?.length === 0 && <p className="hint">No GGUF repositories found.</p>}
         {results?.map((r) => (
           <div key={r.id} className="provider-card">
-            <div className="provider-row" style={{ cursor: "pointer" }} onClick={() => void toggleRepo(r.id)}>
+            {/* The "Show files" label beside this is a span, not a button, so
+                this row is the only way to expand a repo — it has to be
+                reachable without a mouse. */}
+            <div
+              className="provider-row"
+              role="button"
+              tabIndex={0}
+              aria-expanded={openRepo === r.id}
+              style={{ cursor: "pointer" }}
+              onClick={() => void toggleRepo(r.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  void toggleRepo(r.id);
+                }
+              }}
+            >
               <div className="grow">
                 <b>{r.id}</b>
                 <div className="hint">

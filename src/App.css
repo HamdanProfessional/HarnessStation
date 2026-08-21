@@ -2148,9 +2148,23 @@ select:focus {
   white-space: nowrap;
 }
 
+/* Now a real <button role="switch"> rather than a clickable span, so the
+   browser's button chrome has to come off — the visible control is the .switch
+   inside it. */
 .switch-wrap {
   display: inline-flex;
   cursor: pointer;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+.switch-wrap:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 12px;
 }
 
 .switch-wrap .switch {
@@ -5819,4 +5833,71 @@ textarea {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* ---------- Status pills ----------
+   ChannelsPanel, CloudSyncPanel, CommunityAdmin and WebLlmCard all render
+   `className={`pill ${ok ? "ok" : warn ? "warn" : ""}`}` — five sites whose
+   markup implies three visual states. None of these classes had a rule, so
+   every one of them rendered as bare inline text and the states were
+   indistinguishable. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-3);
+  color: var(--text-dim);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Colour is doubled by the label text these always carry ("Connected",
+   "Error"), so this is not colour-only signalling. */
+.pill.ok {
+  border-color: color-mix(in srgb, var(--ok) 45%, transparent);
+  background: color-mix(in srgb, var(--ok) 14%, transparent);
+  color: var(--ok);
+}
+
+.pill.warn {
+  border-color: color-mix(in srgb, var(--warn) 45%, transparent);
+  background: color-mix(in srgb, var(--warn) 14%, transparent);
+  color: var(--warn);
+}
+
+/* A checkbox with its label, used in the local-model launch options and the
+   devices panel. Undefined until now, so the box and its text sat unaligned. */
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.check input {
+  accent-color: var(--accent);
+  margin: 0;
+}
+
+/* The chat list is now keyboard-reachable (role="button" tabIndex={0}), which
+   it never was before — without this there is no indication of where focus is,
+   and the feature is only half usable. */
+.chat-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Voice transcripts styled only the user side; assistant turns fell through to
+   bare .voice-turn, so the two speakers looked identical. */
+.voice-turn-assistant > div {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
 }

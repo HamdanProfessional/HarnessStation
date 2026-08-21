@@ -305,7 +305,10 @@ export function ModelsView() {
       await ensureLocalProvider(LOCAL_PORT, modelIds);
       setStatus(await serverStatus());
       // point the current chat at the local model for convenience
-      const chat = chats[0];
+      // chats[0] is the most recently *created* chat, not the open one — the
+      // store prepends on create, so those are only the same thing until you
+      // switch conversations.
+      const chat = chats.find((c) => c.id === currentId) ?? chats[0];
       if (chat) {
         selectChat(chat.id);
         updateChat({ providerId: "local", model: modelIds[0] });
@@ -388,7 +391,10 @@ export function ModelsView() {
   };
 
   const useInChat = (providerId: string, model: string) => {
-    const chat = chats[0];
+    // Must match the chat the "in use" highlight below is computed against,
+    // or clicking a chip navigates you to a different conversation and
+    // changes that one instead.
+    const chat = chats.find((c) => c.id === currentId) ?? chats[0];
     if (!chat) return;
     selectChat(chat.id);
     updateChat({ providerId, model });

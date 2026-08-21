@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { confirmDialog } from "../lib/dialog";
 import { toast } from "../lib/toast";
+import { hasEdits, mergeEdits } from "../lib/settingsMerge";
 import * as storage from "../lib/storage";
 import { checkForUpdate, installUpdate, type UpdateInfo } from "../lib/updater";
 import { DevicesPanel } from "./DevicesPanel";
@@ -186,6 +187,11 @@ function isWebBuild(): boolean {
 export function SettingsView() {
   const { settings, saveSettings, setView, init } = useStore();
   const [draft, setDraft] = useState<Settings>(() => structuredClone(settings));
+  /**
+   * What `draft` was cloned from. Save applies only the keys that differ from
+   * this, so settings a sibling panel wrote while this form was open survive.
+   */
+  const baseline = useRef<Settings>(structuredClone(settings));
   const [tab, setTab] = useState<Tab>(() => {
     const saved = localStorage.getItem(TAB_KEY);
     return TABS.some((t) => t.id === saved) ? (saved as Tab) : "general";
@@ -494,7 +500,13 @@ export function SettingsView() {
   };
 
   const save = async () => {
-    await saveSettings(draft);
+    // Read the store now, not at mount: ChannelsPanel, HooksPanel, DevicesPanel
+    // and CloudSyncPanel all save directly while this form is open, and saving
+    // our mount-time clone used to revert their work.
+    const merged = mergeEdits(baseline.current, draft, useStore.getState().settings);
+    await saveSettings(merged);
+    baseline.current = structuredClone(merged);
+    setDraft(structuredClone(merged));
     setSaved(true);
     toast.success("Settings updated");
     setTimeout(() => setSaved(false), 1500);
@@ -507,7 +519,7 @@ export function SettingsView() {
    * entirely possible to change six things, wander off, and lose all of them
    * with no indication anything was pending.
    */
-  const dirty = JSON.stringify(draft) !== JSON.stringify(settings);
+  const dirty = hasEdits(baseline.current, draft);
 
   /** Sections matching the search box, by label, blurb or keyword.
    *  When not searching, returns only the current section's tabs — core by
