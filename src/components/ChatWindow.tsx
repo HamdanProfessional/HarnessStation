@@ -11,7 +11,8 @@ import { ensureWhisper, transcribePath } from "../lib/whisper";
 import { IconX, IconSpeaker, LogoMark } from "./icons";
 import { useMicAvailable, type MicStatus } from "../lib/micDetect";
 import { FirstRunKey } from "./FirstRunKey";
-import { InlineBrowser } from "./InlineBrowser";
+import { InlineBrowser } from "./InlineBrowser";
+import { AskUserPrompt } from "./AskUserPrompt";
 import { MultiAgentBar } from "./MultiAgentBar";
 import { TrajectoryView } from "./TrajectoryView";
 
@@ -528,6 +529,9 @@ export function ChatWindow() {
           deliberately *not* inside the scrolling list. See InlineBrowser. */}
       {browserDock && <InlineBrowser />}
       {voiceState && <div className="voice-state">{voiceState}</div>}
+      {/* A paused turn waiting on an answer. Above the composer and outside the
+          scrolling list, so it cannot scroll away while it is blocking. */}
+      <AskUserPrompt chatId={chat.id} />
       {attachments.length > 0 && (
         <div className="att-tray">
           {attachments.map((a, i) => (

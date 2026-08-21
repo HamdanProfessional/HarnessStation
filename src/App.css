@@ -5789,3 +5789,34 @@ textarea {
   font-size: 13px;
   white-space: pre-wrap;
 }
+
+/* A model's mid-turn question. Sits between the thread and the composer
+   because the turn is paused on it — it must read as part of the conversation
+   without scrolling away while it blocks. */
+.ask-user {
+  margin: 0 auto 8px;
+  padding: 12px 14px;
+  max-width: 760px;
+  width: 100%;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.ask-user-q {
+  margin: 0 0 10px;
+  font-weight: 600;
+}
+
+.ask-user-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.ask-user-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

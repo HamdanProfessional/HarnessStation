@@ -100,6 +100,31 @@ async function runTerminal(base: string, command: string): Promise<string> {
 /** Built-in system tools. Their code is visible/copyable in the Tools tab. */
 export const BUILTIN_TOOLS: Tool[] = [
   {
+    id: "ask_user",
+    name: "ask_user",
+    description:
+      "Ask the user a question and wait for their answer. Use this when you hit a real fork that changes what you do next and you cannot resolve it from the conversation." +
+      "\n\nUsage:" +
+      "\n- Offer 2-4 concrete options. If you recommend one, put it first and add \"(Recommended)\" to its label." +
+      "\n- A \"type your own answer\" box is added automatically, so do not include an \"Other\" or catch-all option." +
+      "\n- The answer comes back as the tool result and you carry on in the same turn, so this costs the user one click rather than a whole round trip." +
+      "\n- Do not use it for things you can decide yourself, look up with another tool, or for confirming you should continue.",
+    parameters: {
+      type: "object",
+      properties: {
+        question: { type: "string", description: "The question, ending in a question mark" },
+        options: {
+          type: "array",
+          items: { type: "string" },
+          description: "2-4 concrete choices. Omit to ask for free text only.",
+        },
+      },
+      required: ["question"],
+    },
+    code: "", // handled directly in executeTool — it waits on the UI
+    builtin: true,
+  },
+  {
     id: "read_tool_output",
     name: "read_tool_output",
     description:
@@ -755,6 +780,16 @@ export async function executeTool(
   target?: import("./toolDiscovery").ToolTarget,
   sessionId?: string,
 ): Promise<string> {
+  if (tool.id === "ask_user") {
+    // Blocks until the user clicks. Deliberately outside the 30s sandbox
+    // timeout below — a person is allowed to take longer than a script.
+    const { ask } = await import("./askUser");
+    return ask({
+      question: String(args.question ?? "").trim() || "Which would you prefer?",
+      options: Array.isArray(args.options) ? args.options.map(String) : [],
+      chatId: target?.kind === "chat" ? target.id : "",
+    });
+  }
   if (tool.id === "read_tool_output") {
     const page = readStash(
       String(args.id ?? ""),

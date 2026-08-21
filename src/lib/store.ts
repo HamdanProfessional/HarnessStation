@@ -920,7 +920,13 @@ export const useStore = create<AppState>((set, get) => ({
     await runCompletion(set, get);
   },
 
-  stop: () => abortController?.abort(),
+  stop: () => {
+    // A question can only be answered by the turn that asked it, so stopping
+    // the turn must end it too — otherwise it sits there blocking a tool call
+    // that nothing will ever read.
+    void import("./askUser").then((m) => m.cancel("The turn was stopped."));
+    abortController?.abort();
+  },
 
   clearError: () => set({ error: null }),
 
