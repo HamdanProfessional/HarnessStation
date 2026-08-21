@@ -45,6 +45,20 @@ function uid(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/**
+ * Give every message a stable id.
+ *
+ * The transcript used to be keyed by array index, so deleting a message made
+ * React reuse each component instance for whatever message slid into its
+ * position — expanded tool cards collapsed, collapsed ones opened, and an
+ * in-progress edit box reattached itself to a different message. Backfilled on
+ * load so conversations written before ids existed get them too.
+ */
+function withMessageIds(chat: Chat): Chat {
+  if (chat.messages.every((m) => m.id)) return chat;
+  return { ...chat, messages: chat.messages.map((m) => (m.id ? m : { ...m, id: uid() })) };
+}
+
 function newChatObj(settings: Settings): Chat {
   const p = settings.providers[0];
   const now = new Date().toISOString();
@@ -707,7 +721,9 @@ export const useStore = create<AppState>((set, get) => ({
       // and retrying on every keystroke would be worse than showing it empty.
       hydratedIds: { ...get().hydratedIds, [id]: true },
       chats: body
-        ? get().chats.map((c) => (c.id === id ? { ...body, ...c, messages: body.messages } : c))
+        ? get().chats.map((c) =>
+            c.id === id ? withMessageIds({ ...body, ...c, messages: body.messages }) : c,
+          )
         : get().chats,
     });
   },
@@ -727,7 +743,7 @@ export const useStore = create<AppState>((set, get) => ({
       hydratedIds: marks,
       chats: get().chats.map((c) => {
         const body = byId.get(c.id);
-        return body ? { ...body, ...c, messages: body.messages } : c;
+        return body ? withMessageIds({ ...body, ...c, messages: body.messages }) : c;
       }),
     });
   },
@@ -1304,7 +1320,9 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
 
   const appendMsg = (m: Message) => {
     const cur = live();
-    if (cur) patch({ messages: [...cur.messages, m] });
+    // Every message gets an id here so the transcript can be keyed by identity
+    // rather than by position.
+    if (cur) patch({ messages: [...cur.messages, m.id ? m : { ...m, id: uid() }] });
   };
 
   /** Rewrite the last message of this chat. No-op if the chat vanished. */

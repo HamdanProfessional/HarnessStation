@@ -11,7 +11,7 @@ import { ensureWhisper, transcribePath } from "../lib/whisper";
 import { IconX, IconSpeaker, LogoMark } from "./icons";
 import { useMicAvailable, type MicStatus } from "../lib/micDetect";
 import { FirstRunKey } from "./FirstRunKey";
-import { InlineBrowser } from "./InlineBrowser";
+import { InlineBrowser } from "./InlineBrowser";
 import { AskUserPrompt } from "./AskUserPrompt";
 import { MultiAgentBar } from "./MultiAgentBar";
 import { TrajectoryView } from "./TrajectoryView";
@@ -38,13 +38,15 @@ let speaking = false;
 function speak(text: string) {
   const synth = window.speechSynthesis;
   if (!synth) return;
-  if (speaking) {
-    synth.cancel();
-    speaking = false;
-    return;
-  }
+  // Cancel anything in flight, then speak the new text. It used to return here,
+  // so clicking Speak on a second message only stopped the first — you had to
+  // click twice, and it looked like the button had failed.
+  if (speaking) synth.cancel();
   const u = new SpeechSynthesisUtterance(text.replace(/```[\s\S]*?```/g, " code block ").slice(0, 4000));
-  u.onend = () => (speaking = false);
+  // speechSynthesis fires `error` rather than `end` on interruption or a
+  // missing voice. Handling only `end` left `speaking` stuck true, and the
+  // Speak button became a silent no-op for the rest of the session.
+  u.onend = u.onerror = () => (speaking = false);
   speaking = true;
   synth.speak(u);
 }
@@ -147,6 +149,16 @@ function ToolResult({
 }) {
   // Show tool responses by default; only long dumps start collapsed to reduce noise.
   const [open, setOpen] = useState((content?.length ?? 0) <= 1500);
+  // A tool result can arrive empty and grow. Decided only at mount, the
+  // collapse choice was made against the first content this component ever saw,
+  // so a 40 kB dump stayed expanded because it started at zero characters.
+  // Re-decide when the content changes — unless the user has clicked since,
+  // which `touched` records, because overriding a deliberate click is worse
+  // than a bad default.
+  const touched = useRef(false);
+  useEffect(() => {
+    if (!touched.current) setOpen((content?.length ?? 0) <= 1500);
+  }, [content]);
   const media = (attachments ?? []).filter((a) => a.kind !== "text");
   return (
     <div className="toolresult">
@@ -157,7 +169,14 @@ function ToolResult({
           ))}
         </div>
       )}
-      <button className="toolcall-head" onClick={() => setOpen(!open)} aria-expanded={open}>
+      <button
+        className="toolcall-head"
+        onClick={() => {
+          touched.current = true;
+          setOpen(!open);
+        }}
+        aria-expanded={open}
+      >
         <span className="toolcall-arrow" aria-hidden="true">
           &#8627;
         </span>
@@ -176,6 +195,15 @@ export function ChatWindow() {
   const { chats, currentId, streaming, error, sendMessage, regenerate, stop, clearError, branchAt, editUserMessage, rewindTo, deleteItem, agents, compactChat, settings, browserDock, setView, updateChatById } =
     useStore();
   const [editIdx, setEditIdx] = useState<number | null>(null);
+  /**
+   * The id of the message being edited, held alongside its index.
+   *
+   * editUserMessage takes an index, so the index has to be kept. But if a
+   * message is deleted while the edit box is open, that index now points at a
+   * different message and "Save & regenerate" would rewrite the wrong one.
+   * Checking the id too means the edit is abandoned instead.
+   */
+  const [editId, setEditId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [compacting, setCompacting] = useState(false);
   const [showTrace, setShowTrace] = useState(false);
@@ -380,10 +408,16 @@ export function ChatWindow() {
           for (const m of chat.messages)
             for (const c of m.toolCalls ?? []) callName[c.id] = c.name;
           return chat.messages.map((m, i) => {
+            // Key by identity, not position. Keyed by index, deleting a message
+            // made React reuse each component for whatever slid into its slot,
+            // so expanded tool cards collapsed and collapsed ones opened. Ids
+            // are assigned on append and backfilled on load; the index fallback
+            // only covers a message that somehow has neither.
+            const key = m.id ?? `idx-${i}`;
             if (m.role === "tool") {
               return (
                 <ToolResult
-                  key={i}
+                  key={key}
                   name={callName[m.toolCallId ?? ""]}
                   content={m.content}
                   attachments={m.attachments}
@@ -393,9 +427,9 @@ export function ChatWindow() {
             }
             const hasText = m.content.trim().length > 0;
             const artifact = m.role === "assistant" ? extractArtifact(m.content) : null;
-            if (editIdx === i) {
+            if (editIdx === i && editId === key) {
               return (
-                <div key={i} className="msg user">
+                <div key={key} className="msg user">
                   <div className="msg-role">Edit message</div>
                   <textarea
                     className="chat-input"
@@ -408,12 +442,19 @@ export function ChatWindow() {
                       className="btn primary small"
                       onClick={() => {
                         setEditIdx(null);
+                        setEditId(null);
                         void editUserMessage(i, editText);
                       }}
                     >
                       Save &amp; regenerate
                     </button>
-                    <button className="btn small" onClick={() => setEditIdx(null)}>
+                    <button
+                      className="btn small"
+                      onClick={() => {
+                        setEditIdx(null);
+                        setEditId(null);
+                      }}
+                    >
                       Cancel
                     </button>
                   </div>
@@ -422,7 +463,7 @@ export function ChatWindow() {
             }
             return (
               <div
-                key={i}
+                key={key}
                 className={`msg ${m.role} ${m.author && chat.mode === "battle" ? "battle-col" : ""}`}
               >
                 <div className="msg-role">
@@ -434,6 +475,7 @@ export function ChatWindow() {
                           className="msg-act"
                           onClick={() => {
                             setEditIdx(i);
+                            setEditId(key);
                             setEditText(m.content);
                           }}
                         >
