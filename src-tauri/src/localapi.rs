@@ -19,7 +19,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::sync::{oneshot, Mutex};
+use tokio::sync::{mpsc, oneshot, Mutex};
 
 /// How long an inbound request may wait for the frontend to answer it. Model
 /// calls can be slow, so this is generous.
@@ -33,6 +33,10 @@ pub struct LocalApi {
     task: Mutex<Option<tauri::async_runtime::JoinHandle<()>>>,
     /// Inbound requests waiting for the frontend to answer.
     inbox: Mutex<HashMap<u64, oneshot::Sender<Value>>>,
+    /// Streaming requests: each chunk the frontend pushes is relayed to the
+    /// still-open socket. Separate from `inbox` because a stream is many
+    /// messages and a oneshot is, by definition, one.
+    streams: Mutex<HashMap<u64, mpsc::UnboundedSender<Value>>>,
     next_rid: AtomicU64,
     /// The port we're bound to, or None when stopped.
     port: Mutex<Option<u16>>,
@@ -77,6 +81,103 @@ async fn ask_frontend(
         Ok(Err(_)) => Err("the HarnessStation window isn't answering — is it open?".into()),
         Err(_) => Err(format!("timed out after {HANDLER_TIMEOUT_SECS}s")),
     }
+}
+
+/// Open a streaming request: emit it to the frontend and return the channel
+/// its chunks will arrive on.
+async fn ask_frontend_stream(
+    api: &Arc<LocalApi>,
+    app: &AppHandle,
+    params: Value,
+) -> Result<(u64, mpsc::UnboundedReceiver<Value>), String> {
+    let rid = api.next_rid.fetch_add(1, Ordering::Relaxed) + 1;
+    let (tx, rx) = mpsc::unbounded_channel();
+    api.streams.lock().await.insert(rid, tx);
+    app.emit(
+        "localapi-request",
+        json!({ "rid": rid, "method": "chat_stream", "params": params }),
+    )
+    .map_err(|e| e.to_string())?;
+    Ok((rid, rx))
+}
+
+/// Server-sent-events headers. No Content-Length: the body ends when we close.
+fn sse_headers() -> String {
+    concat!(
+        "HTTP/1.1 200 OK\r\n",
+        "Content-Type: text/event-stream\r\n",
+        // Without this, proxies and the browser buffer the whole stream and
+        // deliver it at the end — which looks exactly like no streaming at all.
+        "Cache-Control: no-cache\r\n",
+        "Access-Control-Allow-Origin: *\r\n",
+        "Connection: close\r\n",
+        // No Content-Length: the body ends when the socket closes. Sending one
+        // would tell the client the response is already complete.
+        "\r\n",
+    )
+    .to_string()
+}
+
+/// Relay a streaming completion to the socket as SSE, then close it.
+///
+/// Rust stays a dumb pipe here: the frontend pushes fully-formed OpenAI chunk
+/// objects and this only wraps them in `data: ...` framing. Keeping the shape
+/// on the frontend means the side that knows what a model is also decides what
+/// a chunk looks like.
+async fn stream_chat(
+    api: Arc<LocalApi>,
+    app: AppHandle,
+    params: Value,
+    stream: &mut tokio::net::TcpStream,
+) {
+    let (rid, mut rx) = match ask_frontend_stream(&api, &app, params).await {
+        Ok(v) => v,
+        Err(e) => {
+            let _ = stream.write_all(http_error("500 Internal Server Error", &e).as_bytes()).await;
+            return;
+        }
+    };
+
+    if stream.write_all(sse_headers().as_bytes()).await.is_err() {
+        api.streams.lock().await.remove(&rid);
+        return;
+    }
+
+    loop {
+        let next = tokio::time::timeout(
+            std::time::Duration::from_secs(HANDLER_TIMEOUT_SECS),
+            rx.recv(),
+        )
+        .await;
+        let chunk = match next {
+            Ok(Some(c)) => c,
+            // Channel closed by local_api_end, or the frontend went away.
+            Ok(None) => break,
+            Err(_) => {
+                let _ = stream
+                    .write_all(
+                        format!(
+                            "data: {}\n\n",
+                            json!({ "error": { "message": format!("timed out after {HANDLER_TIMEOUT_SECS}s") } })
+                        )
+                        .as_bytes(),
+                    )
+                    .await;
+                break;
+            }
+        };
+        let frame = format!("data: {chunk}\n\n");
+        // A write failure means the client hung up. Dropping the sender is what
+        // tells the frontend to stop generating, via local_api_push's return.
+        if stream.write_all(frame.as_bytes()).await.is_err() {
+            break;
+        }
+        let _ = stream.flush().await;
+    }
+
+    api.streams.lock().await.remove(&rid);
+    let _ = stream.write_all(b"data: [DONE]\n\n").await;
+    let _ = stream.flush().await;
 }
 
 fn find_subslice(haystack: &[u8], needle: &[u8]) -> Option<usize> {
@@ -159,6 +260,18 @@ async fn handle_conn(api: Arc<LocalApi>, app: AppHandle, mut stream: tokio::net:
             Err(_) => break,
         };
         body.extend_from_slice(&tmp[..n]);
+    }
+
+    // Streaming completions keep the socket open and write SSE frames, so they
+    // cannot go through `route`, which returns one finished response string.
+    let clean_path = path.split('?').next().unwrap_or(&path);
+    if method == "POST" && matches!(clean_path, "/v1/chat/completions" | "/chat/completions") {
+        if let Ok(params) = serde_json::from_slice::<Value>(&body) {
+            if params.get("stream").and_then(Value::as_bool) == Some(true) {
+                stream_chat(api, app, params, &mut stream).await;
+                return;
+            }
+        }
     }
 
     let response = route(&api, &app, &method, &path, &body).await;
@@ -266,6 +379,42 @@ pub async fn local_api_status(state: State<'_, Arc<LocalApi>>) -> Result<Option<
     Ok(*state.inner().port.lock().await)
 }
 
+/// Push one chunk of a streaming completion.
+///
+/// Returns whether the client is still connected. The frontend uses a `false`
+/// to abort generation — otherwise a client that hung up mid-reply would leave
+/// us paying a provider to finish a response nobody will read.
+#[tauri::command]
+pub async fn local_api_push(
+    state: State<'_, Arc<LocalApi>>,
+    rid: u64,
+    chunk: Value,
+) -> Result<bool, String> {
+    let api = state.inner().clone();
+    let map = api.streams.lock().await;
+    let Some(tx) = map.get(&rid) else {
+        return Ok(false);
+    };
+    Ok(tx.send(chunk).is_ok())
+}
+
+/// Finish a streaming completion, optionally with a final error frame.
+#[tauri::command]
+pub async fn local_api_end(
+    state: State<'_, Arc<LocalApi>>,
+    rid: u64,
+    error: Option<String>,
+) -> Result<(), String> {
+    let api = state.inner().clone();
+    if let Some(tx) = api.streams.lock().await.remove(&rid) {
+        if let Some(e) = error {
+            let _ = tx.send(json!({ "error": { "message": e, "type": "harnessstation_error" } }));
+        }
+        // Dropping the sender ends the relay loop.
+    }
+    Ok(())
+}
+
 /// The frontend's answer to a `localapi-request` event.
 #[tauri::command]
 pub async fn local_api_reply(
@@ -285,4 +434,56 @@ pub async fn local_api_reply(
     };
     let _ = tx.send(payload);
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sse_headers_declare_a_stream_and_no_length() {
+        let h = sse_headers();
+        // text/event-stream is what makes a client parse frames instead of
+        // waiting for one JSON body — the exact mistake this server used to make.
+        assert!(h.contains("Content-Type: text/event-stream"));
+        // A Content-Length would tell the client the body is already complete.
+        assert!(!h.to_lowercase().contains("content-length"));
+        // Proxies and browsers will buffer a stream without this.
+        assert!(h.contains("Cache-Control: no-cache"));
+        assert!(h.ends_with("\r\n\r\n"));
+    }
+
+    #[test]
+    fn json_responses_carry_a_length_and_cors() {
+        let r = http_json("200 OK", "{\"a\":1}");
+        assert!(r.contains("Content-Length: 7"));
+        assert!(r.contains("Access-Control-Allow-Origin: *"));
+        assert!(r.ends_with("{\"a\":1}"));
+    }
+
+    #[test]
+    fn errors_are_shaped_the_way_openai_clients_parse_them() {
+        // Clients read error.message; a bare string here shows as "undefined".
+        let r = http_error("404 Not Found", "unknown endpoint");
+        let body = r.split("\r\n\r\n").nth(1).unwrap();
+        let v: Value = serde_json::from_str(body).unwrap();
+        assert_eq!(v["error"]["message"], "unknown endpoint");
+        assert!(v["error"]["type"].is_string());
+    }
+
+    #[test]
+    fn content_length_counts_bytes_not_characters() {
+        // A multi-byte reply truncated by a char-count length is the classic
+        // way a JSON body arrives unparseable.
+        let body = "{\"m\":\"héllo — ok\"}";
+        let r = http_json("200 OK", body);
+        assert!(r.contains(&format!("Content-Length: {}", body.as_bytes().len())));
+        assert!(body.as_bytes().len() > body.chars().count());
+    }
+
+    #[test]
+    fn find_subslice_locates_the_header_break() {
+        assert_eq!(find_subslice(b"GET / HTTP/1.1\r\n\r\nbody", b"\r\n\r\n"), Some(14));
+        assert_eq!(find_subslice(b"no break here", b"\r\n\r\n"), None);
+    }
 }

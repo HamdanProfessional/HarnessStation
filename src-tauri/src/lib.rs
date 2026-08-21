@@ -211,6 +211,8 @@ pub fn run() {
             localapi::local_api_stop,
             localapi::local_api_status,
             localapi::local_api_reply,
+            localapi::local_api_push,
+            localapi::local_api_end,
             browser::browser_call,
             browser::browser_status,
             inapp_browser::inapp_open,
