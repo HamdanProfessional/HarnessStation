@@ -168,30 +168,14 @@ textarea,
 }
 
 ::selection {
-  background: rgba(94, 106, 210, 0.35);
+  /* Was rgba(94, 106, 210, …) — the indigo accent hardcoded, so the
+     selection stayed indigo under the forest and ember accents. */
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
-*::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
-}
-
-*::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 8px;
-  border: 2px solid transparent;
-  background-clip: content-box;
-}
-
-*::-webkit-scrollbar-thumb:hover {
-  background: var(--text-dim);
-  background-clip: content-box;
-  border: 2px solid transparent;
-}
-
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* The scrollbar theme lives in one place, further down under "scrollbars".
+   A second, older copy used to sit here — unconditional and 4700 lines from
+   the one that actually won, so editing the obvious block did nothing. */
 
 .app {
   display: flex;
@@ -562,8 +546,8 @@ select:focus {
 .nav-btn.active {
   background: linear-gradient(
     90deg,
-    rgba(94, 106, 210, 0.16),
-    rgba(94, 106, 210, 0.07) 70%,
+    color-mix(in srgb, var(--accent) 16%, transparent),
+    color-mix(in srgb, var(--accent) 7%, transparent) 70%,
     transparent
   );
   color: var(--text);
@@ -1194,6 +1178,11 @@ select:focus {
 
 .side-panel-title {
   flex: 1;
+  /* An ellipsis triad does nothing on a flex child until min-width is 0:
+     the default `auto` refuses to shrink below the content, so the text
+     never truncates and the panel's own close button gets pushed off the edge. */
+  min-width: 0;
+
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
@@ -1207,7 +1196,7 @@ select:focus {
   letter-spacing: 0.06em;
   padding: 2px 6px;
   border-radius: 999px;
-  background: var(--accent-soft, rgba(90, 130, 255, 0.16));
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
   color: var(--accent, #6b8afd);
 }
 
@@ -1347,7 +1336,7 @@ select:focus {
 
 .msg.user .msg-content {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
-  border: 1px solid rgba(94, 106, 210, 0.32);
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
   border-radius: 14px 14px 4px 14px;
   padding: 11px 15px;
   white-space: pre-wrap;
@@ -1588,6 +1577,8 @@ select:focus {
 
 .att-chip {
   display: inline-flex;
+  overflow: hidden;
+
   align-items: center;
   gap: 7px;
   background: var(--bg-3);
@@ -1615,7 +1606,9 @@ select:focus {
 }
 
 .att-name {
+  min-width: 0;
   overflow: hidden;
+
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2071,7 +2064,7 @@ select:focus {
   padding: 9px 11px;
   border-radius: 10px;
   background: color-mix(in srgb, var(--accent) 12%, transparent);
-  border: 1px solid rgba(94, 106, 210, 0.3);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
   font-size: 12px;
   color: var(--text);
 }
@@ -2385,7 +2378,7 @@ select:focus {
 }
 
 .tag-PY {
-  color: #ffd25a;
+  color: var(--warn);
 }
 
 .tag-MCP {
@@ -2393,7 +2386,7 @@ select:focus {
 }
 
 .tag-JS {
-  color: #a0b0ff;
+  color: var(--accent);
 }
 
 /* ---------- Main panels ---------- */
@@ -2870,7 +2863,9 @@ select:focus {
 }
 
 .code-editor-ta::selection {
-  background: rgba(94, 106, 210, 0.35);
+  /* Was rgba(94, 106, 210, …) — the indigo accent hardcoded, so the
+     selection stayed indigo under the forest and ember accents. */
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .code-view {
@@ -3081,7 +3076,9 @@ select:focus {
 .svg-render {
   margin: 12px 0;
   padding: 12px;
-  background: #fff;
+  /* Was #fff in both themes. Inline SVG drawn with currentColor
+     inherits var(--text), so in dark mode it was near-white on white. */
+  background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: 10px;
   text-align: center;
@@ -3694,6 +3691,11 @@ select:focus {
 
 .eval-cell-model {
   flex: 1;
+  /* An ellipsis triad does nothing on a flex child until min-width is 0:
+     the default `auto` refuses to shrink below the content, so the text
+     never truncates and the score this view exists to show gets pushed out of the cell. */
+  min-width: 0;
+
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3967,13 +3969,13 @@ select:focus {
 
 .wf-node.wf-running {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(94, 106, 210, 0.25), 0 0 24px rgba(94, 106, 210, 0.25);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent), 0 0 24px color-mix(in srgb, var(--accent) 25%, transparent);
   animation: pulse 1.4s ease infinite;
 }
 
 @keyframes pulse {
   50% {
-    box-shadow: 0 0 0 5px rgba(94, 106, 210, 0.12), 0 0 30px rgba(94, 106, 210, 0.3);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 12%, transparent), 0 0 30px color-mix(in srgb, var(--accent) 30%, transparent);
   }
 }
 
@@ -4005,7 +4007,7 @@ select:focus {
   padding: 2px 9px;
   border-radius: 20px;
   background: color-mix(in srgb, var(--accent) 12%, transparent);
-  border: 1px solid rgba(94, 106, 210, 0.3);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
   color: var(--text);
   white-space: nowrap;
 }
@@ -4044,6 +4046,11 @@ select:focus {
 .wf-node-title {
   font-weight: 600;
   flex: 1;
+  /* An ellipsis triad does nothing on a flex child until min-width is 0:
+     the default `auto` refuses to shrink below the content, so the text
+     never truncates and the controls beside it get pushed out of view. */
+  min-width: 0;
+
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4578,7 +4585,7 @@ select:focus {
 }
 
 .conn-dot.on {
-  background: #27ae60;
+  background: var(--ok);
 }
 
 /* Provider connection states in My Models. "unknown" is grey rather than red on
@@ -4958,62 +4965,10 @@ textarea {
   }
 }
 
-/* =========================================================================
-   Docked browser
-   -------------------------------------------------------------------------
-   Sits beside the chat or the call. The page itself is a native webview
-   floating over .browser-slot, so this only styles the frame around it.
-   ========================================================================= */
-
-.browser-pane {
-  width: clamp(360px, 42vw, 720px);
-  display: flex;
-  flex-direction: column;
-  border-left: 1px solid var(--border);
-  background: var(--bg-2);
-  min-width: 0;
-  animation: pane-in var(--t-slow) var(--ease);
-}
-
-@keyframes pane-in {
-  from {
-    opacity: 0;
-    transform: translateX(18px);
-  }
-}
-
-.browser-pane-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--border);
-}
-
-.browser-pane-bar input {
-  font-size: 12.5px;
-}
-
-/* The webview is opaque, so give the empty state the page's own background
-   rather than letting the app show through only until something loads. */
-.browser-pane .browser-slot {
-  flex: 1;
-  min-height: 0;
-  background: var(--bg);
-  display: flex;
-}
-
-@media (max-width: 1100px) {
-  .browser-pane {
-    width: clamp(300px, 50vw, 520px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .browser-pane {
-    animation: none;
-  }
-}
+/* The docked-browser frame that used to live here is gone: nothing rendered
+   `.browser-pane`. The live docked browser is BrowserView's `.browser-slot`
+   and InlineBrowser's `.inline-browser*`; this was a superseded
+   implementation whose CSS outlived it. */
 
 /* Pairing code: the one string a user retypes on another machine, so it wants
    to be unmistakable — wide tracking, monospace, no ambiguity. */
@@ -5307,7 +5262,7 @@ textarea {
   display: block;
   height: 16px;
   border-radius: 6px;
-  background: var(--panel-2, #1c1f28);
+  background: var(--bg-3);
   border: 1px solid var(--border);
   overflow: hidden;
   margin-top: 2px;
@@ -5416,7 +5371,7 @@ textarea {
   align-items: center;
   gap: 3px;
   font-size: 11px;
-  color: var(--text-2);
+  color: var(--text-dim);
   white-space: nowrap;
   cursor: pointer;
 }
@@ -5671,7 +5626,7 @@ textarea {
   background: var(--bg-3);
 }
 .files-crumbs .crumb:disabled {
-  color: var(--text-2);
+  color: var(--text-dim);
   cursor: default;
 }
 .files-crumbs .crumb-sep {
@@ -5720,7 +5675,7 @@ textarea {
   display: inline-flex;
   width: 16px;
   justify-content: center;
-  color: var(--text-2);
+  color: var(--text-dim);
   flex-shrink: 0;
 }
 .file-name {
@@ -5769,8 +5724,12 @@ textarea {
 }
 .files-viewer-name {
   font-family: var(--mono, ui-monospace, monospace);
+  /* A flex child with no `flex` still defaults to min-width: auto, so this
+     full path refused to shrink and shoved the Download button off. */
+  min-width: 0;
+
   font-size: 12px;
-  color: var(--text-2);
+  color: var(--text-dim);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
