@@ -5613,22 +5613,125 @@ textarea {
   border-bottom: 1px solid var(--border);
   background: var(--bg-2);
 }
-.multiagent-note { margin-left: 8px; font-size: 12px; }
-.participant-list { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.participant-chip {
+/* The header row: mode control, then what the mode does, then the count.
+   `baseline` rather than `center` so the note's text sits on the same line as
+   the segment labels instead of floating against the taller pill. */
+.ma-head {
   display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* The shared .seg carries `margin: 8px 0 14px` for use inside settings forms.
+   In this bar the spacing comes from the bar's own padding and gap, and the
+   inherited margin pushed the control off-centre and made the header taller
+   than the content needed. */
+.ma-seg {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.ma-seg .seg-btn {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 6px;
+  padding: 5px 12px;
+  font-size: 12.5px;
+}
+
+/* The icon is the quiet half of the pairing until its segment is chosen. */
+.ma-seg .seg-btn svg {
+  opacity: 0.75;
+}
+
+.ma-seg .seg-btn.active svg {
+  opacity: 1;
+}
+
+.ma-note {
+  color: var(--text-dim);
+  font-size: 12px;
+  /* Takes the slack so the count can sit hard against the right edge. */
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ma-count {
+  color: var(--text-dim);
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.participant-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+/* A card per participant rather than one wrapping line of controls. The old
+   layout put the name and five selects in a single flex row that broke
+   wherever the window happened to end, so a participant's controls could
+   straddle two lines with the next participant's beginning beside them. */
+.participant-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-3);
 }
-.participant-chip { flex-wrap: wrap; }
-.participant-chip .p-label { width: 84px; }
-.participant-chip .p-role { width: 170px; }
+
+.p-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Position, not decoration: A/B/C is the order the battle columns appear in,
+   so the header and the transcript can be read against each other. */
+.p-badge {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: var(--grad);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.p-fields {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.participant-chip .p-label {
+  width: 96px;
+  font-weight: 500;
+}
+.participant-chip .p-role { width: 100%; }
 .participant-chip .p-agent { max-width: 120px; }
-.participant-chip .p-effort { max-width: 100px; }
+.participant-chip .p-model { max-width: 170px; }
+.participant-chip .p-effort { max-width: 104px; }
+
+/* A disabled effort select still looked available, so turning thinking off
+   left a control that silently did nothing. */
+.participant-chip .p-effort:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 .participant-chip .p-think {
   display: flex;
   align-items: center;

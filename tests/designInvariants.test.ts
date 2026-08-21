@@ -73,6 +73,22 @@ describe("App.css design invariants", () => {
     expect(chat).toContain("msg-new");
   });
 
+  it("keeps the mode note out of the segmented control", () => {
+    // The note used to be a sibling of the segment buttons, so the pill track
+    // drew its background behind a sentence of prose and stretched to fit it.
+    const bar = readFileSync(resolve(__dirname, "..", "src", "components", "MultiAgentBar.tsx"), "utf8");
+    const seg = /<div className="seg ma-seg"[\s\S]*?<\/div>/.exec(bar)?.[0] ?? "";
+    expect(seg).toBeTruthy();
+    expect(seg).not.toContain("ma-note");
+    expect(bar).toContain('className="ma-note"');
+  });
+
+  it("cancels the shared .seg margin inside the multi-agent header", () => {
+    // .seg carries `margin: 8px 0 14px` for settings forms; inherited here it
+    // pushed the control off-centre and padded the header for no reason.
+    expect(css).toMatch(/\.ma-seg\s*\{[^}]*margin:\s*0/);
+  });
+
   it("slides the side panels instead of unmounting them", () => {
     // The slide only works because App.tsx keeps them mounted; if that ternary
     // comes back the CSS below is dead and the panels snap again.
