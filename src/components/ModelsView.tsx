@@ -20,27 +20,41 @@ import { listModels } from "../lib/providers";
 import { useStore } from "../lib/store";
 import * as storage from "../lib/storage";
 import type { LocalModel } from "../lib/storage";
+import type { Provider } from "../lib/types";
 import { EmptyState } from "./EmptyState";
 import { IconBox, IconCloud, IconX } from "./icons";
 
 /** Quick-add shortcuts the wider audience reaches for first. Each row is a
  *  one-click path: add the provider, prompt for the key, save. */
 const QUICK_PROVIDERS: { id: string; name: string; keyUrl: string; blurb: string }[] = [
-  { id: "anthropic", name: "Anthropic", keyUrl: "https://console.anthropic.com/settings/keys", blurb: "Claude Sonnet, Haiku" },
-  { id: "openai", name: "OpenAI", keyUrl: "https://platform.openai.com/api-keys", blurb: "GPT-4o, o1, GPT-5" },
-  { id: "google", name: "Google", keyUrl: "https://aistudio.google.com/apikey", blurb: "Gemini 2.5/3 Pro" },
+  { id: "anthropic", name: "Anthropic", keyUrl: "https://console.anthropic.com/settings/keys", blurb: "Claude Opus, Sonnet, Haiku" },
+  { id: "openai", name: "OpenAI", keyUrl: "https://platform.openai.com/api-keys", blurb: "GPT-5.6 Sol, Terra, Luna" },
+  { id: "google", name: "Google", keyUrl: "https://aistudio.google.com/apikey", blurb: "Gemini 3.7 Flash, 3.1 Pro" },
   { id: "mistral", name: "Mistral", keyUrl: "https://console.mistral.ai/api-keys", blurb: "Mistral Large, Codestral" },
-  { id: "groq", name: "Groq", keyUrl: "https://console.groq.com/keys", blurb: "Llama, free tier" },
-  { id: "xai", name: "xAI (Grok)", keyUrl: "https://console.x.ai/", blurb: "Grok 4" },
+  { id: "groq", name: "Groq", keyUrl: "https://console.groq.com/keys", blurb: "GPT-OSS, Compound — free tier" },
+  { id: "xai", name: "xAI (Grok)", keyUrl: "https://console.x.ai/", blurb: "Grok 4.6" },
 ];
 
 export function ModelsView() {
-  const { ensureLocalProvider, setView, selectChat, chats, updateChat, settings, saveSettings } =
+  const { ensureLocalProvider, setView, selectChat, chats, currentId, updateChat, settings, saveSettings } =
     useStore();
   const [models, setModels] = useState<LocalModel[]>([]);
   const [editProvider, setEditProvider] = useState<string | null>(null);
   const [editModels, setEditModels] = useState("");
   const [editKey, setEditKey] = useState("");
+  /**
+   * Per-provider connection status.
+   *
+   * "Connected" was previously an assertion this page made and never checked: a
+   * revoked key, a changed base URL or a local server that isn't running all
+   * looked identical to a working provider, and you only found out in a chat
+   * when the reply failed. Probing answers it here instead.
+   */
+  const [probes, setProbes] = useState<
+    Record<string, { state: "checking" | "ok" | "error"; count?: number; error?: string; at?: number }>
+  >({});
+  /** Providers whose full model list is expanded past the first dozen. */
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [engines, setEngines] = useState<string[]>([]);
   const [hw, setHw] = useState<HwInfo | null>(null);
   const [status, setStatus] = useState<ServerStatus>({ running: false, model: null, port: null });
@@ -325,6 +339,45 @@ export function ModelsView() {
     setEditProvider(null);
   };
 
+  /**
+   * Ask a provider what it can do, and believe the answer.
+   *
+   * One call does both jobs: `listModels` throws when the endpoint is
+   * unreachable or the key is refused, which is the health check, and returns
+   * the provider's own current list, which is the refresh. Doing them separately
+   * would mean two buttons that can disagree.
+   *
+   * The stored list is only overwritten on a non-empty result — a provider that
+   * answers with nothing is a bad reason to wipe models the user hand-entered.
+   */
+  const checkProvider = useCallback(async (p: Provider) => {
+    setProbes((s) => ({ ...s, [p.id]: { state: "checking" } }));
+    try {
+      const names = await listModels(p);
+      let changed = 0;
+      if (names.length) {
+        const next = structuredClone(useStore.getState().settings);
+        const target = next.providers.find((x) => x.id === p.id);
+        if (target) {
+          changed = names.filter((n) => !target.models.includes(n)).length;
+          target.models = names;
+          await useStore.getState().saveSettings(next);
+        }
+      }
+      setProbes((s) => ({
+        ...s,
+        [p.id]: { state: "ok", count: names.length, at: Date.now(), error: changed ? `${changed} new` : undefined },
+      }));
+    } catch (e) {
+      // Surfaced verbatim: "HTTP 401" and "failed to fetch" point at different
+      // fixes, and flattening them to "couldn't connect" hides which.
+      setProbes((s) => ({
+        ...s,
+        [p.id]: { state: "error", error: (e as Error).message || String(e), at: Date.now() },
+      }));
+    }
+  }, []);
+
   const removeProvider = async (id: string) => {
     if (!(await confirmDialog("Remove this provider?", { danger: true }))) return;
     const s = structuredClone(settings);
@@ -374,6 +427,8 @@ export function ModelsView() {
 
   // remote/cloud providers = everything except the local llama-server provider
   const remoteProviders = settings.providers.filter((p) => p.id !== "local" && p.models.length > 0);
+  /** The chat a "use this model" click would retarget, so its model can be marked. */
+  const current = chats.find((c) => c.id === currentId);
   /** Any provider row that has been registered but not yet keyed. The quick-add
    *  empty state offers to fill these in. */
   const unkeyedProviders = settings.providers.filter((p) => p.id !== "local" && !p.apiKey.trim());
@@ -430,7 +485,19 @@ export function ModelsView() {
       )}
 
       <section>
-        <h2>Connected providers</h2>
+        <div className="provider-row">
+          <h2 className="grow">Connected providers</h2>
+          {remoteProviders.length > 1 && (
+            <button
+              className="btn small"
+              title="Check every provider at once"
+              disabled={remoteProviders.some((p) => probes[p.id]?.state === "checking")}
+              onClick={() => void Promise.all(remoteProviders.map((p) => checkProvider(p)))}
+            >
+              Check all
+            </button>
+          )}
+        </div>
         {remoteProviders.length === 0 && unkeyedProviders.length === 0 && (
           <EmptyState
             icon={<IconCloud size={22} />}
@@ -492,22 +559,50 @@ export function ModelsView() {
           const editing = editProvider === p.id;
           const hasKey = p.apiKey.trim().length > 0;
           const localish = p.id === "ollama" || p.id === "lmstudio" || p.id === "llamacpp";
+          const probe = probes[p.id];
           return (
             <div key={p.id} className="provider-card">
               <div className="provider-row">
+                <span
+                  className={`conn-dot ${probe?.state === "ok" ? "on" : probe?.state === "checking" ? "checking" : probe?.state === "error" ? "bad" : "unknown"}`}
+                  aria-hidden="true"
+                />
                 <div className="grow">
                   <b>{p.name}</b>{" "}
                   <span className="hint">
-                    {p.models.length} model(s) · {p.baseUrl}
+                    {p.models.length} model{p.models.length === 1 ? "" : "s"} · {p.baseUrl}
                   </span>
                   <div className="hint">
-                    {localish
-                      ? "Local server — no API key needed"
-                      : hasKey
-                        ? "API key set"
-                        : "No API key set — click Edit to add one"}
+                    {/* Three separate facts, previously collapsed into one line:
+                        how it authenticates, whether it answered, and when. */}
+                    {localish ? "Local server — no key needed" : hasKey ? "API key set" : "No API key set"}
+                    {probe?.state === "checking" && <> · checking…</>}
+                    {probe?.state === "ok" && (
+                      <>
+                        {" · "}
+                        <span className="fit-gpu">
+                          answered with {probe.count} model{probe.count === 1 ? "" : "s"}
+                        </span>
+                        {probe.error && <> · {probe.error}</>}
+                      </>
+                    )}
+                    {probe?.state === "error" && (
+                      <>
+                        {" · "}
+                        <span className="fit-no">{probe.error}</span>
+                      </>
+                    )}
+                    {!probe && !localish && !hasKey && <> — add one to use it</>}
                   </div>
                 </div>
+                <button
+                  className="btn small"
+                  disabled={probe?.state === "checking"}
+                  title="Ask the provider for its model list — checks the connection and refreshes the models below"
+                  onClick={() => void checkProvider(p)}
+                >
+                  {probe?.state === "checking" ? "Checking…" : "Check"}
+                </button>
                 <button className="btn small" onClick={() => (editing ? setEditProvider(null) : openEdit(p.id))}>
                   {editing ? "Close" : "Edit"}
                 </button>
@@ -549,17 +644,26 @@ export function ModelsView() {
                 </div>
               ) : (
                 <div className="model-chips">
-                  {p.models.slice(0, 12).map((m) => (
-                    <button
-                      key={m}
-                      className="model-chip"
-                      title="Use this model in the current chat"
-                      onClick={() => useInChat(p.id, m)}
-                    >
-                      {m}
+                  {(expanded[p.id] ? p.models : p.models.slice(0, 12)).map((m) => {
+                    const inUse = current?.providerId === p.id && current?.model === m;
+                    return (
+                      <button
+                        key={m}
+                        className={`model-chip${inUse ? " active" : ""}`}
+                        title={inUse ? "This chat is using this model" : "Use this model in the current chat"}
+                        onClick={() => useInChat(p.id, m)}
+                      >
+                        {m}
+                      </button>
+                    );
+                  })}
+                  {/* Was a dead "+N more" label. With OpenRouter or Ollama Cloud
+                      that hid most of the list behind nothing at all. */}
+                  {p.models.length > 12 && (
+                    <button className="link-btn" onClick={() => setExpanded((e) => ({ ...e, [p.id]: !e[p.id] }))}>
+                      {expanded[p.id] ? "Show fewer" : `+${p.models.length - 12} more`}
                     </button>
-                  ))}
-                  {p.models.length > 12 && <span className="hint">+{p.models.length - 12} more</span>}
+                  )}
                 </div>
               )}
             </div>

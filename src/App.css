@@ -4556,6 +4556,42 @@ select:focus {
   background: #27ae60;
 }
 
+/* Provider connection states in My Models. "unknown" is grey rather than red on
+   purpose: not-yet-checked is not the same claim as failing, and colouring it
+   red would tell every user their working setup is broken. */
+.conn-dot.unknown {
+  background: var(--border);
+}
+
+.conn-dot.bad {
+  background: var(--danger);
+}
+
+.conn-dot.checking {
+  background: var(--warn);
+  animation: conn-pulse 1s ease-in-out infinite;
+}
+
+@keyframes conn-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conn-dot.checking {
+    animation: none;
+  }
+}
+
+/* The model this chat is actually using, so the list shows state and not just
+   options. */
+.model-chip.active {
+  border-color: var(--accent);
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
 .browser-steps {
   margin: 6px 0 0;
   padding-left: 20px;
