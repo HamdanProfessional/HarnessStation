@@ -599,6 +599,18 @@ export function SettingsView() {
 
       <section hidden={tab !== "general"}>
         <h2>System instructions (global)</h2>
+        <label className="agent-check">
+          <input
+            type="checkbox"
+            checked={draft.baseSystemPrompt !== false}
+            onChange={(e) => setDraft({ ...draft, baseSystemPrompt: e.target.checked })}
+          />
+          Use the built-in house rules (tone, objectivity, how to use tools)
+        </label>
+        <p className="hint">
+          Sent before anything below, so your own instructions win where they disagree. Turn it off
+          if you have tuned your own prompt and do not want a second voice in it.
+        </p>
         <p className="hint">Prepended to every chat, before style and per-chat prompts.</p>
         <textarea
           rows={5}

@@ -3,6 +3,7 @@ import { streamChat } from "./providers";
 import * as storage from "./storage";
 import { composeSystemPrompt } from "./styles";
 import { environmentNote } from "./environment";
+import { basePrompt } from "./basePrompt";
 import { isWeb } from "./web";
 import { os } from "./platform";
 import { buildParticipantContext } from "./multiAgent";
@@ -1422,8 +1423,21 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
         web: isWeb(),
       });
 
+      // The house rules, first, so anything the user configured can override
+      // them by coming later. Conditional on what this turn actually has:
+      // describing tools to a chat with none invites the model to invent one.
+      const houseRules =
+        settings.baseSystemPrompt === false
+          ? ""
+          : basePrompt({
+              toolCount: enabledTools.length,
+              hasShell: enabledTools.some((t) => t.id === "run_terminal"),
+              hasFiles: enabledTools.some((t) => t.id === "read_file" || t.id === "edit_file"),
+            });
+
       // Compose once so the exact prompt the model receives can also be traced.
       const systemStr = [
+        houseRules,
         composeSystemPrompt(settings, base),
         envNote,
         projectNote,

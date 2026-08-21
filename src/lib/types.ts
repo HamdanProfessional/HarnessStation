@@ -90,6 +90,12 @@ export interface Settings {
    * providers advertising the identical model id, so the weights never change.
    */
   roundRobin?: boolean;
+  /**
+   * Prepend the built-in house rules (tone, objectivity, tool-usage policy) to
+   * every chat. Default on. Off for anyone who has tuned their own prompt and
+   * does not want a second voice in it.
+   */
+  baseSystemPrompt?: boolean;
   /** Keep running in the tray when the window is closed. */
   backgroundMode?: boolean;
   /** Remember facts across every chat automatically, with no memory tool calls. */
