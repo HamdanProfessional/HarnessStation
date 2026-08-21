@@ -434,18 +434,29 @@ export function ModelsView() {
   const unkeyedProviders = settings.providers.filter((p) => p.id !== "local" && !p.apiKey.trim());
   const hasAnyKey = settings.providers.some((p) => p.id !== "local" && p.apiKey.trim().length > 0);
   /**
-   * How many model ids more than one usable provider serves. Rotation does
-   * nothing at all when this is zero, so the toggle stays hidden rather than
-   * offering a switch that silently has no effect.
+   * What rotation would actually have to choose between: model ids served by
+   * more than one usable provider, and providers carrying a spare key. Either
+   * one makes the toggle meaningful; neither does, and it stays hidden rather
+   * than offering a switch that silently has no effect.
    */
-  const sharedModels = useMemo(() => {
+  const rotatable = useMemo(() => {
     const seen = new Map<string, number>();
+    let multiKey = 0;
     for (const p of settings.providers) {
       if (p.id !== "local" && !p.apiKey.trim()) continue;
+      if ((p.apiKeys ?? []).filter((k) => k.trim()).length > 0) multiKey++;
       for (const m of new Set(p.models)) seen.set(m, (seen.get(m) ?? 0) + 1);
     }
-    return [...seen.values()].filter((n) => n > 1).length;
+    return { models: [...seen.values()].filter((n) => n > 1).length, multiKey };
   }, [settings.providers]);
+  const canRotate = rotatable.models > 0 || rotatable.multiKey > 0;
+  /** Plain-language summary of what a turn would be shared between. */
+  const rotateSummary = [
+    rotatable.models > 0 ? `${rotatable.models} shared model${rotatable.models === 1 ? "" : "s"}` : "",
+    rotatable.multiKey > 0 ? `${rotatable.multiKey} provider${rotatable.multiKey === 1 ? "" : "s"} with spare keys` : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <main className="settings-main">
@@ -500,13 +511,14 @@ export function ModelsView() {
       <section>
         <div className="provider-row">
           <h2 className="grow">Connected providers</h2>
-          {sharedModels > 0 && (
+          {canRotate && (
             <label
               className="agent-check inline"
               title={
-                `${sharedModels} model${sharedModels === 1 ? " is" : "s are"} served by more than one of your providers. ` +
-                "Rotating spreads turns evenly between them so one key does not hit its rate limit alone. " +
-                "Only providers listing the identical model id are used, so the reply comes from the same weights."
+                "Spread turns evenly instead of always sending to the first option, so no single key " +
+                "reaches its rate limit while the others idle. Rotates between providers listing the " +
+                "identical model id, and between the spare keys on a provider — the reply comes from " +
+                "the same weights either way. Failover still handles what happens after an error."
               }
             >
               <input
@@ -518,7 +530,7 @@ export function ModelsView() {
                   void useStore.getState().saveSettings(next);
                 }}
               />
-              Round-robin <span className="hint">({sharedModels} shared)</span>
+              Round-robin <span className="hint">({rotateSummary})</span>
             </label>
           )}
           {remoteProviders.length > 1 && (
@@ -532,6 +544,19 @@ export function ModelsView() {
             </button>
           )}
         </div>
+        {/* Spare keys are the main thing people want to rotate, and the field
+            for them is a collapsed <details> on the far side of Settings. Saying
+            so here costs one line and saves the search. */}
+        {settings.roundRobin === true && (
+          <p className="hint">
+            Sharing each turn between {rotateSummary || "nothing yet"}. To add spare keys for one
+            provider, open{" "}
+            <button className="link-btn" onClick={() => setView("settings")}>
+              Settings
+            </button>{" "}
+            → that provider → <em>Resilience — extra keys &amp; failover</em>.
+          </p>
+        )}
         {remoteProviders.length === 0 && unkeyedProviders.length === 0 && (
           <EmptyState
             icon={<IconCloud size={22} />}

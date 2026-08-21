@@ -76,6 +76,49 @@ export function rotate(model: string, providers: Provider[]): Provider | null {
   return step.provider;
 }
 
+
+/**
+ * Every usable key on a provider, main key first.
+ *
+ * A keyless (local) provider still yields one empty entry, so callers get
+ * exactly one attempt rather than none.
+ */
+export function keysOf(p: Provider): string[] {
+  const keys = [p.apiKey, ...(p.apiKeys ?? [])].map((k) => (k ?? "").trim()).filter(Boolean);
+  return keys.length ? keys : [""];
+}
+
+/**
+ * Rotate a provider's keys so a different one leads each request.
+ *
+ * The existing failover already walks every key, but always starting at the
+ * first — so key 1 absorbs all traffic until it rate-limits and the spares sit
+ * unused. Rotating the *starting point* spreads the load while keeping the rest
+ * of the list intact behind it, so a failed attempt still falls through to
+ * every other key exactly as before.
+ */
+export function nextKeyOrder(
+  providerId: string,
+  keys: string[],
+  cursors: Cursors,
+): { keys: string[]; cursors: Cursors } {
+  if (keys.length < 2) return { keys, cursors };
+  const slot = `key:${providerId}`;
+  const at = (cursors[slot] ?? 0) % keys.length;
+  return {
+    keys: [...keys.slice(at), ...keys.slice(0, at)],
+    cursors: { ...cursors, [slot]: (at + 1) % keys.length },
+  };
+}
+
+/** Process-wide key rotation. Returns the provider with its keys reordered. */
+export function rotateKeys(p: Provider): Provider {
+  const step = nextKeyOrder(p.id, keysOf(p), live);
+  if (step.keys.length < 2) return p;
+  live = step.cursors;
+  return { ...p, apiKey: step.keys[0], apiKeys: step.keys.slice(1) };
+}
+
 /** Test seam — resets the module-level cursors. */
 export function resetRotation(): void {
   live = {};

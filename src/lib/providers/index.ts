@@ -4,7 +4,7 @@ import { toOpenAITools } from "../tools";
 import { readSSE } from "./sse";
 import { gatewayUrl } from "../gateway";
 import { isWeb } from "../web";
-import { rotate } from "../rotation";
+import { keysOf, rotate, rotateKeys } from "../rotation";
 
 // Some providers' HTTPS APIs send no CORS headers, so a browser can't call them
 // directly (Ollama Cloud, notably). On the web build we route those through the
@@ -93,11 +93,6 @@ export interface Attempt {
   model: string | null;
 }
 
-/** One key per pool entry; a keyless (local) provider still gets one attempt. */
-function keysOf(p: Provider): string[] {
-  const keys = [p.apiKey, ...(p.apiKeys ?? [])].map((k) => (k ?? "").trim()).filter(Boolean);
-  return keys.length ? keys : [""];
-}
 
 /**
  * The ordered list of (provider, key) attempts for a request: every key on the
@@ -144,7 +139,11 @@ export async function streamChat(p: ChatParams): Promise<ChatResult> {
   // Round-robin picks the *entry* provider; failover still owns what happens
   // after an error. Keeping them separate means a rotation can never mask a
   // provider that is down — it just changes which working one goes first.
-  const entry = roundRobin ? (rotate(p.model, all) ?? p.provider) : p.provider;
+  // Two independent rotations: which provider leads, and which of that
+  // provider's keys leads. A single provider with several keys benefits from
+  // the second even though the first has nothing to choose between.
+  const picked = roundRobin ? (rotate(p.model, all) ?? p.provider) : p.provider;
+  const entry = roundRobin ? rotateKeys(picked) : picked;
   const attempts = buildAttempts(entry, all);
   let lastErr: unknown;
   for (let i = 0; i < attempts.length; i++) {

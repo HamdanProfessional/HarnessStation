@@ -1,5 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { candidatesFor, nextProvider, resetRotation, rotate, type Cursors } from "../src/lib/rotation";
+import {
+  candidatesFor,
+  keysOf,
+  nextKeyOrder,
+  nextProvider,
+  resetRotation,
+  rotate,
+  rotateKeys,
+  type Cursors,
+} from "../src/lib/rotation";
 import type { Provider } from "../src/lib/types";
 
 const p = (over: Partial<Provider> = {}): Provider => ({
@@ -104,5 +113,72 @@ describe("the process-wide wrapper", () => {
 
   it("reports null for an unservable model so the caller keeps its own choice", () => {
     expect(rotate("gpt-4o", [groq])).toBeNull();
+  });
+});
+
+
+describe("rotating the keys on one provider", () => {
+  beforeEach(() => resetRotation());
+
+  it("lists the main key first, then the spares", () => {
+    expect(keysOf(p({ apiKey: "main", apiKeys: ["s1", " s2 ", "  "] }))).toEqual(["main", "s1", "s2"]);
+  });
+
+  it("gives a keyless provider exactly one attempt, not zero", () => {
+    expect(keysOf(p({ apiKey: "", apiKeys: [] }))).toEqual([""]);
+  });
+
+  it("moves the starting key along on each request", () => {
+    let cursors: Cursors = {};
+    const first: string[] = [];
+    for (let i = 0; i < 4; i++) {
+      const step = nextKeyOrder("groq", ["k1", "k2", "k3"], cursors);
+      first.push(step.keys[0]);
+      cursors = step.cursors;
+    }
+    expect(first).toEqual(["k1", "k2", "k3", "k1"]);
+  });
+
+  it("keeps every other key behind the leader, so failover is unchanged", () => {
+    // The point of rotating is to change who goes first, never to drop a
+    // spare — a rate-limited turn must still fall through to all the others.
+    const step = nextKeyOrder("groq", ["k1", "k2", "k3"], { "key:groq": 1 });
+    expect(step.keys).toEqual(["k2", "k3", "k1"]);
+  });
+
+  it("leaves a single key alone and burns no cursor", () => {
+    const step = nextKeyOrder("groq", ["only"], {});
+    expect(step.keys).toEqual(["only"]);
+    expect(step.cursors).toEqual({});
+  });
+
+  it("counts each provider's keys separately from every other provider", () => {
+    let cursors: Cursors = {};
+    cursors = nextKeyOrder("groq", ["a", "b"], cursors).cursors;
+    expect(nextKeyOrder("cerebras", ["x", "y"], cursors).keys[0]).toBe("x");
+  });
+
+  it("does not collide with the per-model cursors", () => {
+    // Both live in one map; a provider id that matches a model name must not
+    // make one rotation drive the other.
+    // A model literally named "groq", plus a provider whose id is "groq".
+    const serving = [p({ id: "a", models: ["groq"] }), p({ id: "b", models: ["groq"] })];
+    let cursors: Cursors = {};
+    cursors = nextProvider("groq", serving, cursors)!.cursors;
+    expect(cursors).toEqual({ groq: 1 });
+    // The key cursor is namespaced, so it is still at the top.
+    expect(nextKeyOrder("groq", ["k1", "k2"], cursors).keys[0]).toBe("k1");
+  });
+
+  it("rewrites the provider so the rotated key is the one that gets used", () => {
+    const prov = p({ apiKey: "k1", apiKeys: ["k2"] });
+    expect(rotateKeys(prov).apiKey).toBe("k1");
+    expect(rotateKeys(prov).apiKey).toBe("k2");
+    expect(rotateKeys(prov).apiKey).toBe("k1");
+  });
+
+  it("returns a provider with one key untouched", () => {
+    const prov = p({ apiKey: "solo", apiKeys: [] });
+    expect(rotateKeys(prov)).toBe(prov);
   });
 });
