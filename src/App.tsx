@@ -21,6 +21,8 @@ import { IconPanelLeft, IconPanelRight } from "./components/icons";
 import { ClosingOverlay, Splash, ViewLoading } from "./components/Loading";
 import { useStore } from "./lib/store";
 import { flushChatSaves } from "./lib/storage";
+import { installWatchdog } from "./lib/watchdog";
+import { toast } from "./lib/toast";
 import "./App.css";
 
 export default function App() {
@@ -118,6 +120,15 @@ export default function App() {
     if ((globalThis as unknown as { __HS_WEB__?: boolean }).__HS_WEB__) return;
     void import("./lib/channels").then((m) => m.syncChannels(settings.channels));
   }, [ready, settings.channels]);
+
+  // Answer the hang watchdog, and report a hang from the previous run.
+  //
+  // Not gated on `ready`: a hang during hydration is exactly the case worth
+  // catching, and waiting for the store would leave the riskiest stretch of
+  // startup unwatched.
+  useEffect(() => {
+    void installWatchdog((message) => toast.error(message));
+  }, []);
 
   // Mirror the background-mode setting into Rust, which owns the close behaviour.
   useEffect(() => {

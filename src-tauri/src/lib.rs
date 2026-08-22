@@ -11,6 +11,7 @@ mod opencode;
 mod py;
 mod secret;
 mod speech;
+mod watchdog;
 
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -155,6 +156,9 @@ pub fn run() {
                 eprintln!("Global push-to-talk shortcut unavailable (already registered?): {e}");
             }
             build_tray(app.handle())?;
+            // Outside the webview on purpose — a thread that is not the one
+            // that gets stuck is the only thing that can notice it has.
+            watchdog::start(app.handle().clone());
             Ok(())
         })
         .on_window_event(|win, event| {
@@ -171,6 +175,8 @@ pub fn run() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            watchdog::watchdog_pong,
+            watchdog::take_hang_report,
             local::hw_info,
             local::platform,
             local::download,
