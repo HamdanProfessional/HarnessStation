@@ -1,11 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  candidatesFor,
+  keyCount,
   keysOf,
   nextKeyOrder,
-  nextProvider,
   resetRotation,
-  rotate,
   rotateKeys,
   type Cursors,
 } from "../src/lib/rotation";
@@ -24,98 +22,6 @@ const p = (over: Partial<Provider> = {}): Provider => ({
 const groq = p();
 const cerebras = p({ id: "cerebras", name: "Cerebras", baseUrl: "https://api.cerebras.ai/v1" });
 const together = p({ id: "together", name: "Together", baseUrl: "https://api.together.xyz/v1" });
-
-describe("who is eligible to serve a model", () => {
-  it("only counts providers that list the exact model id", () => {
-    const other = p({ id: "openai", models: ["gpt-4o"] });
-    expect(candidatesFor("llama-3.3-70b", [groq, other, cerebras]).map((x) => x.id)).toEqual([
-      "groq",
-      "cerebras",
-    ]);
-  });
-
-  it("skips a provider with no key — rotating onto a 401 is worse than not balancing", () => {
-    const unkeyed = p({ id: "fireworks", apiKey: "   " });
-    expect(candidatesFor("llama-3.3-70b", [groq, unkeyed]).map((x) => x.id)).toEqual(["groq"]);
-  });
-
-  it("still counts a local server, which authenticates with nothing", () => {
-    const ollama = p({ id: "ollama", apiKey: "", baseUrl: "http://localhost:11434/v1" });
-    const lmstudio = p({ id: "lm", apiKey: "", baseUrl: "http://127.0.0.1:1234/v1" });
-    const named = p({ id: "local", apiKey: "", baseUrl: "" });
-    expect(candidatesFor("llama-3.3-70b", [ollama, lmstudio, named])).toHaveLength(3);
-  });
-});
-
-describe("the rotation itself", () => {
-  it("cycles through every candidate before repeating one", () => {
-    const all = [groq, cerebras, together];
-    let cursors: Cursors = {};
-    const order: string[] = [];
-    for (let i = 0; i < 6; i++) {
-      const step = nextProvider("llama-3.3-70b", all, cursors)!;
-      order.push(step.provider.id);
-      cursors = step.cursors;
-    }
-    expect(order).toEqual(["groq", "cerebras", "together", "groq", "cerebras", "together"]);
-  });
-
-  it("keeps a separate cursor per model, so one busy model doesn't skew another", () => {
-    const all = [
-      p({ id: "a", models: ["m1", "m2"] }),
-      p({ id: "b", models: ["m1", "m2"] }),
-    ];
-    let cursors: Cursors = {};
-    // Three turns on m1 leave its cursor mid-cycle.
-    for (let i = 0; i < 3; i++) cursors = nextProvider("m1", all, cursors)!.cursors;
-    // m2 has still never been asked, so it must start at the top.
-    expect(nextProvider("m2", all, cursors)!.provider.id).toBe("a");
-  });
-
-  it("does not advance a cursor when there is only one candidate", () => {
-    // Otherwise adding a second provider later would start it mid-cycle, which
-    // looks like the rotation skipping a provider on its very first turn.
-    let cursors: Cursors = {};
-    for (let i = 0; i < 5; i++) cursors = nextProvider("llama-3.3-70b", [groq], cursors)!.cursors;
-    expect(cursors).toEqual({});
-    expect(nextProvider("llama-3.3-70b", [groq, cerebras], cursors)!.provider.id).toBe("groq");
-  });
-
-  it("returns null when nothing can serve the model, rather than guessing", () => {
-    // The caller falls back to its own resolution, so switching rotation on can
-    // never take away a provider the old code would have found.
-    expect(nextProvider("gpt-4o", [groq, cerebras], {})).toBeNull();
-    expect(nextProvider("llama-3.3-70b", [], {})).toBeNull();
-  });
-
-  it("is pure — the caller's cursors are never mutated", () => {
-    const cursors: Cursors = { "llama-3.3-70b": 0 };
-    nextProvider("llama-3.3-70b", [groq, cerebras], cursors);
-    expect(cursors).toEqual({ "llama-3.3-70b": 0 });
-  });
-
-  it("survives a cursor left over from a larger pool", () => {
-    // A provider removed between turns must not index past the end.
-    const step = nextProvider("llama-3.3-70b", [groq, cerebras], { "llama-3.3-70b": 7 })!;
-    expect(step.provider.id).toBe("cerebras");
-  });
-});
-
-describe("the process-wide wrapper", () => {
-  beforeEach(() => resetRotation());
-
-  it("advances across calls", () => {
-    const all = [groq, cerebras];
-    expect(rotate("llama-3.3-70b", all)?.id).toBe("groq");
-    expect(rotate("llama-3.3-70b", all)?.id).toBe("cerebras");
-    expect(rotate("llama-3.3-70b", all)?.id).toBe("groq");
-  });
-
-  it("reports null for an unservable model so the caller keeps its own choice", () => {
-    expect(rotate("gpt-4o", [groq])).toBeNull();
-  });
-});
-
 
 describe("rotating the keys on one provider", () => {
   beforeEach(() => resetRotation());
@@ -158,15 +64,10 @@ describe("rotating the keys on one provider", () => {
     expect(nextKeyOrder("cerebras", ["x", "y"], cursors).keys[0]).toBe("x");
   });
 
-  it("does not collide with the per-model cursors", () => {
-    // Both live in one map; a provider id that matches a model name must not
-    // make one rotation drive the other.
-    // A model literally named "groq", plus a provider whose id is "groq".
-    const serving = [p({ id: "a", models: ["groq"] }), p({ id: "b", models: ["groq"] })];
-    let cursors: Cursors = {};
-    cursors = nextProvider("groq", serving, cursors)!.cursors;
-    expect(cursors).toEqual({ groq: 1 });
-    // The key cursor is namespaced, so it is still at the top.
+  it("namespaces its cursor so a stray key in the map cannot drive it", () => {
+    // Cursors are one flat map. The key slot is prefixed, so an entry that
+    // happens to share the provider's id must not move the key rotation.
+    const cursors: Cursors = { groq: 1 };
     expect(nextKeyOrder("groq", ["k1", "k2"], cursors).keys[0]).toBe("k1");
   });
 
@@ -180,5 +81,50 @@ describe("rotating the keys on one provider", () => {
   it("returns a provider with one key untouched", () => {
     const prov = p({ apiKey: "solo", apiKeys: [] });
     expect(rotateKeys(prov)).toBe(prov);
+  });
+});
+
+describe("counting a provider's keys", () => {
+  it("counts the main key and the spares together", () => {
+    expect(keyCount(p({ apiKey: "main", apiKeys: ["s1", "s2"] }))).toBe(3);
+  });
+
+  it("ignores blank and whitespace entries", () => {
+    // An empty line in the "extra keys" textarea must not read as a key, or the
+    // UI would offer to rotate across something that does not exist.
+    expect(keyCount(p({ apiKey: "main", apiKeys: ["", "   ", "s1"] }))).toBe(2);
+  });
+
+  it("reports zero for a keyless local provider", () => {
+    // Deliberately different from keysOf, which yields [""] so callers still get
+    // one attempt. Here zero has to mean zero, or a local server would look
+    // like it had something to rotate.
+    expect(keyCount(p({ apiKey: "", apiKeys: [] }))).toBe(0);
+    expect(keysOf(p({ apiKey: "", apiKeys: [] }))).toHaveLength(1);
+  });
+
+  it("handles a provider that has never had spares", () => {
+    expect(keyCount({ apiKey: "solo" })).toBe(1);
+  });
+});
+
+describe("what rotation must never do", () => {
+  it("returns the same provider it was given", () => {
+    // The whole point of the change: round-robin spreads load across keys on
+    // one provider. Sending a turn to a different provider would silently
+    // change the service, price and quantisation behind "the same" model id.
+    const prov = p({ id: "groq", apiKey: "k1", apiKeys: ["k2", "k3"] });
+    for (let i = 0; i < 5; i++) {
+      const out = rotateKeys(prov);
+      expect(out.id).toBe("groq");
+      expect(out.baseUrl).toBe(prov.baseUrl);
+      expect(out.models).toEqual(prov.models);
+    }
+  });
+
+  it("keeps the full key set intact, only reordered", () => {
+    const prov = p({ apiKey: "k1", apiKeys: ["k2", "k3"] });
+    const out = rotateKeys(prov);
+    expect([out.apiKey, ...(out.apiKeys ?? [])].sort()).toEqual(["k1", "k2", "k3"]);
   });
 });

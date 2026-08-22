@@ -15,6 +15,7 @@ import { fitFor, fitCaveat, FIT_LABEL } from "../lib/catalog";
 import { chatCapable, classifyModel, groupByModality, MODALITY_LABEL, MODALITY_TAG } from "../lib/modality";
 import { toast } from "../lib/toast";
 import { dotState, pageStats, providerBadges } from "../lib/providerStatus";
+import { keyCount } from "../lib/rotation";
 import {
   hwInfo,
   installEngine,
@@ -58,6 +59,8 @@ export function ModelsView() {
   const [editProvider, setEditProvider] = useState<string | null>(null);
   const [editModels, setEditModels] = useState("");
   const [editKey, setEditKey] = useState("");
+  /** The provider's spare keys, one per line, while its edit form is open. */
+  const [editSpares, setEditSpares] = useState("");
   /**
    * Per-provider connection status.
    *
@@ -389,6 +392,7 @@ export function ModelsView() {
     setEditProvider(id);
     setEditModels(p.models.join("\n"));
     setEditKey(p.apiKey);
+    setEditSpares((p.apiKeys ?? []).join("\n"));
   };
 
   const saveEdit = async () => {
@@ -397,9 +401,40 @@ export function ModelsView() {
     if (p) {
       p.models = editModels.split(/[\n,]/).map((m) => m.trim()).filter(Boolean);
       p.apiKey = editKey.trim();
+      // Split on newlines only. A comma is not a separator here the way it is
+      // for model ids — several providers issue keys containing one, and
+      // splitting on it would quietly cut a valid key in half.
+      p.apiKeys = editSpares.split("\n").map((k) => k.trim()).filter(Boolean);
       await saveSettings(s);
     }
     setEditProvider(null);
+  };
+
+  /** Add one more key to a provider without opening the whole edit form. */
+  const addKey = async (id: string) => {
+    const key = await promptDialog("Add another API key", {
+      placeholder: "API key",
+      // Named so it is clear this is extra headroom on the same account, not a
+      // way to reach a different provider.
+      message: "Turns are shared across every key on this provider, so each one gets its own rate limit.",
+    });
+    if (!key?.trim()) return;
+    const s = structuredClone(useStore.getState().settings);
+    const p = s.providers.find((x) => x.id === id);
+    if (!p) return;
+    // The first key a provider ever gets belongs in apiKey, not the spares:
+    // everything else treats an empty apiKey as "not configured".
+    if (!p.apiKey.trim()) p.apiKey = key.trim();
+    else p.apiKeys = [...(p.apiKeys ?? []), key.trim()];
+    await saveSettings(s);
+    // Turning the setting on is the point of adding a second key, so do not
+    // make them find the checkbox afterwards.
+    if (keyCount(p) > 1 && s.roundRobin !== true) {
+      const s2 = structuredClone(useStore.getState().settings);
+      s2.roundRobin = true;
+      await saveSettings(s2);
+      toast.success("Round-robin turned on — turns will rotate across your keys.");
+    }
   };
 
   /**
@@ -506,30 +541,28 @@ export function ModelsView() {
   const unkeyedProviders = settings.providers.filter((p) => p.id !== "local" && !p.apiKey.trim());
   const hasAnyKey = settings.providers.some((p) => p.id !== "local" && p.apiKey.trim().length > 0);
   /**
-   * What rotation would actually have to choose between: model ids served by
-   * more than one usable provider, and providers carrying a spare key. Either
-   * one makes the toggle meaningful; neither does, and it stays hidden rather
-   * than offering a switch that silently has no effect.
+   * What rotation would actually have to choose between: providers carrying
+   * more than one key. Nothing to rotate means the toggle stays hidden rather
+   * than offering a switch that silently does nothing.
    */
   const rotatable = useMemo(() => {
-    const seen = new Map<string, number>();
     let multiKey = 0;
+    let keys = 0;
     for (const p of settings.providers) {
-      if (p.id !== "local" && !p.apiKey.trim()) continue;
-      if ((p.apiKeys ?? []).filter((k) => k.trim()).length > 0) multiKey++;
-      for (const m of new Set(p.models)) seen.set(m, (seen.get(m) ?? 0) + 1);
+      const n = keyCount(p);
+      if (n > 1) {
+        multiKey++;
+        keys += n;
+      }
     }
-    return { models: [...seen.values()].filter((n) => n > 1).length, multiKey };
+    return { multiKey, keys };
   }, [settings.providers]);
-  const canRotate = rotatable.models > 0 || rotatable.multiKey > 0;
+  const canRotate = rotatable.multiKey > 0;
   const stats = pageStats(remoteProviders, probes);
   /** Plain-language summary of what a turn would be shared between. */
-  const rotateSummary = [
-    rotatable.models > 0 ? `${rotatable.models} shared model${rotatable.models === 1 ? "" : "s"}` : "",
-    rotatable.multiKey > 0 ? `${rotatable.multiKey} provider${rotatable.multiKey === 1 ? "" : "s"} with spare keys` : "",
-  ]
-    .filter(Boolean)
-    .join(", ");
+  const rotateSummary = canRotate
+    ? `${rotatable.keys} keys across ${rotatable.multiKey} provider${rotatable.multiKey === 1 ? "" : "s"}`
+    : "";
 
   return (
     <main className="settings-main">
@@ -620,10 +653,9 @@ export function ModelsView() {
             <label
               className="agent-check inline"
               title={
-                "Spread turns evenly instead of always sending to the first option, so no single key " +
-                "reaches its rate limit while the others idle. Rotates between providers listing the " +
-                "identical model id, and between the spare keys on a provider — the reply comes from " +
-                "the same weights either way. Failover still handles what happens after an error."
+                "Lead with a different API key each turn, so no single key reaches its rate limit " +
+                "while the others idle. Only ever rotates keys on the same provider — the turn goes " +
+                "to the provider you picked. Failover still handles what happens after an error."
               }
             >
               <input
@@ -635,7 +667,7 @@ export function ModelsView() {
                   void useStore.getState().saveSettings(next);
                 }}
               />
-              Round-robin <span className="hint">({rotateSummary})</span>
+              Round-robin keys <span className="hint">({rotateSummary})</span>
             </label>
           )}
           {remoteProviders.length > 1 && (
@@ -649,17 +681,11 @@ export function ModelsView() {
             </button>
           )}
         </div>
-        {/* Spare keys are the main thing people want to rotate, and the field
-            for them is a collapsed <details> on the far side of Settings. Saying
-            so here costs one line and saves the search. */}
         {settings.roundRobin === true && (
           <p className="hint">
-            Sharing each turn between {rotateSummary || "nothing yet"}. To add spare keys for one
-            provider, open{" "}
-            <button className="link-btn" onClick={() => setView("settings")}>
-              Settings
-            </button>{" "}
-            → that provider → <em>Resilience — extra keys &amp; failover</em>.
+            Leading with a different key each turn — {rotateSummary}. Add more with{" "}
+            <b>+ Key</b> on any provider below. The provider never changes; only which of its keys
+            goes first.
           </p>
         )}
         {remoteProviders.length === 0 && unkeyedProviders.length === 0 && (
@@ -724,6 +750,7 @@ export function ModelsView() {
           const hasKey = p.apiKey.trim().length > 0;
           const localish = p.id === "ollama" || p.id === "lmstudio" || p.id === "llamacpp";
           const probe = probes[p.id];
+          const keys = keyCount(p);
           return (
             <div key={p.id} className="provider-card">
               <div className="provider-head">
@@ -747,6 +774,20 @@ export function ModelsView() {
                       {b.label}
                     </span>
                   ))}
+                  {/* Only once there is something to rotate. A "1 key" pill on
+                      every card would be noise. */}
+                  {keys > 1 && (
+                    <span
+                      className="pill ok"
+                      title={
+                        settings.roundRobin === true
+                          ? "Turns are shared across these keys"
+                          : "Turn on Round-robin keys above to share turns across these"
+                      }
+                    >
+                      {keys} keys
+                    </span>
+                  )}
                 </div>
                 <button
                   className="btn small"
@@ -756,6 +797,19 @@ export function ModelsView() {
                 >
                   {probe?.state === "checking" ? "Checking…" : "Check"}
                 </button>
+                {/* The whole point of round-robin, one click from the provider
+                    it applies to. It used to live behind Settings → provider →
+                    a collapsed "Resilience" section, which is not a path anyone
+                    finds while looking at this page. */}
+                {!localish && (
+                  <button
+                    className="btn small"
+                    title="Add another API key for this provider — turns rotate across all of them"
+                    onClick={() => void addKey(p.id)}
+                  >
+                    + Key
+                  </button>
+                )}
                 <button className="btn small" onClick={() => (editing ? setEditProvider(null) : openEdit(p.id))}>
                   {editing ? "Close" : "Edit"}
                 </button>
@@ -775,6 +829,22 @@ export function ModelsView() {
                         placeholder="Paste API key"
                         onChange={(e) => setEditKey(e.target.value)}
                       />
+                    </label>
+                  )}
+                  {!localish && (
+                    <label className="field">
+                      <span>Extra API keys (one per line)</span>
+                      <textarea
+                        rows={3}
+                        className="code"
+                        value={editSpares}
+                        placeholder={"sk-...\nsk-..."}
+                        onChange={(e) => setEditSpares(e.target.value)}
+                      />
+                      <span className="hint">
+                        Each key gets its own rate limit. With Round-robin keys on, turns lead with a
+                        different one each time; failover still tries the rest after an error.
+                      </span>
                     </label>
                   )}
                   <label className="field">

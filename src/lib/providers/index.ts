@@ -4,7 +4,7 @@ import { toOpenAITools } from "../tools";
 import { readSSE } from "./sse";
 import { gatewayUrl } from "../gateway";
 import { isWeb } from "../web";
-import { keysOf, rotate, rotateKeys } from "../rotation";
+import { keysOf, rotateKeys } from "../rotation";
 import { backoffMs, retryAfterMs, shouldWait } from "./backoff";
 import { withCacheBreakpoint } from "./cache";
 
@@ -141,14 +141,11 @@ export async function streamChat(p: ChatParams): Promise<ChatResult> {
   } catch {
     /* store unavailable (tests / workflows) — just use the one provider */
   }
-  // Round-robin picks the *entry* provider; failover still owns what happens
-  // after an error. Keeping them separate means a rotation can never mask a
-  // provider that is down — it just changes which working one goes first.
-  // Two independent rotations: which provider leads, and which of that
-  // provider's keys leads. A single provider with several keys benefits from
-  // the second even though the first has nothing to choose between.
-  const picked = roundRobin ? (rotate(p.model, all) ?? p.provider) : p.provider;
-  const entry = roundRobin ? rotateKeys(picked) : picked;
+  // Round-robin rotates which of this provider's keys leads. It never changes
+  // the provider: the turn goes where the user pointed it, and failover still
+  // owns what happens after an error. Keeping those separate means a rotation
+  // can never mask a provider that is down.
+  const entry = roundRobin ? rotateKeys(p.provider) : p.provider;
   const attempts = buildAttempts(entry, all);
   let lastErr: unknown;
   // Counts only the attempts we actually paused for, so the exponential curve

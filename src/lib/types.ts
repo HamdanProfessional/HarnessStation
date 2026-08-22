@@ -84,10 +84,12 @@ export interface Settings {
   /** Same, for the calendar month. */
   monthlyCapUsd?: number;
   /**
-   * Spread turns across every connected provider that lists the same model,
-   * instead of always sending to the first one. Providers rate-limit their own
-   * keys, so an idle second key is wasted headroom. Only rotates between
-   * providers advertising the identical model id, so the weights never change.
+   * Spread turns across the API keys on a provider instead of always leading
+   * with the first. Providers rate-limit per key, so a spare key is real extra
+   * headroom that failover alone never reaches — it only tries key 2 once key 1
+   * has already failed.
+   *
+   * Never changes which provider serves the turn. See lib/rotation.ts.
    */
   roundRobin?: boolean;
   /**
