@@ -8,6 +8,7 @@ import {
   type BrowserTarget,
 } from "../lib/browserTools";
 import { useStore } from "../lib/store";
+import { toast } from "../lib/toast";
 import { Spinner } from "./Loading";
 import { IconX } from "./icons";
 
@@ -33,8 +34,16 @@ export function BrowserView() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [extension, setExtension] = useState<{ connected: boolean; port: number } | null>(null);
+  const [bridgeToken, setBridgeToken] = useState("");
   const [error, setError] = useState<string | null>(null);
   const shot = lastScreenshot();
+
+  // Shown in the extension setup steps — the credential the options page needs.
+  useEffect(() => {
+    void invoke<string>("browser_bridge_token")
+      .then(setBridgeToken)
+      .catch(() => {});
+  }, []);
 
   // Keep the native pane lined up with the placeholder as the window resizes.
   useEffect(() => {
@@ -186,17 +195,35 @@ export function BrowserView() {
             and it can take screenshots, which the in-app pane can't yet.
           </p>
           {!extension?.connected && (
-            <ol className="hint browser-steps">
-              <li>
-                Open <code>chrome://extensions</code> (or <code>edge://extensions</code>).
-              </li>
-              <li>
-                Turn on <b>Developer mode</b>.
-              </li>
-              <li>
-                <b>Load unpacked</b> → choose the <code>extension</code> folder in HarnessStation.
-              </li>
-            </ol>
+            <>
+              <ol className="hint browser-steps">
+                <li>
+                  Open <code>chrome://extensions</code> (or <code>edge://extensions</code>).
+                </li>
+                <li>
+                  Turn on <b>Developer mode</b>.
+                </li>
+                <li>
+                  <b>Load unpacked</b> → choose the <code>extension</code> folder in HarnessStation.
+                </li>
+                <li>
+                  Open the extension's <b>Options</b> and paste this bridge token — it's how the app
+                  knows the connection is really your extension, not a webpage:
+                </li>
+              </ol>
+              <div className="provider-row" style={{ alignItems: "center" }}>
+                <code style={{ userSelect: "all" }}>{bridgeToken || "…"}</code>
+                <button
+                  className="btn"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(bridgeToken);
+                    toast.success("Bridge token copied.");
+                  }}
+                >
+                  Copy
+                </button>
+              </div>
+            </>
           )}
           {shot && (
             <>

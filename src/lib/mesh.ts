@@ -168,10 +168,12 @@ export function looksLikeCode(input: string): boolean {
 /**
  * How exposed a peer address is.
  *
- * This matters because mesh traffic isn't encrypted yet. On a home LAN that's
- * the same exposure as any other local service; over the open internet it means
- * anyone on the path can read the prompts, the tool output and the knowledge
- * that goes across. So the app has to be able to tell the difference and say so.
+ * Message bodies are sealed with ChaCha20-Poly1305 since protocol v2 (mesh.rs
+ * owns the wire), so a listener can't read the prompts or tool output — what
+ * remains exposed is metadata (who talks, when, how much) and the lack of
+ * forward secrecy: a token stolen later unlocks traffic recorded today, and
+ * nothing authenticates the host. That residual risk is why the app still has
+ * to tell the difference between address classes and say so.
  *
  *   loopback  same machine
  *   private   RFC1918 / link-local / IPv6 ULA — a LAN

@@ -8,6 +8,7 @@
  * so someone else's agent lands usable on your setup.
  */
 import { gatewayUrl } from "./gateway";
+import { confirmDialog } from "./dialog";
 import { useStore } from "./store";
 import type { Agent, Schedule, Workflow } from "./types";
 
@@ -336,9 +337,53 @@ async function installOne(
   return `Imported schedule “${name}” (disabled — pick a target and model, then enable it).`;
 }
 
+/**
+ * What an item will run with, in one line each: the instruction text a model
+ * will be told, and any tool ids it wants enabled. Surfaced before install —
+ * a published "agent" is arbitrary instructions plus tool grants, and a
+ * malicious one is a data-exfiltration prompt waiting for the user to enable
+ * file or web tools. Import is where that has to be visible, not after.
+ */
+async function reviewSummary(kind: string, payload: string): Promise<string | null> {
+  const parse = (): { instructions?: string; toolIds?: string[]; agent?: { instructions?: string } } => {
+    try {
+      return JSON.parse(payload);
+    } catch {
+      return {};
+    }
+  };
+  const t = parse();
+  if (kind === "skill") return null; // a skill is inert until explicitly invoked
+  if (kind === "agent") {
+    const a = t as { instructions?: string; toolIds?: string[] };
+    const tools = a.toolIds?.length ? `\nTools it starts with: ${a.toolIds.join(", ")}` : "";
+    return `Instructions it will run with:\n${(a.instructions || "(none)").slice(0, 600)}${tools}`;
+  }
+  if (kind === "template" && t.agent) {
+    return `Bundles an agent. Its instructions:\n${(t.agent.instructions || "(none)").slice(0, 600)}`;
+  }
+  return null;
+}
+
 /** Download an item and add it to the user's local collection. Returns a label. */
 export async function communityImport(item: CommunityItem): Promise<string> {
   const payload = await fetchPayload(item.id);
+
+  // Show what the thing will do before it can do it. Skills are exempt (they
+  // only run when invoked by name); everything that carries instructions or
+  // tool grants gets a look-before-installing step.
+  const kinds = item.type === "bundle" ? (JSON.parse(payload) as BundlePayload).items ?? [] : [{ kind: item.type, name: item.name, payload }];
+  const reviews: string[] = [];
+  for (const it of kinds) {
+    const summary = await reviewSummary(it.kind, it.payload);
+    if (summary) reviews.push(`“${it.name}” — ${summary}`);
+  }
+  if (reviews.length) {
+    const ok = await confirmDialog(`Import “${item.name}”?`, {
+      message: `${reviews.join("\n\n")}\n\nPublished content is not reviewed — check that the instructions do nothing you wouldn't ask for yourself.`,
+    });
+    if (!ok) return "Import cancelled.";
+  }
 
   if (item.type === "bundle") {
     const b = JSON.parse(payload) as BundlePayload;

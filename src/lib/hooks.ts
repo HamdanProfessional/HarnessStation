@@ -149,7 +149,13 @@ export async function guardTool(toolId: string, args?: unknown): Promise<"allow"
     if (r.tool !== "*" && r.tool !== toolId) continue;
     if (r.pattern) {
       try {
-        if (!new RegExp(r.pattern, "i").test(argsStr)) continue;
+        // Guardrail patterns are user-authored and often pasted from elsewhere,
+        // so they get a length cap on the subject: catastrophic-backtracking
+        // regexes scale with input size, and tool args can be arbitrarily
+        // large. 10k characters is far more than any sensible guardrail needs
+        // to see, and bounds the worst case to "slow" rather than "hung".
+        const subject = argsStr.length > 10_000 ? argsStr.slice(0, 10_000) : argsStr;
+        if (!new RegExp(r.pattern, "i").test(subject)) continue;
       } catch {
         continue; // a bad regex never blocks anything
       }

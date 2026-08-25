@@ -32,6 +32,27 @@ function CodeBlock({ className, children }: { className?: string; children?: Rea
 }
 
 /**
+ * An SVG preview that cannot execute.
+ *
+ * The naive render is `dangerouslySetInnerHTML`, and that was here for a
+ * while — but model output is untrusted input (it echoes fetched pages, RAG
+ * documents, tool results), and raw SVG accepts `<script>`, `onload=`-style
+ * attributes and `<foreignObject>` full of HTML. In a Tauri webview an XSS is
+ * not "defaced chat": the page can reach every `invoke()` command. So the SVG
+ * is never given to the DOM as markup. Base64-packed into an `<img>` it becomes
+ * a sealed document: images don't run scripts, don't fire event handlers,
+ * don't load external references and don't render foreignObject. Same picture,
+ * none of the attack surface — which is why this beats sanitizing: there is no
+ * allowlist to maintain and nothing subtle to get wrong.
+ */
+export function svgDataUrl(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return `data:image/svg+xml;base64,${btoa(bin)}`;
+}
+
+/**
  * Memoised on `children`, which is the whole prop surface.
  *
  * Every assistant token restreams the open message, and the store update
@@ -61,9 +82,7 @@ export const Markdown = memo(function Markdown({ children }: { children: string 
             }
             if (lang === "mermaid") return <Mermaid code={text.replace(/\n$/, "")} />;
             if (lang === "svg" && /<svg[\s>]/i.test(text)) {
-              return (
-                <div className="svg-render" dangerouslySetInnerHTML={{ __html: text }} />
-              );
+              return <img className="svg-render" src={svgDataUrl(text)} alt="SVG preview" />;
             }
             return <CodeBlock className={className}>{children}</CodeBlock>;
           },

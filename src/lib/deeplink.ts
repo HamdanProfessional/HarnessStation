@@ -21,6 +21,7 @@
  * Only meaningful in the web build (the desktop app has an opaque tauri:// URL),
  * but the read/apply path is harmless if it ever runs elsewhere.
  */
+import { confirmDialog } from "./dialog";
 import { gatewayUrl } from "./gateway";
 import { useStore } from "./store";
 import { STYLE_PRESETS } from "./styles";
@@ -167,9 +168,45 @@ async function provisionKnownProvider(ref: string, model?: string): Promise<stri
 /**
  * Apply a deep-link config: redeem any trial, inject a shared key, then point
  * the current chat at the chosen provider/model/style. Called once after boot.
+ *
+ * A link is untrusted input — it is one click from a stranger — so anything
+ * that changes what the model is *told* or *talks to* (system prompt, a key, a
+ * new provider, a trial redemption) is summarized and confirmed before it is
+ * applied. Provider/model/style selection alone stays silent: that's the
+ * share-link happy path, and it only changes which configured setup is on top.
  */
 export async function applyDeepLink(cfg: DeepLinkConfig): Promise<void> {
   const store = useStore.getState();
+
+  // Describe every consequential action first, from a dry run, so the dialog
+  // states what WILL happen rather than what sounds nice.
+  const plan: string[] = [];
+  if (cfg.trial) {
+    plan.push("Redeem the trial code — this adds its provider and installs its key.");
+  } else if (cfg.provider) {
+    const existing = resolveProvider(useStore.getState().settings, cfg.provider);
+    if (!existing) plan.push(`Add the "${cfg.provider}" provider from the built-in catalog.`);
+  }
+  if (cfg.key) {
+    plan.push(
+      `Install an API key ending "…${cfg.key.slice(-4)}" from the link. Keys in URLs are visible to anyone who has the link.`,
+    );
+  }
+  if (cfg.system) {
+    plan.push(
+      `Replace the chat's system prompt with:\n"${cfg.system.slice(0, 300)}${cfg.system.length > 300 ? "…" : ""}"`,
+    );
+  }
+  if (plan.length) {
+    const ok = await confirmDialog("Apply settings from this link?", {
+      message: `${plan.join("\n\n")}\n\nLinks can come from anywhere. If you didn't write this one, read every line before accepting.`,
+      confirmLabel: "Apply",
+    });
+    if (!ok) {
+      toast.info("Link settings were not applied.");
+      return;
+    }
+  }
 
   // 1. A trial code brings its own provider (and usually its key).
   let targetProviderId: string | undefined;

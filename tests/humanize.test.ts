@@ -91,3 +91,27 @@ describe("pickFiller", () => {
     }
   });
 });
+
+describe("humanSsml keeps real numbers speakable", () => {
+  // Regression pin: the pause markers are \x01<ms>\x02 sentinel pairs, and the
+  // final replace must only ever convert wrapped pairs. A reviewer misread the
+  // marker as a bare digit and concluded "$50" gets swallowed into silence —
+  // this test is the proof it can't.
+  it("leaves digit runs in the text alone", () => {
+    const out = humanSsml("It costs $50 in 2026, call 555-0100.");
+    expect(out).toContain("$50");
+    expect(out).toContain("2026");
+    expect(out).toContain("555-0100");
+    expect(out).not.toMatch(/\$<break/);
+  });
+
+  it("still pauses at clause breaks", () => {
+    const out = humanSsml("First part, second part.");
+    expect(out).toContain("<break time=");
+  });
+
+  it("never leaks a sentinel into the SSML", () => {
+    const out = humanSsml("A, B; C: D. E-F.");
+    expect(out).not.toMatch(/[\x01\x02]/);
+  });
+});

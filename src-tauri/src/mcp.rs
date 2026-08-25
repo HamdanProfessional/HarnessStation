@@ -166,16 +166,38 @@ pub async fn mcp_connect(
 
         // On Windows, npm shims (npx/npm/yarn/pnpm) are .cmd/.ps1 files, not .exe —
         // CreateProcess can't launch them directly, so route non-.exe commands through cmd.
+        //
+        // The hop is also an injection surface if handled the naive way: cmd
+        // parses metacharacters (& | ^ < >) outside quotes, so an imported
+        // config with an argument like `&calc` used to chain a second program.
+        // The fix is to build ONE pre-quoted command line ourselves: every
+        // argument is wrapped in straight quotes with internal quotes doubled,
+        // which keeps metacharacters literal. Residual caveat, accepted and
+        // documented: cmd expands %VAR% even inside quotes, so an argument can
+        // read environment variables — it cannot execute through them.
+        #[cfg(windows)]
+        fn cmd_quote(arg: &str) -> String {
+            format!("\"{}\"", arg.replace('"', "\"\""))
+        }
+
         #[cfg(windows)]
         let mut cmd = {
+            if command.contains('"') {
+                return Err("MCP command must not contain quote characters".into());
+            }
             let is_exe = command.to_lowercase().ends_with(".exe");
             if is_exe {
                 let mut c = Command::new(&command);
                 c.args(&arg_vec);
                 c
             } else {
+                let line = format!(
+                    "\"{}\" {}",
+                    command,
+                    arg_vec.iter().map(|a| cmd_quote(a)).collect::<Vec<_>>().join(" ")
+                );
                 let mut c = Command::new("cmd");
-                c.arg("/C").arg(&command).args(&arg_vec);
+                c.arg("/C").arg(&line);
                 c
             }
         };
@@ -287,5 +309,38 @@ pub fn kill_all(state: &State<McpState>) {
             let _ = child.kill();
             let _ = child.wait();
         }
+    }
+}
+
+#[cfg(test)]
+mod quoting_tests {
+    /// Mirrors the quoting built in mcp_connect � kept as a pure copy because
+    /// the function lives behind #[cfg(windows)] and the property that matters
+    /// (metacharacters stay literal) is platform-independent to assert.
+    fn cmd_quote(arg: &str) -> String {
+        format!("\"{}\"", arg.replace('"', "\"\""))
+    }
+
+    #[test]
+    fn plain_args_are_wrapped() {
+        assert_eq!(cmd_quote("--port"), "\"--port\"");
+    }
+
+    #[test]
+    fn metacharacters_cannot_chain_a_second_command() {
+        // The injection that motivated this: cmd treats an unquoted & as
+        // "run this too". Inside the wrapping quotes it is a literal.
+        for hostile in ["&calc", "| whoami", "^x", "> out.txt", "a b"] {
+            let q = cmd_quote(hostile);
+            assert!(q.starts_with('"') && q.ends_with('"'), "{hostile}");
+            assert_eq!(q, format!("\"{hostile}\""));
+        }
+    }
+
+    #[test]
+    fn embedded_quotes_are_doubled_not_escaped() {
+        // cmd has no backslash escapes; the only way to embed a quote in a
+        // quoted string is to double it.
+        assert_eq!(cmd_quote("say \"hi\""), "\"say \"\"hi\"\"\"");
     }
 }

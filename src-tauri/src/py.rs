@@ -62,10 +62,25 @@ fn python_exe() -> Result<String, String> {
     Err("Python not found — install Python 3 and make sure `python` is on PATH.".into())
 }
 
+/// Sequence number so two concurrent invocations (a swarm, a battle) never
+/// clobber each other's script file. The old fixed names made a parallel
+/// python tool call overwrite the other's code mid-run.
+static TMP_SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
 fn tmp_file(name: &str, content: &str) -> Result<std::path::PathBuf, String> {
     let dir = crate::local::harness_root().join("tmp");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let path = dir.join(name);
+    // <stem>_<pid>_<seq>.<ext> — unique per invocation, still recognisable in a dir listing.
+    let p = std::path::Path::new(name);
+    let seq = TMP_SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let unique = format!(
+        "{}_{}_{}.{}",
+        p.file_stem().and_then(|s| s.to_str()).unwrap_or("hs_pytool"),
+        std::process::id(),
+        seq,
+        p.extension().and_then(|s| s.to_str()).unwrap_or("tmp"),
+    );
+    let path = dir.join(unique);
     std::fs::write(&path, content).map_err(|e| e.to_string())?;
     Ok(path)
 }

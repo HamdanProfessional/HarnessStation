@@ -1012,10 +1012,12 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   saveToolSet: async (name, toolIds) => {
-    const set: ToolSet = { id: uid(), name, toolIds };
-    await storage.saveToolSet(set);
+    // Named `toolSet`, not `set`: shadowing zustand's `set` here once sent a
+    // future edit's `set({...})` into the local variable instead of the store.
+    const toolSet: ToolSet = { id: uid(), name, toolIds };
+    await storage.saveToolSet(toolSet);
     useStore.setState({
-      toolSets: [...get().toolSets, set].sort((a, b) => a.name.localeCompare(b.name)),
+      toolSets: [...get().toolSets, toolSet].sort((a, b) => a.name.localeCompare(b.name)),
     });
   },
 
@@ -1814,6 +1816,8 @@ async function runMultiCompletion(set: Set, get: Get): Promise<void> {
         role: "assistant" as const,
         content: "",
         author: p.label,
+        // Priced and labelled by the model that actually answers, not the chat's.
+        model: p.model,
         id: mid,
       })),
     ],

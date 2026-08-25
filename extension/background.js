@@ -27,13 +27,29 @@ function connect() {
     return setTimeout(connect, RECONNECT_MS);
   }
 
-  socket.onopen = () => console.log("[bridge] connected to HarnessStation");
+  // The app rejects any connection that cannot present the bridge token (set
+  // once on the options page), and additionally checks the WebSocket Origin —
+  // a service worker's is chrome-extension://, a webpage's is its own site.
+  // The hello frame must be the first thing sent after the socket opens.
+  socket.onopen = () => {
+    chrome.storage.local.get("bridgeToken", ({ bridgeToken }) => {
+      if (socket?.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "hello", token: bridgeToken || "" }));
+      }
+    });
+    console.log("[bridge] connected to HarnessStation");
+  };
 
   socket.onmessage = async (event) => {
     let msg;
     try {
       msg = JSON.parse(event.data);
     } catch {
+      return;
+    }
+    if (msg?.type === "error") {
+      console.warn("[bridge] rejected by the app:", msg.error);
+      socket.close();
       return;
     }
     const { id, action, args } = msg ?? {};

@@ -485,9 +485,10 @@ function LocalApiCard() {
       {running && (
         <>
           <p className="hint ok-note">
-            Point a client's base URL at <code>http://127.0.0.1:{running}/v1</code> (any API key). Use
-            a model id like <code>openai/gpt-5</code>, an agent as <code>agent/&lt;name&gt;</code>, or
-            a combo as <code>combo/&lt;name&gt;</code>. <code>GET /v1/models</code> lists them.
+            Point a client's base URL at <code>http://127.0.0.1:{running}/v1</code>, using the token
+            below as its API key — the server rejects requests without it. Use a model id like{" "}
+            <code>openai/gpt-5</code>, an agent as <code>agent/&lt;name&gt;</code>, or a combo as{" "}
+            <code>combo/&lt;name&gt;</code>. <code>GET /v1/models</code> lists them.
           </p>
           <EndpointConfigs running={running} />
         </>
@@ -505,14 +506,15 @@ function LocalApiCard() {
  */
 function EndpointConfigs({ running }: { running: number }) {
   const base = `http://127.0.0.1:${running}/v1`;
+  const token = useStore((s) => s.settings.localApi?.token) ?? "";
   const blocks: { title: string; body: string }[] = [
     {
       title: "Claude Code — set these, then run `claude`",
-      body: claudeEnvSnippet(base),
+      body: claudeEnvSnippet(base, "", token),
     },
     {
       title: "OpenAI-compatible tools (opencode, Aider, SDKs)",
-      body: endpointSnippet(base, ["provider/model", "agent/assistant", "combo/cheap-first"]),
+      body: endpointSnippet(base, ["provider/model", "agent/assistant", "combo/cheap-first"], "", token),
     },
   ];
   const copy = async (text: string) => {

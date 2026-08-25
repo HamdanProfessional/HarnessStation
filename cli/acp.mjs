@@ -28,6 +28,7 @@ import { createInterface } from "node:readline";
 import { pathToFileURL } from "node:url";
 import {
   apiTarget,
+  authHeaders,
   deltaText,
   diagnose,
   parseArgs,
@@ -100,7 +101,10 @@ export function createAgent({ target, model, system }) {
 
   async function resolveModel() {
     if (defaultModel) return defaultModel;
-    const res = await fetch(`${target.base}/models`, { signal: AbortSignal.timeout(5000) });
+    const res = await fetch(`${target.base}/models`, {
+      headers: authHeaders(target),
+      signal: AbortSignal.timeout(5000),
+    });
     if (!res.ok) throw new Error(`The app returned HTTP ${res.status} for /models.`);
     const first = (await res.json())?.data?.[0]?.id;
     if (!first) throw new Error("The app has no models configured yet.");
@@ -114,7 +118,10 @@ export function createAgent({ target, model, system }) {
       const why = diagnose({
         settings: readSettings(),
         target,
-        reachable: await fetch(`${target.base}/models`, { signal: AbortSignal.timeout(2500) })
+        reachable: await fetch(`${target.base}/models`, {
+          headers: authHeaders(target),
+          signal: AbortSignal.timeout(2500),
+        })
           .then((r) => r.ok)
           .catch(() => false),
       });
@@ -162,7 +169,7 @@ export function createAgent({ target, model, system }) {
       try {
         const res = await fetch(`${target.base}/chat/completions`, {
           method: "POST",
-          headers: { "content-type": "application/json" },
+          headers: { "content-type": "application/json", ...authHeaders(target) },
           body: JSON.stringify({ model: modelName, messages: out, stream: true }),
           signal: controller.signal,
         });

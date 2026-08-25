@@ -41,7 +41,6 @@ export function ContextMenu() {
       const items: MenuItem[] = [];
 
       if (field && (field.tagName === "TEXTAREA" || field.type === "text" || field.type === "search" || field.type === "password" || !field.type)) {
-        const hasSel = field.selectionStart !== field.selectionEnd;
         items.push({
           label: "Cut",
           action: async () => {
@@ -74,7 +73,6 @@ export function ContextMenu() {
             field.select();
           },
         });
-        if (!hasSel) items[0].danger = false;
       } else if (selection) {
         items.push({
           label: "Copy",

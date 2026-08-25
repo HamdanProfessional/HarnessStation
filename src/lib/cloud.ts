@@ -15,11 +15,19 @@
 import { fetch } from "@tauri-apps/plugin-http";
 import { gatewayUrl } from "./gateway";
 import { useStore } from "./store";
+import * as storage from "./storage";
 import { gatherSyncSnapshot, applySyncSnapshot, type SyncSnapshot } from "./storage";
 
 const ENC = new TextEncoder();
 const DEC = new TextDecoder();
 const subtle = () => globalThis.crypto.subtle;
+// KDF iterations for the account verifier and the encryption key. 200k is
+// below current OWASP guidance (600k for SHA-256), and this is deliberately
+// NOT a one-line bump: both the login verifier AND the blob decryption key
+// derive from these iterations, so raising the constant would lock every
+// existing account out of its own data on next login. Doing it properly means
+// versioned KDF params stored per account server-side plus a
+// decrypt-and-re-encrypt migration on first sync — scheduled, not forgotten.
 const ITERATIONS = 200_000;
 
 // ---- small binary helpers (stack-safe base64) ----
@@ -150,6 +158,35 @@ function setCloud(patch: Partial<NonNullable<import("./types").Settings["cloud"]
   return useStore.getState().saveSettings({ ...s, cloud: { enabled: false, ...s.cloud, ...patch } });
 }
 
+// ---- session token ----
+//
+// The account token is a credential, so it lives in the OS keychain under the
+// same roof as provider keys — not in settings.json, which anything with file
+// access can read. (The sync encryption key was already vaulted; the session
+// token was the odd one out, and an account hijack is exactly what the
+// "keys stay local" promise is supposed to rule out.)
+
+const TOKEN_REF = "cloud-session";
+
+/** The live session token, or "" when signed out. Migrates the legacy copy. */
+export async function sessionToken(): Promise<string> {
+  const stored = await storage.vaultGet(TOKEN_REF);
+  if (stored) return stored;
+  // Pre-keychain sessions kept the token in settings.json — move it out once
+  // and scrub the file, so the plaintext copy doesn't outlive the migration.
+  const legacy = useStore.getState().settings.cloud?.token ?? "";
+  if (!legacy) return "";
+  await storage.vaultSet(TOKEN_REF, legacy);
+  await setCloud({ token: undefined as unknown as string });
+  return legacy;
+}
+
+async function setSessionToken(token: string): Promise<void> {
+  await storage.vaultSet(TOKEN_REF, token);
+  // Keep settings.json free of the credential entirely.
+  await setCloud({ token: undefined as unknown as string });
+}
+
 // ---- account ----
 
 export async function signup(email: string, password: string): Promise<void> {
@@ -159,7 +196,8 @@ export async function signup(email: string, password: string): Promise<void> {
     body: JSON.stringify({ email: email.trim().toLowerCase(), authVerifier }),
   });
   await cacheKey(encKey);
-  await setCloud({ enabled: true, email: email.trim().toLowerCase(), token: r!.token, autoSync: true });
+  await setSessionToken(r!.token);
+  await setCloud({ enabled: true, email: email.trim().toLowerCase(), autoSync: true });
 }
 
 /** Log in. Returns whether the account already has a stored blob to pull. */
@@ -170,22 +208,25 @@ export async function login(email: string, password: string): Promise<{ hasBlob:
     body: JSON.stringify({ email: email.trim().toLowerCase(), authVerifier }),
   });
   await cacheKey(encKey);
-  await setCloud({ enabled: true, email: email.trim().toLowerCase(), token: r!.token, autoSync: true });
+  await setSessionToken(r!.token);
+  await setCloud({ enabled: true, email: email.trim().toLowerCase(), autoSync: true });
   return { hasBlob: !!r!.hasBlob };
 }
 
 export async function logout(): Promise<void> {
-  const token = useStore.getState().settings.cloud?.token;
+  const token = await sessionToken();
   if (token) await api(`/api/account/logout`, { method: "POST", token }).catch(() => {});
   await clearKey();
+  await storage.vaultDelete(TOKEN_REF);
   const s = useStore.getState().settings;
   await useStore.getState().saveSettings({ ...s, cloud: { enabled: false } });
 }
 
 export async function deleteAccount(): Promise<void> {
-  const token = useStore.getState().settings.cloud?.token;
+  const token = await sessionToken();
   if (token) await api(`/api/account`, { method: "DELETE", token });
   await clearKey();
+  await storage.vaultDelete(TOKEN_REF);
   const s = useStore.getState().settings;
   await useStore.getState().saveSettings({ ...s, cloud: { enabled: false } });
 }
@@ -195,22 +236,23 @@ export async function deleteAccount(): Promise<void> {
 let syncing = false;
 
 export async function isReady(): Promise<boolean> {
-  return !!useStore.getState().settings.cloud?.token && !!(await loadKey());
+  return (await sessionToken()) !== "" && !!(await loadKey());
 }
 
 /** Encrypt the local snapshot and upload it. */
 export async function pushNow(): Promise<void> {
   const cloud = useStore.getState().settings.cloud;
   const key = await loadKey();
-  if (!cloud?.token || !key || syncing) return;
+  const token = await sessionToken();
+  if (!token || !key || syncing) return;
   syncing = true;
   try {
     const snapshot = await gatherSyncSnapshot();
     const blob = await encrypt(key, JSON.stringify(snapshot));
     const r = await api<{ updatedAt: number; version: number }>(`/api/sync`, {
       method: "PUT",
-      token: cloud.token,
-      body: JSON.stringify({ blob, version: cloud.version ?? 0 }),
+      token,
+      body: JSON.stringify({ blob, version: cloud?.version ?? 0 }),
     });
     await setCloud({ lastSyncedAt: r!.updatedAt, version: r!.version });
   } finally {
@@ -220,12 +262,12 @@ export async function pushNow(): Promise<void> {
 
 /** Download, decrypt and apply the cloud snapshot. Returns true if something was applied. */
 export async function pullNow(): Promise<boolean> {
-  const cloud = useStore.getState().settings.cloud;
   const key = await loadKey();
-  if (!cloud?.token || !key || syncing) return false;
+  const token = await sessionToken();
+  if (!token || !key || syncing) return false;
   syncing = true;
   try {
-    const r = await api<{ blob: string; updatedAt: number; version: number }>(`/api/sync`, { token: cloud.token });
+    const r = await api<{ blob: string; updatedAt: number; version: number }>(`/api/sync`, { token });
     if (!r) return false; // 204 — nothing stored yet
     const snapshot = JSON.parse(await decrypt(key, r.blob)) as SyncSnapshot;
     await applySyncSnapshot(snapshot);
@@ -247,7 +289,9 @@ export function startAutoSync(): void {
   if (unsub) return;
   unsub = useStore.subscribe(() => {
     const cloud = useStore.getState().settings.cloud;
-    if (!cloud?.enabled || !cloud.autoSync || !cloud.token) return;
+    // The token check itself happens in pushNow (it's async — keychain read);
+    // here we only decide whether a push is even wanted.
+    if (!cloud?.enabled || !cloud.autoSync) return;
     if (useStore.getState().streaming) return; // don't sync mid-generation
     if (debounce) clearTimeout(debounce);
     debounce = setTimeout(() => void pushNow().catch(() => {}), 8000);

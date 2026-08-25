@@ -3445,14 +3445,15 @@ select:focus {
 .svg-render {
   margin: 12px 0;
   padding: 12px;
-  /* Was #fff in both themes. Inline SVG drawn with currentColor
-     inherits var(--text), so in dark mode it was near-white on white. */
+  /* An <img> now, not inline markup — see Markdown.tsx svgDataUrl for why the
+     SVG is sealed into an image instead of injected into the DOM. */
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: 10px;
   text-align: center;
 }
 
+.svg-render img,
 .svg-render svg {
   max-width: 100%;
   height: auto;

@@ -315,16 +315,19 @@ describe("repl body", () => {
 });
 
 describe("claude code snippet", () => {
-  it("strips the /v1 suffix the SDK appends itself", () => {
-    const s = cli.claudeEnvSnippet("http://127.0.0.1:11435/v1", "groq/llama-3.3-70b");
+  it("strips the /v1 suffix the SDK appends itself and carries the real token", () => {
+    const s = cli.claudeEnvSnippet("http://127.0.0.1:11435/v1", "groq/llama-3.3-70b", "tok123");
     expect(s).toContain("ANTHROPIC_BASE_URL=http://127.0.0.1:11435");
     expect(s).toContain("ANTHROPIC_MODEL=groq/llama-3.3-70b");
-    expect(s).toContain("ANTHROPIC_AUTH_TOKEN=hs-local");
+    // The server rejects the old constant placeholder — the snippet must carry
+    // the credential the app actually minted.
+    expect(s).toContain("ANTHROPIC_AUTH_TOKEN=tok123");
+    expect(s).not.toContain("hs-local");
   });
 
-  it("leaves a bare base URL alone and placeholders the model", () => {
+  it("without a token it says how to get one instead of shipping a credential that fails", () => {
     const s = cli.claudeEnvSnippet("http://127.0.0.1:11435");
-    expect(s).toContain("ANTHROPIC_BASE_URL=http://127.0.0.1:11435");
     expect(s).toContain("ANTHROPIC_MODEL=provider/model");
+    expect(s).toMatch(/ANTHROPIC_AUTH_TOKEN=\(missing/);
   });
 });

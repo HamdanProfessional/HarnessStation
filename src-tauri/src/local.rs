@@ -30,18 +30,166 @@ pub(crate) fn harness_root() -> PathBuf {
     home_dir().join(".harnessx")
 }
 
-/// Resolve `path` against `base`; absolute paths pass through, empty base = home dir.
-fn resolve(base: &str, path: &str) -> PathBuf {
-    let p = Path::new(path);
-    if p.is_absolute() {
-        return p.to_path_buf();
+/// Resolve `path` against `base` and refuse anything that lands outside it.
+///
+/// This is the fs tools' whole sandbox. The README promises "file access is
+/// confined to a working directory you choose", which used to be enforced
+/// nowhere at all: absolute paths passed straight through and `..` climbed
+/// freely, so `read_file("C:/anywhere")` or `read_file("../../secrets")` from
+/// the model walked out of the workspace. Now:
+///
+///   - relative paths are normalized lexically (`a/../b` -> `b`); a `..` that
+///     would climb above the base is an error, not a silent clamp;
+///   - absolute paths are allowed *only* when, canonically, they are inside
+///     the base — an absolute path into the workspace stays convenient, one
+///     pointing elsewhere is refused;
+///   - both sides are canonicalized through their deepest existing ancestor
+///     (the target itself may not exist yet — fs_write creates it), which
+///     also collapses symlinks, `\\?\` prefixes and case differences on
+///     Windows.
+///
+/// Empty `base` means the home directory, matching every caller that predates
+/// per-chat working directories.
+fn resolve_in_base(base: &str, path: &str) -> Result<PathBuf, String> {
+    let target = Path::new(path);
+    if path.trim().is_empty() {
+        return Err("empty path".into());
     }
-    let b = if base.trim().is_empty() {
-        home_dir()
-    } else {
-        PathBuf::from(base)
+    let base_path = if base.trim().is_empty() { home_dir() } else { PathBuf::from(base) };
+    let joined = if target.is_absolute() { target.to_path_buf() } else { base_path.join(target) };
+
+    // Lexical pass: collapse `.` and `..` without touching the filesystem, so
+    // an escaping `..` is caught even when nothing along the way exists.
+    let mut stack: Vec<std::ffi::OsString> = Vec::new();
+    for comp in joined.components() {
+        use std::path::Component;
+        match comp {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                // Popping past the root (a leading `..` on an absolute path)
+                // leaves the stack at the prefix — the prefix check below
+                // still rejects it.
+                stack.pop();
+            }
+            other => stack.push(other.as_os_str().to_os_string()),
+        }
+    }
+    let normalized = stack.iter().collect::<PathBuf>();
+
+    // Canonical pass: walk up to the deepest ancestor that exists, canonicalize
+    // it, and re-attach the tail that doesn't exist yet.
+    let canonical = |p: &Path| -> Option<PathBuf> {
+        let mut probe = p.to_path_buf();
+        let mut tail: Vec<std::ffi::OsString> = Vec::new();
+        loop {
+            match std::fs::canonicalize(&probe) {
+                Ok(real) => {
+                    let mut out = real;
+                    for part in tail.iter().rev() {
+                        out.push(part);
+                    }
+                    return Some(out);
+                }
+                Err(_) => {
+                    let last = probe.file_name()?.to_os_string();
+                    probe.pop();
+                    tail.push(last);
+                }
+            }
+        }
     };
-    b.join(path)
+
+    let base_real = std::fs::canonicalize(&base_path)
+        .map_err(|_| format!("working directory does not exist: {}", base_path.display()))?;
+    let target_real = canonical(&normalized)
+        .ok_or_else(|| "could not resolve the path".to_string())?;
+
+    #[cfg(windows)]
+    let inside = target_real
+        .to_string_lossy()
+        .to_lowercase()
+        .starts_with(&base_real.to_string_lossy().to_lowercase());
+    #[cfg(not(windows))]
+    let inside = target_real.starts_with(&base_real);
+    if !inside {
+        return Err(format!(
+            "path escapes the working directory: {}",
+            target_real.display()
+        ));
+    }
+    Ok(target_real)
+}
+
+#[cfg(test)]
+mod confinement_tests {
+    use super::*;
+
+    #[test]
+    fn relative_paths_stay_inside() {
+        let dir = std::env::temp_dir().join("hs_confine_rel");
+        std::fs::create_dir_all(dir.join("sub")).unwrap();
+        let p = resolve_in_base(dir.to_str().unwrap(), "sub/file.txt").unwrap();
+        assert!(p.to_string_lossy().to_lowercase().contains("sub"));
+        std::fs::remove_dir_all(dir).ok();
+    }
+
+    #[test]
+    fn dot_dot_climbing_out_is_refused() {
+        let dir = std::env::temp_dir().join("hs_confine_up");
+        std::fs::create_dir_all(dir.join("sub")).unwrap();
+        let err = resolve_in_base(dir.join("sub").to_str().unwrap(), "..\\..\\etc\\passwd").unwrap_err();
+        assert!(err.contains("escapes"), "{err}");
+        let err = resolve_in_base(dir.join("sub").to_str().unwrap(), "../../../etc/passwd").unwrap_err();
+        assert!(err.contains("escapes"), "{err}");
+        std::fs::remove_dir_all(dir).ok();
+    }
+
+    #[test]
+    fn internal_dot_dot_that_stays_inside_is_fine() {
+        let dir = std::env::temp_dir().join("hs_confine_in");
+        std::fs::create_dir_all(dir.join("a/b")).unwrap();
+        let p = resolve_in_base(dir.to_str().unwrap(), "a/b/../../a/c.txt").unwrap();
+        assert!(p.ends_with("a/c.txt"));
+        std::fs::remove_dir_all(dir).ok();
+    }
+
+    #[test]
+    fn absolute_outside_is_refused_even_without_dotdot() {
+        let dir = std::env::temp_dir().join("hs_confine_abs");
+        std::fs::create_dir_all(&dir).unwrap();
+        let elsewhere = if cfg!(windows) { "C:\\Windows\\system.ini" } else { "/etc/hostname" };
+        assert!(resolve_in_base(dir.to_str().unwrap(), elsewhere).is_err());
+        std::fs::remove_dir_all(dir).ok();
+    }
+
+    #[test]
+    fn absolute_inside_is_allowed_and_canonicalized() {
+        let dir = std::env::temp_dir().join("hs_confine_absin");
+        std::fs::create_dir_all(&dir).unwrap();
+        let real = std::fs::canonicalize(&dir).unwrap();
+        let file = real.join("t.txt");
+        std::fs::write(&file, "x").unwrap();
+        let p = resolve_in_base(dir.to_str().unwrap(), file.to_str().unwrap()).unwrap();
+        assert!(p.ends_with("t.txt"));
+        std::fs::remove_dir_all(dir).ok();
+    }
+
+    #[test]
+    fn missing_target_under_base_resolves_for_creation() {
+        let dir = std::env::temp_dir().join("hs_confine_new");
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = resolve_in_base(dir.to_str().unwrap(), "new/nested/f.txt").unwrap();
+        assert!(p.ends_with("f.txt"));
+        std::fs::remove_dir_all(dir).ok();
+    }
+
+    #[test]
+    fn empty_path_is_an_error() {
+        let dir = std::env::temp_dir().join("hs_confine_empty");
+        std::fs::create_dir_all(&dir).unwrap();
+        assert!(resolve_in_base(dir.to_str().unwrap(), "").is_err());
+        std::fs::remove_dir_all(dir).ok();
+    }
 }
 
 fn no_window(cmd: &mut Command) {
@@ -292,7 +440,7 @@ pub struct DirEntry {
 #[tauri::command]
 pub fn fs_write(base: String, path: String, content: String, append: bool) -> Result<(), String> {
     use std::io::Write;
-    let target = resolve(&base, &path);
+    let target = resolve_in_base(&base, &path)?;
     if let Some(parent) = target.parent() {
         std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
@@ -308,17 +456,17 @@ pub fn fs_write(base: String, path: String, content: String, append: bool) -> Re
 
 #[tauri::command]
 pub fn fs_read(base: String, path: String) -> Result<String, String> {
-    std::fs::read_to_string(resolve(&base, &path)).map_err(|e| e.to_string())
+    std::fs::read_to_string(resolve_in_base(&base, &path)?).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn fs_mkdir(base: String, path: String) -> Result<(), String> {
-    std::fs::create_dir_all(resolve(&base, &path)).map_err(|e| e.to_string())
+    std::fs::create_dir_all(resolve_in_base(&base, &path)?).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn fs_remove(base: String, path: String) -> Result<(), String> {
-    let target = resolve(&base, &path);
+    let target = resolve_in_base(&base, &path)?;
     if target.is_dir() {
         std::fs::remove_dir_all(&target).map_err(|e| e.to_string())
     } else {
@@ -328,12 +476,12 @@ pub fn fs_remove(base: String, path: String) -> Result<(), String> {
 
 #[tauri::command]
 pub fn fs_exists(base: String, path: String) -> bool {
-    resolve(&base, &path).exists()
+    resolve_in_base(&base, &path).is_ok_and(|p| p.exists())
 }
 
 #[tauri::command]
 pub fn fs_list(base: String, path: String) -> Result<Vec<DirEntry>, String> {
-    let dir = resolve(&base, &path);
+    let dir = resolve_in_base(&base, &path)?;
     let mut out = Vec::new();
     for entry in std::fs::read_dir(&dir).map_err(|e| e.to_string())? {
         let entry = entry.map_err(|e| e.to_string())?;
@@ -785,6 +933,11 @@ pub fn probe_engine(engine_dir: String) -> Option<String> {
     find_server_exe(&root).map(|p| p.to_string_lossy().into_owned())
 }
 
+// A Tauri command's argument list is its wire format — each parameter is a
+// named field the frontend passes by name. Collapsing them into a struct
+// would just move the eight names into a type while keeping the invoke site
+// unchanged, so the lint's usual remedy buys nothing here.
+#[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub fn start_server(
     state: State<LocalServer>,

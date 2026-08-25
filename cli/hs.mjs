@@ -16,6 +16,7 @@ import {
   HELP,
   apiTarget,
   chatBody,
+  authHeaders,
   claudeEnvSnippet,
   deltaText,
   diagnose,
@@ -42,6 +43,7 @@ const target = apiTarget(settings, flags.port);
 async function reachable() {
   try {
     const res = await fetch(`${target.base}/models`, {
+      headers: authHeaders(target),
       signal: AbortSignal.timeout(2500),
     });
     return res.ok;
@@ -79,7 +81,7 @@ function requestConfig() {
 async function streamTurn({ body, signal }) {
   const res = await fetch(`${target.base}/chat/completions`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...authHeaders(target) },
     body: JSON.stringify(body),
     signal,
   });
@@ -251,7 +253,7 @@ async function main() {
 
     case "models": {
       await requireApi();
-      const res = await fetch(`${target.base}/models`);
+      const res = await fetch(`${target.base}/models`, { headers: authHeaders(target) });
       const body = await res.json();
       const ids = (body.data ?? []).map((m) => m.id);
       out(asJson ? JSON.stringify(ids, null, 2) : ids.join("\n"));
@@ -260,7 +262,7 @@ async function main() {
 
     case "endpoint": {
       await requireApi();
-      const res = await fetch(`${target.base}/models`);
+      const res = await fetch(`${target.base}/models`, { headers: authHeaders(target) });
       const body = await res.json();
       const models = (body.data ?? []).map((m) => m.id).slice(0, 12);
       out(asJson
@@ -270,11 +272,11 @@ async function main() {
             "",
             "Point any OpenAI-compatible tool at it — e.g. opencode's config:",
             "",
-            endpointSnippet(target.base, models),
+            endpointSnippet(target.base, models, "", target.token),
             "",
             "Claude Code (Anthropic protocol — any model, incl. local):",
             "",
-            claudeEnvSnippet(target.base),
+            claudeEnvSnippet(target.base, "", target.token),
             "",
             "Function calling passes through on openai-compatible providers.",
           ].join("\n"));
@@ -313,7 +315,7 @@ async function main() {
       if (!stream) {
         const res = await fetch(`${target.base}/chat/completions`, {
           method: "POST",
-          headers: { "content-type": "application/json" },
+          headers: { "content-type": "application/json", ...authHeaders(target) },
           body: JSON.stringify(body),
         });
         if (!res.ok) {

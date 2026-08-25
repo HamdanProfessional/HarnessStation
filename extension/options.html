@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>HarnessStation Bridge — Setup</title>
+  <style>
+    body { font: 14px system-ui, sans-serif; max-width: 560px; margin: 32px auto; padding: 0 16px; color: #222; }
+    code { background: #f2f2f2; padding: 2px 5px; border-radius: 4px; }
+    input { width: 100%; padding: 8px; font-family: monospace; margin: 8px 0 12px; }
+    button { padding: 8px 14px; }
+    .ok { color: #0a7d2c; margin-left: 10px; }
+  </style>
+</head>
+<body>
+  <h1>HarnessStation Browser Bridge</h1>
+  <p>
+    Paste the bridge token from the app: open HarnessStation's Browser panel
+    and copy the token shown under setup. It proves to the desktop app that
+    this extension — not some webpage — is the thing on the other end of the
+    wire.
+  </p>
+  <label for="token">Bridge token</label>
+  <input id="token" placeholder="paste the token from the app" autocomplete="off" spellcheck="false" />
+  <button id="save">Save</button><span id="status" class="ok"></span>
+  <script src="options.js"></script>
+</body>
+</html>

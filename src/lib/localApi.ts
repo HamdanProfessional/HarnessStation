@@ -35,14 +35,36 @@ let stop: UnlistenFn | null = null;
 /** The default loopback port — deliberately clear of Ollama (11434) and LM Studio (1234). */
 export const DEFAULT_LOCAL_API_PORT = 11435;
 
-/** Start the server and begin answering its requests. Desktop only. */
+/** A fresh 192-bit hex credential for the loopback server. */
+export function newLocalApiToken(): string {
+  const b = new Uint8Array(24);
+  crypto.getRandomValues(b);
+  return Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Start the server and begin answering its requests. Desktop only.
+ *
+ * The token is minted once on first start and persisted in settings — the CLI
+ * (`hs`, `hs-acp`) and any editor the user configures read the same value from
+ * settings.json, so it rotates only when the user deletes it. Without it the
+ * Rust side refuses every request, so an unauthenticated server can never
+ * exist, even by misconfiguration.
+ */
 export async function startLocalApi(port = DEFAULT_LOCAL_API_PORT): Promise<number> {
   if (isWeb()) throw new Error("The local API server is a desktop feature.");
+  const settings = structuredClone(useStore.getState().settings);
+  let token = settings.localApi?.token ?? "";
+  if (!token.trim()) {
+    token = newLocalApiToken();
+    settings.localApi = { ...settings.localApi, enabled: true, token };
+    await useStore.getState().saveSettings(settings);
+  }
   await stopLocalApiListener();
   stop = await listen<ApiRequest>("localapi-request", (event) => {
     void handle(event.payload);
   });
-  return invoke<number>("local_api_start", { port });
+  return invoke<number>("local_api_start", { port, token });
 }
 
 /** Stop the server and the event listener. */

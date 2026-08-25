@@ -241,6 +241,7 @@ pub fn run() {
             localapi::local_api_end,
             browser::browser_call,
             browser::browser_status,
+            browser::browser_bridge_token,
             inapp_browser::inapp_open,
             inapp_browser::inapp_bounds,
             inapp_browser::inapp_hide,

@@ -4,7 +4,87 @@ All notable changes are recorded here. Versions follow [semantic versioning](htt
 
 ## [Unreleased]
 
+### Security
+- **SVG code blocks can no longer execute.** A ```svg fence was injected into
+  the DOM raw, and SVG carries `<script>`, event attributes and
+  `<foreignObject>` — in a Tauri webview an XSS reaches every app command.
+  Previews are now sealed into an `<img>` (data URL), which cannot run
+  scripts, fire handlers, load external references or render foreignObject.
+  Same picture, no attack surface, no sanitizer allowlist to maintain.
+- **The browser-extension bridge authenticates both ways.** The WebSocket on
+  127.0.0.1:8791 used to accept any connection and let it replace the real
+  extension — and since WebSockets ignore CORS, any webpage could do it and
+  feed the agent fabricated page contents. Connections are now refused unless
+  the WebSocket Origin is a real extension origin *and* the client presents
+  the bridge token (shown with a copy button in the Browser panel, pasted once
+  into the extension's new options page).
+- **The cloud-sync session token lives in the OS keychain**, not
+  settings.json — same rule as provider keys. Existing sessions migrate on
+  first use and the plaintext copy is scrubbed. (Blob confidentiality was
+  never affected; the AES-GCM key was always vaulted.)
+- **Community imports show what they'll run before installing.** Agents and
+  setup templates now open a review dialog with their instruction text and
+  tool grants — a published "agent" is arbitrary instructions plus tool
+  permissions, and that deserves a look before it lands.
+- **The loopback API now requires a bearer token, and wildcard CORS is gone.**
+  Any webpage in any browser could previously POST to `127.0.0.1` and drive the
+  app's models — spend tokens, read the model list, use it as a free proxy.
+  The server now answers 401 to everything that doesn't present the token
+  (`Authorization: Bearer` or `x-api-key`), which is minted once on first
+  start, lives in settings.json, and is printed by `hs endpoint` and the
+  Devices panel's paste-ready configs. **Existing external clients need the
+  new token after updating.** CORS headers were removed entirely: real
+  clients aren't browsers, and their absence is what stops a page from
+  *reading* responses.
+- **The fs tools' sandbox is real.** `resolve()` passed absolute paths
+  straight through and never normalized `..`, so `read_file("C:/anywhere")`
+  walked out of the working directory the README promised would confine it.
+  Paths are now lexically normalized, canonicalized through their deepest
+  existing ancestor (symlinks and `\\?\` prefixes included), and prefix-checked
+  against the base; escapes are refused with the resolved path in the error.
+- **MCP stdio spawn no longer chains shell commands.** Non-.exe commands went
+  through `cmd /C` with raw arguments, so an imported config with an argument
+  like `&calc` executed a second program. Arguments are now pre-quoted for
+  cmd's parser (metacharacters stay literal), and commands containing quotes
+  are refused.
+- **Concurrent python tool calls no longer clobber each other.** The fixed
+  temp filenames (`hs_pytool_run.py`) meant a swarm's parallel calls wrote
+  over the same file mid-run; names are now unique per invocation.
+- Stale comment in mesh.ts claimed mesh traffic "isn't encrypted yet" — it
+  has been sealed with ChaCha20-Poly1305 since protocol v2; the comment now
+  describes the actual residual exposure (metadata, no forward secrecy).
+- **Deep links confirm before they change anything that matters.** A crafted
+  `?system=…&key=…` link used to rewrite the chat's system prompt and install
+  an attacker's API key on load, no questions asked — prompt injection by URL.
+  Links now show every consequential change (system prompt, keys, new
+  providers, trial redemptions) in a confirm dialog first; plain
+  provider/model/style selection still applies silently.
+- **The shared ui-kit package got the same SVG fix** as the app (its copy of
+  the raw-DOM render survived the first patch).
+- **Importing a custom tool asks first** — pasted JSON is untrusted, and a
+  tool is arbitrary code running with the app's permissions once enabled.
+- **Guardrail regexes run against a length-capped subject**, so a
+  catastrophic-backtracking pattern pasted into Settings can stall a tool call
+  but can't hang the app on huge tool arguments.
+
+### Fixed
+- Per-message cost in Battle/Collaborate chats was priced against the chat's
+  model; participant messages now record the model that produced them and are
+  priced accordingly.
+- Toasts dismiss with Escape (clicking worked; keyboards didn't).
+- Dead code removed in ContextMenu.
+
+### Noted
+- Cloud-sync PBKDF2 stays at 200k iterations for now: raising it invalidates
+  every existing login AND decryption key simultaneously. Doing it safely
+  means versioned KDF params server-side plus a re-encryption migration —
+  documented in cloud.ts, scheduled, not forgotten.
+
 ### Added
+- **CI exists.** The repo had no test workflow at all — only the release
+  pipeline ran checks. New `ci.yml`: web tests + tsc on Ubuntu *and* Windows
+  (the Windows leg would have caught the PowerShell/cmd-only bugs in this
+  codebase's history), cargo tests + clippy `-D warnings` on Windows.
 - **"Server default" temperature — the request can now carry no sampling at
   all.** New chats send no temperature field: a local llama.cpp/vLLM server's
   own sampler settings stand, instead of being silently overridden by a client

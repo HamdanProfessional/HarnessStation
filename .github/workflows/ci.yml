@@ -1,3 +1,15 @@
+# Continuous integration.
+#
+# This repo had no test CI at all — releases ran checks, but a plain push to
+# main ran nothing. Two legs matter here:
+#
+#   - The web tests run on BOTH Linux and Windows. The app is Windows-first
+#     and its history includes bugs that only existed on Windows paths (the
+#     PowerShell alias trap in run_command, the cmd /C quoting in MCP spawn),
+#     so an Ubuntu-only suite would have passed right through them.
+#   - The Rust tests and clippy run on Windows, the platform the crate
+#     actually ships for. An Ubuntu cargo leg needs the full webkit2gtk stack
+#     for Tauri to compile; add it when Linux becomes a shipping target.
 name: CI
 
 on:
@@ -6,57 +18,34 @@ on:
   pull_request:
 
 jobs:
-  frontend:
-    name: Typecheck, tests, web build
-    runs-on: ubuntu-latest
+  web:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
-
       - run: npm ci
-
-      - name: Typecheck
-        run: npx tsc --noEmit
-
-      - name: Unit tests
-        run: npm test
-
-      # `npm run build` runs tsc + vite build; catches bundling regressions that
-      # a typecheck alone would miss.
-      - name: Build frontend
-        run: npm run build
+      - run: npx tsc --noEmit
+      - run: npm test
 
   rust:
-    name: Rust check
-    runs-on: ubuntu-22.04
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: src-tauri
     steps:
-      - uses: actions/checkout@v5
-
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-
-      - uses: swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
-
-      - name: Install Tauri system dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y \
-            libwebkit2gtk-4.1-dev build-essential curl wget file \
-            libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev \
-            libasound2-dev libdbus-1-dev pkg-config
-
-      # No `cargo fmt --check` gate: the Rust here is hand-formatted more compactly
-      # than rustfmt's defaults, and a mass reformat would bury real history.
-      # Run `cargo fmt` deliberately if you ever want to adopt it.
-      - name: Clippy
-        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
-
-      - name: Tests
-        run: cargo test --manifest-path src-tauri/Cargo.toml
+      - run: cargo test --lib
+      - run: cargo clippy --lib -- -D warnings

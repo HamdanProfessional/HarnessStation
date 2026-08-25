@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useToast } from "../lib/toast";
 
@@ -10,6 +11,18 @@ const ICON: Record<string, string> = {
 export function Toaster() {
   const toasts = useToast((s) => s.toasts);
   const dismiss = useToast((s) => s.dismiss);
+
+  // Escape dismisses the newest toast. Clicking worked, but a keyboard-only
+  // user had no way to clear a sticky error toast out of the way.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const live = useToast.getState().toasts.filter((t) => !t.leaving);
+      if (live.length) dismiss(live[live.length - 1].id);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [dismiss]);
 
   return createPortal(
     <div className="toaster">

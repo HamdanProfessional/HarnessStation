@@ -103,14 +103,16 @@ export default function App() {
   // Cloud sync: when an account is signed in with auto-sync on, keep pushing
   // local changes up (debounced). We do NOT auto-pull on boot — that could
   // overwrite edits made offline; a pull happens on login and via "Restore".
+  // The session token lives in the keychain now, so "signed in" is judged by
+  // the account flags alone; pushNow re-checks the token itself.
   useEffect(() => {
     if (!ready) return;
-    if (settings.cloud?.enabled && settings.cloud.token && (settings.cloud.autoSync ?? true)) {
+    if (settings.cloud?.enabled && (settings.cloud.autoSync ?? true)) {
       void import("./lib/cloud").then((m) => m.startAutoSync());
     } else {
       void import("./lib/cloud").then((m) => m.stopAutoSync());
     }
-  }, [ready, settings.cloud?.enabled, settings.cloud?.token, settings.cloud?.autoSync]);
+  }, [ready, settings.cloud?.enabled, settings.cloud?.autoSync]);
 
   // Messaging channels (Telegram / Discord) connect while the desktop app runs.
   // Re-sync whenever their config changes; never on the web build (bot APIs need

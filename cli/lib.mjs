@@ -106,7 +106,26 @@ export function apiTarget(settings, portOverride) {
   // app's own on/off toggle irrelevant. Without this, pointing the CLI at any
   // other compatible server is refused because of a setting that does not
   // govern it.
-  return { port, explicit, enabled: !!cfg.enabled, base: `http://127.0.0.1:${port}/v1` };
+  return {
+    port,
+    explicit,
+    enabled: !!cfg.enabled,
+    token: typeof cfg.token === "string" ? cfg.token : "",
+    base: `http://127.0.0.1:${port}/v1`,
+  };
+}
+
+/**
+ * Headers the loopback server requires on every call.
+ *
+ * Both spellings are sent because the server accepts either — Authorization
+ * for OpenAI-style clients, x-api-key for Anthropic-style ones — and a raw
+ * fetch is playing both roles at once. A missing token still sends nothing:
+ * the 401 the server returns names the fix (`hs endpoint` prints the token).
+ */
+export function authHeaders(target) {
+  if (!target?.token) return {};
+  return { Authorization: `Bearer ${target.token}`, "x-api-key": target.token };
 }
 
 /** Agents defined in the app, as {name, description, model}. */
@@ -232,14 +251,16 @@ export function parseReplLine(line) {
 /**
  * A ready-to-paste provider block for tools that accept OpenAI-compatible
  * endpoints (opencode, Aider, LangChain…). Emitted rather than documented so
- * it can never drift from the actual port.
+ * it can never drift from the actual port. The token rides along as `apiKey`:
+ * the loopback server checks it on every request.
  */
-export function endpointSnippet(base, models, indent = "") {
+export function endpointSnippet(base, models, indent = "", apiKey = "") {
   const list = models.map((m) => `${indent}      "${m}"`).join(",\n");
   return `${indent}{
 ${indent}  "provider": {
 ${indent}    "api": "openai",
 ${indent}    "baseUrl": "${base}",
+${indent}    "apiKey": "${apiKey}",
 ${indent}    "models": [
 ${list}
 ${indent}    ]
@@ -249,14 +270,17 @@ ${indent}}`;
 
 /**
  * Environment for pointing Claude Code at the app. The Anthropic SDK appends
- * /v1/messages itself, so the base URL must not include it.
+ * /v1/messages itself, so the base URL must not include it. The auth token is
+ * the same one the server checks — the old constant placeholder only ever
+ * worked because the server used to check nothing.
  */
-export function claudeEnvSnippet(base, model) {
+export function claudeEnvSnippet(base, model, token = "") {
   const root = base.replace(/\/v1\/?$/, "");
   const m = model || "provider/model — see `hs models`";
+  const t = token || "(missing — start the desktop app once, then re-run `hs endpoint`)";
   return [
     `ANTHROPIC_BASE_URL=${root}`,
-    "ANTHROPIC_AUTH_TOKEN=hs-local",
+    `ANTHROPIC_AUTH_TOKEN=${t}`,
     `ANTHROPIC_MODEL=${m}`,
     `ANTHROPIC_SMALL_FAST_MODEL=${m}`,
   ].join("\n");

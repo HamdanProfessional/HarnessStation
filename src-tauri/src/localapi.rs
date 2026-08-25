@@ -40,6 +40,13 @@ pub struct LocalApi {
     next_rid: AtomicU64,
     /// The port we're bound to, or None when stopped.
     port: Mutex<Option<u16>>,
+    /// Credential every request must present. The frontend mints this once and
+    /// persists it in settings; without it the server answers 401 to everything.
+    /// A loopback bind alone is not access control — any webpage the user
+    /// browses can POST to 127.0.0.1 ports, and with an open API that page
+    /// could spend their tokens and read their models. The token is what turns
+    /// "anyone on this machine's browsers" back into "programs the user chose".
+    token: Mutex<String>,
 }
 
 impl LocalApi {
@@ -103,6 +110,11 @@ async fn ask_frontend_stream(
 }
 
 /// Server-sent-events headers. No Content-Length: the body ends when we close.
+///
+/// Deliberately no CORS headers: the legitimate clients (curl, SDKs, editors,
+/// the CLI) are not browsers and never needed them, and their absence is what
+/// stops a random webpage from *reading* responses it tricks this server into
+/// writing. Auth is the lock; no-CORS is the second lock on the same door.
 fn sse_headers() -> String {
     concat!(
         "HTTP/1.1 200 OK\r\n",
@@ -110,7 +122,6 @@ fn sse_headers() -> String {
         // Without this, proxies and the browser buffer the whole stream and
         // deliver it at the end — which looks exactly like no streaming at all.
         "Cache-Control: no-cache\r\n",
-        "Access-Control-Allow-Origin: *\r\n",
         "Connection: close\r\n",
         // No Content-Length: the body ends when the socket closes. Sending one
         // would tell the client the response is already complete.
@@ -207,14 +218,55 @@ fn find_subslice(haystack: &[u8], needle: &[u8]) -> Option<usize> {
     haystack.windows(needle.len()).position(|w| w == needle)
 }
 
-/// Build a full HTTP/1.1 response with the JSON body and permissive CORS.
+/// The credential a request presented, if any.
+///
+/// Two doors, because the two protocol families reach for different headers:
+/// OpenAI SDKs send `Authorization: Bearer <key>`, Anthropic SDKs send
+/// `x-api-key`. Header names are matched case-insensitively per RFC 9110;
+/// HTTP/2-style lowercase from odd proxies is handled by the same rule.
+fn presented_token(head: &str) -> Option<String> {
+    let mut bearer: Option<String> = None;
+    let mut x_api_key: Option<String> = None;
+    for line in head.lines().skip(1) {
+        let (name, value) = match line.split_once(':') {
+            Some((n, v)) => (n.trim_ascii().to_ascii_lowercase(), v.trim()),
+            None => continue,
+        };
+        match name.as_str() {
+            "authorization" => {
+                let v = value.strip_prefix("Bearer ").or_else(|| value.strip_prefix("bearer "));
+                if let Some(v) = v {
+                    bearer = Some(v.trim().to_string());
+                }
+            }
+            "x-api-key" => x_api_key = Some(value.to_string()),
+            _ => {}
+        }
+    }
+    bearer.or(x_api_key)
+}
+
+/// Is this request allowed in? Fail-closed: with no token configured nothing
+/// is authorized, so a start that forgot to mint one locks the door rather
+/// than leaving it open.
+fn authorized(head: &str, expected: &str) -> bool {
+    if expected.is_empty() {
+        return false;
+    }
+    presented_token(head).is_some_and(|t| t == expected)
+}
+
+/// Build a full HTTP/1.1 response with the JSON body.
+///
+/// No CORS headers, on purpose: every real client of a loopback API is a
+/// program, not a webpage, and `Access-Control-Allow-Origin: *` is what would
+/// let any page the user browses read the responses. Browsers still *send*
+/// simple requests cross-origin, which is why the token check exists
+/// independently of CORS.
 fn http_json(status: &str, body: &str) -> String {
     format!(
         "HTTP/1.1 {status}\r\n\
          Content-Type: application/json\r\n\
-         Access-Control-Allow-Origin: *\r\n\
-         Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n\
-         Access-Control-Allow-Headers: Authorization, Content-Type, x-api-key, anthropic-version, anthropic-beta\r\n\
          Content-Length: {len}\r\n\
          Connection: close\r\n\
          \r\n\
@@ -265,6 +317,25 @@ async fn handle_conn(api: Arc<LocalApi>, app: AppHandle, mut stream: tokio::net:
     let mut parts = request_line.split_whitespace();
     let method = parts.next().unwrap_or("").to_string();
     let path = parts.next().unwrap_or("").to_string();
+
+    // Auth before anything else. OPTIONS is exempt because a CORS preflight by
+    // definition carries no credentials — and with no CORS headers sent back,
+    // a passing preflight grants a browser nothing.
+    if method != "OPTIONS" {
+        let token = api.token.lock().await.clone();
+        if !authorized(&head, &token) {
+            let _ = stream
+                .write_all(
+                    http_error(
+                        "401 Unauthorized",
+                        "missing or invalid API token — send it as `Authorization: Bearer <token>` (print it with `hs endpoint`)",
+                    )
+                    .as_bytes(),
+                )
+                .await;
+            return;
+        }
+    }
 
     let mut content_length = 0usize;
     for line in lines {
@@ -389,17 +460,28 @@ async fn route(
 // ---------------------------------------------------------------------------
 
 /// Start the loopback API server on `port` (rebinding if already running).
+///
+/// `token` is the credential every request must present — minted once by the
+/// frontend, persisted in settings, and shared with CLI consumers through
+/// settings.json. An empty token is refused rather than trusted: a server that
+/// starts without a credential would be exactly the open door this exists to
+/// close.
 #[tauri::command]
 pub async fn local_api_start(
     app: AppHandle,
     state: State<'_, Arc<LocalApi>>,
     port: u16,
+    token: String,
 ) -> Result<u16, String> {
+    if token.trim().is_empty() {
+        return Err("refusing to start the local API without an access token".into());
+    }
     let api = state.inner().clone();
     // Replace any existing server (e.g. the user changed the port).
     if let Some(t) = api.task.lock().await.take() {
         t.abort();
     }
+    *api.token.lock().await = token;
 
     let listener = tokio::net::TcpListener::bind(("127.0.0.1", port))
         .await
@@ -514,11 +596,42 @@ mod tests {
     }
 
     #[test]
-    fn json_responses_carry_a_length_and_cors() {
+    fn json_responses_carry_a_length_and_no_cors() {
         let r = http_json("200 OK", "{\"a\":1}");
         assert!(r.contains("Content-Length: 7"));
-        assert!(r.contains("Access-Control-Allow-Origin: *"));
+        // No CORS at all: a webpage that tricks this server into replying must
+        // not be able to read the reply. curl and SDKs never needed it.
+        assert!(!r.contains("Access-Control-Allow-Origin"));
         assert!(r.ends_with("{\"a\":1}"));
+    }
+
+    #[test]
+    fn sse_headers_carry_no_cors_either() {
+        assert!(!sse_headers().contains("Access-Control-Allow-Origin"));
+    }
+
+    #[test]
+    fn presented_token_reads_both_protocol_headers() {
+        let bearer = "POST /v1 HTTP/1.1\r\nAuthorization: Bearer sekrit\r\n\r\n";
+        assert_eq!(presented_token(bearer).as_deref(), Some("sekrit"));
+        let xkey = "POST /v1 HTTP/1.1\r\nx-api-key:  sekrit2 \r\n\r\n";
+        assert_eq!(presented_token(xkey).as_deref(), Some("sekrit2"));
+        // Header names are case-insensitive; the Bearer scheme is matched as sent.
+        let odd = "POST /v1 HTTP/1.1\r\nAUTHORIZATION: bearer lowsecret\r\n\r\n";
+        assert_eq!(presented_token(odd).as_deref(), Some("lowsecret"));
+        assert_eq!(presented_token("GET / HTTP/1.1\r\n\r\n"), None);
+    }
+
+    #[test]
+    fn authorization_fails_closed() {
+        let with = "POST /x HTTP/1.1\r\nAuthorization: Bearer good\r\n\r\n";
+        // No token configured -> deny everything, including the matching request.
+        assert!(!authorized(with, ""));
+        assert!(authorized(with, "good"));
+        assert!(!authorized(with, "other"));
+        // The x-api-key door opens the same lock.
+        let via_key = "POST /x HTTP/1.1\r\nx-api-key: good\r\n\r\n";
+        assert!(authorized(via_key, "good"));
     }
 
     #[test]

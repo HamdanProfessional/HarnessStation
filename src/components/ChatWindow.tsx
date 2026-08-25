@@ -98,9 +98,12 @@ function DeleteItemBtn({ label, onDelete }: { label: string; onDelete: () => voi
   );
 }
 
-function MsgMeta({ model, m }: { model: string; m: { promptTokens?: number; completionTokens?: number } }) {
+function MsgMeta({ model, m }: { model: string; m: { promptTokens?: number; completionTokens?: number; model?: string } }) {
   if (!m.completionTokens && !m.promptTokens) return null;
-  const cost = messageCost(model, m.promptTokens, m.completionTokens);
+  // In battle/collaborate chats the message records the model that produced it
+  // (`m.model`); pricing against the chat's model silently mis-costs every
+  // non-default participant. Absent `m.model` = single-agent, where chat's is right.
+  const cost = messageCost(m.model ?? model, m.promptTokens, m.completionTokens);
   const tok = (m.promptTokens ?? 0) + (m.completionTokens ?? 0);
   return (
     <div className="msg-meta">

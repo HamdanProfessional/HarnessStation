@@ -189,14 +189,27 @@ export interface Settings {
   /** Argument-matching guardrail rules, evaluated before the simple lists. */
   guardrails?: import("./hooks").GuardrailRule[];
   /** Local OpenAI-compatible API server (desktop only): expose configured models/agents on loopback. */
-  localApi?: { enabled: boolean; port?: number };
+  localApi?: {
+    enabled: boolean;
+    port?: number;
+    /**
+     * Bearer credential every request to the loopback server must present.
+     * Minted once on first start and kept forever — the CLI and editors read
+     * the same value from settings.json. Rotating it is deleting it and
+     * restarting; every consumer needs the new value afterwards.
+     */
+    token?: string;
+  };
   /** Messaging channels (Telegram, Discord) that reach the agent from outside. */
   channels?: import("./channels").ChannelsSettings;
   /** Opt-in cloud sync account/session (end-to-end encrypted; keys stay local). */
   cloud?: {
     enabled: boolean;
     email?: string;
-    /** Session bearer token (not the password). */
+    /**
+     * Legacy location of the session token, kept only so cloud.ts can migrate
+     * it into the OS keychain on first read. Never written by new code.
+     */
     token?: string;
     autoSync?: boolean;
     lastSyncedAt?: number;
@@ -377,6 +390,9 @@ export interface Message {
   completionTokens?: number;
   /** Multi-agent chats: which participant produced this message (their label). Absent = single-agent or user. */
   author?: string;
+  /** The model id that produced this message. Set for multi-agent participants so
+   * per-message cost is priced against the model that actually ran, not the chat's. */
+  model?: string;
   /** Transient id used to target a specific message while streaming concurrently (multi-agent). */
   id?: string;
   // ---- Trajectory / traceability (all optional; absent on older messages) ----

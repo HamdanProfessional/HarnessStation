@@ -21,7 +21,10 @@ function rel(ms?: number): string {
 export function CloudSyncPanel() {
   const { settings } = useStore();
   const cloud = settings.cloud;
-  const signedIn = !!cloud?.token;
+  // The session token lives in the keychain; the account flags in settings say
+  // whether a session exists. (A pre-migration token in settings also counts —
+  // cloud.ts moves it to the keychain on first use.)
+  const signedIn = !!(cloud?.enabled && (cloud.token || cloud.email));
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");

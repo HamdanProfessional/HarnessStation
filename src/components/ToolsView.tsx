@@ -113,6 +113,15 @@ export function ToolsView() {
     try {
       const t = JSON.parse(importText) as Tool;
       if (!t.name || !t.code) throw new Error("JSON must have at least name and code fields.");
+      // Same review gate as community imports: pasted JSON is untrusted, and a
+      // tool is arbitrary code that runs with this app's permissions the moment
+      // a chat enables it.
+      const ok = await confirmDialog(`Import tool "${t.name}"?`, {
+        message: `A custom tool is arbitrary ${t.runtime === "python" ? "Python" : "JavaScript"} that runs with this app's permissions once a chat enables it. Read the code before trusting it.`,
+        danger: true,
+        confirmLabel: "Import",
+      });
+      if (!ok) return;
       await saveTool({
         id: t.id || `tool-${Date.now()}`,
         name: t.name,

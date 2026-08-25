@@ -30,6 +30,22 @@ function CodeBlock({ className, children }: { className?: string; children?: Rea
   );
 }
 
+/**
+ * An SVG preview that cannot execute.
+ *
+ * Twin of the fix in the app's src/components/Markdown.tsx: model output is
+ * untrusted (it echoes fetched pages, RAG docs, tool results), and raw SVG
+ * accepts `<script>`, event attributes and `<foreignObject>`. Sealed into an
+ * `<img>` it becomes a document that cannot run any of it. Kept as a copy —
+ * this package is dependency-free and cannot import from the app.
+ */
+export function svgDataUrl(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return `data:image/svg+xml;base64,${btoa(bin)}`;
+}
+
 export function Markdown({ children }: { children: string }) {
   return (
     <div className="md">
@@ -50,9 +66,7 @@ export function Markdown({ children }: { children: string }) {
               );
             }
             if (lang === "svg" && /<svg[\s>]/i.test(text)) {
-              return (
-                <div className="svg-render" dangerouslySetInnerHTML={{ __html: text }} />
-              );
+              return <img className="svg-render" src={svgDataUrl(text)} alt="SVG preview" />;
             }
             return <CodeBlock className={className}>{children}</CodeBlock>;
           },
