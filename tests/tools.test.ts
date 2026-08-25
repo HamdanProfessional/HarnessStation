@@ -44,6 +44,17 @@ describe("built-in catalogue", () => {
       for (const id of set.toolIds) expect(ids, `${set.name} -> ${id}`).toContain(id);
     }
   });
+
+  it("files every user-facing built-in into at least one tool set", () => {
+    // Ungrouped tools are invisible: the config panel's quick-toggle sections
+    // never mention them, so users can neither find nor disable them as a
+    // group. ask_user and read_tool_output are exempt — they are turn
+    // infrastructure, not capabilities, and are always available.
+    const grouped = new Set(BUILTIN_TOOLSETS.flatMap((s) => s.toolIds));
+    const infrastructure = new Set(["ask_user", "read_tool_output"]);
+    const orphans = BUILTIN_TOOLS.filter((t) => !grouped.has(t.id) && !infrastructure.has(t.id));
+    expect(orphans.map((t) => t.id)).toEqual([]);
+  });
 });
 
 describe("executeTool (JS runtime)", () => {

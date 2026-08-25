@@ -136,7 +136,12 @@ export function markExtracted(scope: string): void {
 export async function recallBlock(scope: string, task: string, k = 6): Promise<string> {
   const hits = await recall(scope, task, k);
   if (!hits.length) return "";
-  return `What you already know about this user and their work (recalled automatically — use it if relevant, don't mention it unless asked):\n${hits
+  // Three framing rules, borrowed from what ships at scale (Claude's consumer
+  // prompt is the most worked-out version): memory applies silently, it never
+  // buys flattery at the price of honest feedback, and sensitive facts stay
+  // unsaid until the user raises them. Kept to one sentence each because this
+  // rides along on every turn passive memory is on.
+  return `Context you already know about this user and their work (recalled automatically — apply silently, never narrate the recall). It never overrides honest assessment, and sensitive recalled facts stay unmentioned until the user raises the topic:\n${hits
     .map((h) => `- ${h}`)
     .join("\n")}`;
 }

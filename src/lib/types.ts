@@ -427,6 +427,13 @@ export interface Project {
   color?: string;
 }
 
+/**
+ * Sentinel for "the client sends no sampling temperature" — the server's
+ * default stands. Matches the convention maxTokens already uses, where 0
+ * means "send nothing".
+ */
+export const SERVER_DEFAULT_TEMPERATURE = -1;
+
 export interface Chat {
   id: string;
   title: string;
@@ -452,6 +459,13 @@ export interface Chat {
   model: string;
   systemPrompt: string;
   styleId: string;
+  /**
+   * Sampling temperature sent with every request in this chat.
+   * SERVER_DEFAULT_TEMPERATURE (-1) means "send no temperature at all" — the
+   * server's own sampling stands. That is the honest default: a local
+   * llama.cpp/vLLM server carries tuned sampler settings, and a client that
+   * silently overrides them with its own number changes the model under you.
+   */
   temperature: number;
   maxTokens: number;
   enabledTools?: string[]; // tool ids usable by the model in this chat

@@ -116,8 +116,9 @@ export async function streamWebLLM(p: ChatParams): Promise<ChatResult> {
     messages: toOpenAIMessages(p.system, p.messages),
     stream: true,
     stream_options: { include_usage: true },
-    temperature: p.temperature,
   };
+  // Same rule as every other backend: negative means "send nothing".
+  if (p.temperature >= 0) request.temperature = p.temperature;
   if (p.maxTokens > 0) request.max_tokens = p.maxTokens;
   if (p.tools?.length) request.tools = toOpenAITools(p.tools);
 

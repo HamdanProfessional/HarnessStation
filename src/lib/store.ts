@@ -36,6 +36,7 @@ import type {
   ToolSet,
   Workflow,
 } from "./types";
+import { SERVER_DEFAULT_TEMPERATURE } from "./types";
 
 let abortController: AbortController | null = null;
 
@@ -72,7 +73,9 @@ function newChatObj(settings: Settings): Chat {
     model: p?.models[0] ?? "",
     systemPrompt: "",
     styleId: "normal",
-    temperature: 0.7,
+    // New chats send no temperature: the server's sampler settings stand. The
+    // slider in the config panel takes over the moment the user picks a number.
+    temperature: SERVER_DEFAULT_TEMPERATURE,
     maxTokens: 0,
     // Every built-in tool on by default — a new chat can act right away. Turn any
     // off per-chat in the config panel.
@@ -1258,7 +1261,7 @@ async function executeSchedule(s: Schedule, get: Get, set: Set): Promise<void> {
       model: s.model || p?.models[0] || "",
       systemPrompt: "",
       styleId: "normal",
-      temperature: 0.7,
+      temperature: SERVER_DEFAULT_TEMPERATURE,
       maxTokens: 0,
       enabledTools: [],
       messages: [

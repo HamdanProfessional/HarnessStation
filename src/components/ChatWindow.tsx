@@ -1,4 +1,4 @@
-import { useEffect, useImperativeHandle, useMemo, useRef, useState, type RefObject } from "react";
+import { useLayoutEffect, useEffect, useImperativeHandle, useMemo, useRef, useState, type RefObject } from "react";
 import { Markdown } from "./Markdown";
 import { Canvas } from "./Canvas";
 import { prettyName } from "../lib/format";
@@ -18,6 +18,7 @@ import { TrajectoryView } from "./TrajectoryView";
 import { SnippetPicker, SNIPPET_PICKER_MAX } from "./SnippetPicker";
 import { applySnippet, findSnippetTrigger, filterSnippets, type SnippetTrigger } from "../lib/snippets";
 import { planScroll, prefersReducedMotion } from "../lib/autoscroll";
+import { initialFrom, expandFrom, anchorScroll } from "../lib/transcriptWindow";
 
 const STARTER_PROMPTS = [
   "Summarize the latest news on a topic I choose, with sources.",
@@ -257,6 +258,41 @@ export function ChatWindow() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<ComposerHandle>(null);
 
+  // Transcript window: null means "auto" (render the newest TRANSCRIPT_WINDOW
+  // messages); a number is a reader-chosen start after pressing "show earlier".
+  // New messages never re-shrink an expanded window, and switching chats
+  // resets to auto — nobody expects a scroll position to survive that.
+  const [windowFrom, setWindowFrom] = useState<number | null>(null);
+  // Measured before the window grows so the layout effect can keep the reader
+  // anchored on the message they were reading instead of jumping.
+  const windowAnchor = useRef<{ height: number; top: number } | null>(null);
+
+  // Grow towards the head when the reader reaches the top — the sentinel
+  // button does the same on click; this is the scroll-driven version.
+  const onMessagesScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const from = windowFrom ?? initialFrom(chat?.messages.length ?? 0);
+    if (el.scrollTop < 80 && from > 0) {
+      windowAnchor.current = { height: el.scrollHeight, top: el.scrollTop };
+      setWindowFrom(expandFrom(from));
+    }
+  };
+
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    const anchor = windowAnchor.current;
+    if (!el || !anchor) return;
+    windowAnchor.current = null;
+    el.scrollTop = anchorScroll(anchor, el.scrollHeight);
+  }, [windowFrom]);
+
+  // Switching chats resets the window and clears any pending anchor.
+  useEffect(() => {
+    setWindowFrom(null);
+    windowAnchor.current = null;
+  }, [chat?.id]);
+
   // Which chat this scroller last painted. Switching chats has to jump rather
   // than glide — see planScroll.
   const paintedChat = useRef<string | null>(null);
@@ -294,7 +330,7 @@ export function ChatWindow() {
         </button>
       )}
       {showTrace && <TrajectoryView chat={chat} onClose={() => setShowTrace(false)} />}
-      <div className={`messages ${chat.mode === "battle" ? "battle" : ""}`} ref={scrollRef}>
+      <div className={`messages ${chat.mode === "battle" ? "battle" : ""}`} ref={scrollRef} onScroll={onMessagesScroll}>
         {chat.messages.length === 0 && (() => {
           const provider = settings.providers.find((p) => p.id === chat.providerId);
           const isLocal = provider ? /localhost|127\.0\.0\.1/.test(provider.baseUrl) : false;
@@ -398,7 +434,28 @@ export function ChatWindow() {
           const callName: Record<string, string> = {};
           for (const m of chat.messages)
             for (const c of m.toolCalls ?? []) callName[c.id] = c.name;
-          return chat.messages.map((m, i) => {
+          // Windowed render: only the newest slice is in the DOM. Indices stay
+          // absolute (delete/edit target the real message), and the sentinel
+          // plus the scroll-to-top ramp bring earlier turns back.
+          const from = windowFrom ?? initialFrom(chat.messages.length);
+          const hidden = from;
+          return (
+            <>
+              {hidden > 0 && (
+                <button
+                  type="button"
+                  className="load-earlier"
+                  onClick={() => {
+                    const el = scrollRef.current;
+                    if (el) windowAnchor.current = { height: el.scrollHeight, top: el.scrollTop };
+                    setWindowFrom(expandFrom(from));
+                  }}
+                >
+                  Show earlier messages — {hidden} hidden
+                </button>
+              )}
+              {chat.messages.slice(from).map((m, k) => {
+            const i = from + k;
             // Key by identity, not position. Keyed by index, deleting a message
             // made React reuse each component for whatever slid into its slot,
             // so expanded tool cards collapsed and collapsed ones opened. Ids
@@ -550,7 +607,9 @@ export function ChatWindow() {
                 {m.role === "assistant" && !streaming && <MsgMeta model={chat.model} m={m} />}
               </div>
             );
-          });
+            })}
+            </>
+          );
         })()}
         {streaming && <Working activity={activity} />}
         {error && (

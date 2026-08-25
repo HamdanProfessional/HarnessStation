@@ -15,7 +15,7 @@ function run(id: string, args: Record<string, unknown>, ctx: unknown): Promise<s
 }
 
 const fsCtx = (text: string) => ({ fs: { read: async () => text } });
-const netCtx = (text: string) => ({ fetch: async () => ({ text: async () => text }) });
+const netCtx = (text: string) => ({ fetch: async () => ({ status: 200, text: async () => text }) });
 
 const LONG = "x".repeat(20000);
 
@@ -78,15 +78,28 @@ describe("read_file paging", () => {
   });
 });
 
-describe("http_get paging", () => {
+describe("http_request paging", () => {
   it("marks where a long body was cut and how to resume", async () => {
-    const out = await run("http_get", { url: "https://x" }, netCtx(LONG));
+    // http_request absorbed http_get's raw-fetch role when the two merged, so it
+    // also inherited the resume protocol: a bare slice with no way to continue
+    // would strand the rest of a large API response.
+    const out = await run("http_request", { url: "https://x" }, netCtx(LONG));
     expect(out).toContain("truncated at character 6000 of 20000");
     expect(out).toContain("offset=6000");
+    expect(out).toMatch(/^HTTP 200\n/);
   });
 
-  it("returns a short body untouched", async () => {
-    expect(await run("http_get", { url: "https://x" }, netCtx("ok"))).toBe("ok");
+  it("returns a short body untouched behind the status line", async () => {
+    const out = await run("http_request", { url: "https://x" }, netCtx("ok"));
+    expect(out).toBe("HTTP 200\nok");
+  });
+
+  it("resumes from a reported offset without repeating earlier bytes", async () => {
+    const first = await run("http_request", { url: "https://x" }, netCtx(LONG));
+    const at = Number(/offset=(\d+)/.exec(first)![1]);
+    const next = await run("http_request", { url: "https://x", offset: at }, netCtx(LONG));
+    expect(next).toContain("[from character 6000]");
+    expect(next).toContain("offset=12000");
   });
 });
 
@@ -109,7 +122,7 @@ describe("fetch_page paging", () => {
 describe("the descriptions tell the model paging exists", () => {
   it("documents offset on every tool that truncates", () => {
     // A paging parameter the description does not mention will never be used.
-    for (const id of ["read_file", "http_get", "fetch_page"]) {
+    for (const id of ["read_file", "http_request", "fetch_page"]) {
       const tool = BUILTIN_TOOLS.find((t) => t.id === id)!;
       expect(tool.description, id).toContain("offset");
       expect(tool.parameters.properties, id).toHaveProperty("offset");

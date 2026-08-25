@@ -6,6 +6,7 @@ import { listModels } from "../lib/providers";
 import { useStore } from "../lib/store";
 import { STYLE_PRESETS } from "../lib/styles";
 import { BUILTIN_TOOLSETS } from "../lib/tools";
+import { SERVER_DEFAULT_TEMPERATURE } from "../lib/types";
 import { buildShareLink } from "../lib/deeplink";
 import { toast } from "../lib/toast";
 import { ModelOptions } from "./ModelOptions";
@@ -618,17 +619,34 @@ export function ConfigPanel() {
         );
       })()}
 
-      <label className="field">
-        <span>Temperature: {chat.temperature.toFixed(1)}</span>
-        <input
-          type="range"
-          min={0}
-          max={2}
-          step={0.1}
-          value={chat.temperature}
-          onChange={(e) => updateChat({ temperature: Number(e.target.value) })}
-        />
-      </label>
+      <div className="field">
+        <span>Temperature</span>
+        {/* Off = the request carries no temperature at all, so a local server's
+            own sampler settings stand. Picking any number re-enables the slider. */}
+        <label className="agent-check">
+          <input
+            type="checkbox"
+            checked={chat.temperature < 0}
+            onChange={(e) =>
+              updateChat({ temperature: e.target.checked ? SERVER_DEFAULT_TEMPERATURE : 0.7 })
+            }
+          />
+          Server default (send nothing)
+        </label>
+        {chat.temperature >= 0 && (
+          <>
+            <span>Temperature: {chat.temperature.toFixed(1)}</span>
+            <input
+              type="range"
+              min={0}
+              max={2}
+              step={0.1}
+              value={chat.temperature}
+              onChange={(e) => updateChat({ temperature: Number(e.target.value) })}
+            />
+          </>
+        )}
+      </div>
 
       <label className="field">
         <span>Max tokens (0 = default)</span>

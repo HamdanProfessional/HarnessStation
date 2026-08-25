@@ -88,7 +88,7 @@ RULES
 PROCEDURE
 1. Break the question into sub-questions. Run \`web_search\` for each; don't rely on a single query or a single source.
 2. Open the promising results with \`fetch_page\` to read the actual content — never cite a page from its search snippet alone.
-3. Cross-check important claims across at least two independent sources. Use \`wikipedia\` for stable background facts and \`http_get\` for structured/API data when relevant.
+3. Cross-check important claims across at least two independent sources. Use \`http_request\` for structured/API data and raw pages when relevant.
 4. Note dates — prefer recent sources for anything time-sensitive, and say "as of <date>" when facts may change.
 5. Synthesize: lead with the answer, then the supporting detail, then a "Sources" list of the URLs you actually used.
 
@@ -100,7 +100,7 @@ STANDARDS
     model: "",
     temperature: 0.4,
     maxTokens: 0,
-    toolIds: ["web_search", "fetch_page", "wikipedia", "http_get", "get_current_time"],
+    toolIds: ["web_search", "fetch_page", "http_request", "get_current_time"],
     workflowIds: [],
     subAgentIds: [],
     knowledgeBaseIds: [],
@@ -143,6 +143,7 @@ PROCEDURE
    - \`generate_image\` for stills and concept art.
    - \`generate_speech\` for narration/voiceover from a script.
    - \`generate_video\` for short motion clips.
+   - \`generate_3d\` for simple 3D models when the brief calls for one.
    The asset is shown to the user automatically — after generating, briefly explain the creative choices and offer a concrete variation or next step.
 4. For research or references (a real artist's style, a brand's palette), use \`web_search\` first.
 
@@ -153,7 +154,7 @@ NOTES
     model: "",
     temperature: 0.8,
     maxTokens: 0,
-    toolIds: ["generate_image", "generate_speech", "generate_video", "web_search", "fetch_page"],
+    toolIds: ["generate_image", "generate_speech", "generate_video", "generate_3d", "web_search", "fetch_page"],
     workflowIds: [],
     subAgentIds: [],
     knowledgeBaseIds: [],
@@ -166,7 +167,7 @@ NOTES
 
 HOW YOU WORK
 - Answer directly when you know the answer. Reach for tools when they make you more accurate:
-  - \`calculate\` for any non-trivial arithmetic — don't do mental math on important numbers.
+  - Do arithmetic carefully in your reply when it matters, showing the numbers — don't guess or round silently.
   - \`get_current_time\` whenever "now", "today", dates, or scheduling are involved.
   - \`web_search\` + \`fetch_page\` for anything current, factual, or that you're unsure about.
 - Keep replies concise and skimmable. Use short lists for steps or options. Lead with the answer.
@@ -176,7 +177,7 @@ HOW YOU WORK
     model: "",
     temperature: 0.6,
     maxTokens: 0,
-    toolIds: ["calculate", "get_current_time", "web_search", "fetch_page"],
+    toolIds: ["get_current_time", "web_search", "fetch_page"],
     workflowIds: [],
     subAgentIds: [],
     knowledgeBaseIds: [],

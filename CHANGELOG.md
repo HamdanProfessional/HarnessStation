@@ -5,6 +5,12 @@ All notable changes are recorded here. Versions follow [semantic versioning](htt
 ## [Unreleased]
 
 ### Added
+- **"Server default" temperature — the request can now carry no sampling at
+  all.** New chats send no temperature field: a local llama.cpp/vLLM server's
+  own sampler settings stand, instead of being silently overridden by a client
+  constant. The config panel's temperature control gains a "Server default
+  (send nothing)" checkbox; picking any number re-enables the slider. Existing
+  chats keep their current value. Temperature 0 remains a real, sent choice.
 - **ACP agents hosted in the chat (Option B).** Any agent from the ACP
   registry — Claude Code, Gemini CLI, Codex, 60+ more — runs inside
   HarnessStation: configure the command in Settings → ACP agents, run it in
@@ -128,6 +134,35 @@ All notable changes are recorded here. Versions follow [semantic versioning](htt
 - **Web voice** via the browser's built-in speech recognition (no model download).
 
 ### Changed
+- **The transcript renders a window, not the whole history.** Opening a
+  5,000-message chat used to build 5,000+ DOM subtrees; the page now renders
+  the newest 200 with a "Show earlier messages" ramp at the top (scrolling to
+  the top grows it automatically, and the reader stays anchored on the message
+  they were reading). The autoscroll contract is untouched — the window only
+  grows when the reader is at the top, where the follower already refuses to
+  yank them down.
+- **`npm run stress` now measures memory, not just throughput.** A new soak
+  (`scripts/stress-memory.mjs`, STRESS-gated) prints the store layer's real
+  footprint — 5,000 closed chats cost ~0.3 MB as stubs; hydrating one
+  20,000-message transcript is per-chat and bounded — and samples the running
+  app's own RSS, the `ps -o rss=` discipline: measure, don't assume.
+- **Tool registry pruned to proper tools, in proper sections.** Removed three
+  dumb tools: `calculate` (a one-line JS eval that taught models to outsource
+  arithmetic and added an arbitrary-expression execution surface), `wikipedia`
+  (a single-site wrapper over web_search + fetch_page), and `http_get` (its raw
+  fetch role merged into `http_request`, which now also carries the
+  offset-paging resume protocol http_get had). Sections fixed: `delete_path`
+  joined the Coding agent set, `get_current_time` the Research set, media
+  generation got its own set, and the MCP gateway tools are grouped under a new
+  "MCP servers" section. A new meta-test files every user-facing built-in into
+  at least one section, so orphans can't silently accumulate again.
+- **House prompt sharpened against the leaked-prompt corpus** (asgeirtj/system_prompts_leaks):
+  bans performative honesty ("Honestly?", "my blunt take") per ChatGPT's shipped
+  rules; ambiguous requests now get a stated assumption and an answer instead of
+  a clarifying question; tool-using models are told to find out with tools
+  before asking; recalled memory now ships with guardrails — apply silently,
+  never suppress honest feedback to honour a stored preference, never volunteer
+  sensitive facts uninvited.
 - New chats start with the built-in tools enabled.
 - Flattened, professional UI (real icons, solid accent, no gradients).
 - **Discover model catalog refreshed** against each provider's live docs. Several
@@ -139,6 +174,11 @@ All notable changes are recorded here. Versions follow [semantic versioning](htt
   (`CATALOG_LIVE=1`). It found eight stale providers on its first run.
 
 ### Fixed
+- **The Anthropic path no longer hides a 4096-token output cap.** With
+  `max_tokens` unset it used to truncate long answers silently at 4096; it now
+  derives the limit from the model's published maximum (models.dev /
+  OpenRouter), falling back to 8192 for models without published facts. Your
+  explicit max-tokens setting still wins.
 - The release workflow decoded the Windows Authenticode certificate and then
   used nothing — signing silently never happened even with the secrets set. It
   now imports the .pfx into the runner's cert store and passes its thumbprint

@@ -7,6 +7,7 @@ import { isWeb } from "../web";
 import { keysOf, rotateKeys } from "../rotation";
 import { backoffMs, retryAfterMs, shouldWait } from "./backoff";
 import { withCacheBreakpoint } from "./cache";
+import { factsFor } from "../modelFacts";
 import * as quota from "../quota";
 
 // Some providers' HTTPS APIs send no CORS headers, so a browser can't call them
@@ -48,6 +49,12 @@ export interface ChatParams {
   model: string;
   system: string;
   messages: Message[];
+  /**
+   * Sampling temperature. Negative (SERVER_DEFAULT_TEMPERATURE) omits the field
+   * entirely so the server's own sampler settings stand — a hardcoded client
+   * default silently changes a local model's behaviour, and the user has no way
+   * to see it, let alone fight it.
+   */
   temperature: number;
   maxTokens: number;
   tools?: Tool[];
@@ -442,8 +449,10 @@ async function streamOpenAI(p: ChatParams): Promise<ChatResult> {
     model: p.model,
     messages: toOpenAIMessages(p.system, p.messages),
     stream: true,
-    temperature: p.temperature,
   };
+  // Temperature zero is a real choice and must still be sent — only the
+  // server-default sentinel drops the field.
+  if (p.temperature >= 0) body.temperature = p.temperature;
   if (p.maxTokens > 0) body.max_tokens = p.maxTokens;
   if (p.tools?.length) body.tools = toOpenAITools(p.tools);
   body.stream_options = { include_usage: true };
@@ -596,8 +605,12 @@ async function streamAnthropic(p: ChatParams): Promise<ChatResult> {
       model: p.model,
       system,
       messages: cached,
-      max_tokens: p.maxTokens > 0 ? p.maxTokens : 4096,
-      temperature: p.temperature,
+      // Anthropic requires max_tokens, but a hidden constant silently truncates
+      // long answers. Prefer the user's number, then the model's published
+      // output cap (models.dev / OpenRouter both publish one), then a floor
+      // generous enough for a real answer on any current model.
+      max_tokens: p.maxTokens > 0 ? p.maxTokens : (factsFor(p.model)?.maxOut ?? 8192),
+      temperature: p.temperature >= 0 ? p.temperature : undefined,
       stream: true,
       ...(p.provider.extraBody ?? {}),
     }),

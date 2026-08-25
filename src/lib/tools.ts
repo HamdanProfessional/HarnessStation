@@ -6,6 +6,9 @@ import type { Tool, ToolSet } from "./types";
 import { capOutput, PREVIEW, readStash } from "./toolOutputStore";
 
 /** Ready-made tool sets shipped with the app (always available, non-deletable). */
+/** The four media-generation tools, which stand or fall together (one engine config powers all). */
+export const MEDIA_TOOL_IDS = ["generate_image", "generate_speech", "generate_video", "generate_3d"] as const;
+
 export const BUILTIN_TOOLSETS: ToolSet[] = [
   {
     id: "browser",
@@ -28,7 +31,12 @@ export const BUILTIN_TOOLSETS: ToolSet[] = [
   {
     id: "builtin-research",
     name: "Research",
-    toolIds: ["web_search", "fetch_page", "wikipedia", "http_request"],
+    toolIds: ["web_search", "fetch_page", "http_request", "get_current_time"],
+  },
+  {
+    id: "builtin-media",
+    name: "Media generation",
+    toolIds: [...MEDIA_TOOL_IDS],
   },
   {
     id: "builtin-coding",
@@ -39,6 +47,7 @@ export const BUILTIN_TOOLSETS: ToolSet[] = [
       "read_file",
       "write_file",
       "create_folder",
+      "delete_path",
       "list_folder",
       "find_files",
       "run_terminal",
@@ -48,6 +57,11 @@ export const BUILTIN_TOOLSETS: ToolSet[] = [
     id: "builtin-selfservice",
     name: "Self-service tooling",
     toolIds: ["find_tools", "enable_tool", "use_skill", "list_secrets"],
+  },
+  {
+    id: "builtin-mcp",
+    name: "MCP servers",
+    toolIds: ["mcp_servers", "mcp_tools", "mcp_describe", "mcp_call"],
   },
   {
     id: "builtin-swarm",
@@ -201,50 +215,10 @@ export const BUILTIN_TOOLS: Tool[] = [
     builtin: true,
     group: "Secrets",
   },
-  {
-    id: "calculate",
-    name: "calculate",
-    description: "Evaluates a JavaScript arithmetic expression, e.g. (17*34)/2 or Math.sqrt(2).",
-    parameters: {
-      type: "object",
-      properties: {
-        expression: { type: "string", description: "The expression to evaluate" },
-      },
-      required: ["expression"],
-    },
-    code: `return String(Function('"use strict"; return (' + args.expression + ')')());`,
-    builtin: true,
-  },
-  {
-    id: "http_get",
-    name: "http_get",
-    description:
-      "Fetches a URL with HTTP GET and returns the raw response body.\n\n" +
-      "Usage:\n" +
-      "- Returns up to 6000 characters starting at `offset` (default 0); if it ends in [truncated], call again with the offset it reports.\n" +
-      "- This returns the body verbatim, including HTML. For an article or docs page, use fetch_page instead — it strips the markup.\n" +
-      "- Fetching several URLs? Call this tool once per URL in the same response.",
-    parameters: {
-      type: "object",
-      properties: {
-        url: { type: "string", description: "The URL to fetch" },
-        offset: {
-          type: "number",
-          description: "Character offset to start from. Omit to start at the beginning.",
-        },
-      },
-      required: ["url"],
-    },
-    code: `const res = await ctx.fetch(args.url);
-const text = await res.text();
-const start = Math.max(0, Math.floor(args.offset || 0));
-const slice = text.slice(start, start + 6000);
-const end = start + slice.length;
-return end < text.length
-  ? slice + "\\n...[truncated at character " + end + " of " + text.length + "; call again with offset=" + end + "]"
-  : slice;`,
-    builtin: true,
-  },
+  // `calculate` was removed deliberately: a one-line JS eval taught models to
+  // outsource arithmetic they can do (or should show work for), added an
+  // arbitrary-expression execution surface, and its niche on tiny local models
+  // is covered by run_terminal + a real interpreter.
   {
     id: "create_folder",
     name: "create_folder",
@@ -427,7 +401,7 @@ return out.length ? out.join("\\n\\n") : "No results found.";`,
       "Usage:\n" +
       "- Returns up to `max` characters (default 8000) starting at `offset` (default 0); if it ends in [truncated], call again with the offset it reports.\n" +
       "- Reading several pages? Call this tool once per URL in the same response.\n" +
-      "- Use http_get instead when you need the raw HTML, and http_request when you need a method other than GET.",
+      "- Use http_request when you need the raw HTML, custom headers, or a method other than GET.",
     parameters: {
       type: "object",
       properties: {
@@ -456,7 +430,11 @@ return end < text.length
     id: "http_request",
     name: "http_request",
     description:
-      "Makes an HTTP request with any method, headers, and body. Use to call REST APIs (returns status + response body). For plain page reading prefer fetch_page.",
+      "Makes an HTTP request with any method, headers, and body. Use to call REST APIs (returns status + response body) or to fetch a URL's raw HTML.\n\n" +
+      "Usage:\n" +
+      "- Returns up to 6000 characters of the body starting at `offset` (default 0); if it ends in [truncated], call again with the offset it reports.\n" +
+      "- For an article or docs page, use fetch_page instead — it strips the markup.\n" +
+      "- Fetching several URLs? Call this tool once per URL in the same response.",
     parameters: {
       type: "object",
       properties: {
@@ -464,6 +442,10 @@ return end < text.length
         method: { type: "string", description: "GET, POST, PUT, DELETE, ... (default GET)" },
         headers: { type: "object", description: "Request headers" },
         body: { type: "string", description: "Request body (string or JSON string)" },
+        offset: {
+          type: "number",
+          description: "Character offset into the response body. Omit to start at the beginning.",
+        },
       },
       required: ["url"],
     },
@@ -471,7 +453,13 @@ return end < text.length
 if (args.body != null) opts.body = typeof args.body === "string" ? args.body : JSON.stringify(args.body);
 const res = await ctx.fetch(args.url, opts);
 const text = await res.text();
-return "HTTP " + res.status + "\\n" + text.slice(0, 6000);`,
+const start = Math.max(0, Math.floor(args.offset || 0));
+const slice = text.slice(start, start + 6000);
+const end = start + slice.length;
+const head = "HTTP " + res.status + (start > 0 ? " [from character " + start + "]" : "") + "\\n";
+return end < text.length
+  ? head + slice + "\\n...[truncated at character " + end + " of " + text.length + "; call again with offset=" + end + "]"
+  : head + slice;`,
     builtin: true,
   },
   {
@@ -532,24 +520,9 @@ await ctx.fs.write(args.path, next);
 return "Edited " + args.path + " (" + count + " replacement" + (count > 1 ? "s" : "") + ")";`,
     builtin: true,
   },
-  {
-    id: "wikipedia",
-    name: "wikipedia",
-    description: "Looks up a topic on Wikipedia and returns a concise summary with a source link. Free, no key.",
-    parameters: {
-      type: "object",
-      properties: { query: { type: "string", description: "Topic to look up" } },
-      required: ["query"],
-    },
-    code: `const s = await ctx.fetch("https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srsearch=" + encodeURIComponent(args.query));
-const sj = await s.json();
-const top = sj.query && sj.query.search && sj.query.search[0];
-if (!top) return "No Wikipedia article found for '" + args.query + "'.";
-const r = await ctx.fetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(top.title.replace(/ /g, "_")));
-const j = await r.json();
-return (j.title || top.title) + "\\n\\n" + (j.extract || "No summary.") + "\\n\\nSource: " + ((j.content_urls && j.content_urls.desktop && j.content_urls.desktop.page) || "");`,
-    builtin: true,
-  },
+  // `wikipedia` was removed deliberately: it is web_search + fetch_page with a
+  // single-site special case baked in. The general pair reaches the same
+  // summary, works for every site, and costs one less schema in every request.
   {
     id: "generate_image",
     name: "generate_image",
@@ -739,9 +712,6 @@ return (j.title || top.title) + "\\n\\n" + (j.extract || "No summary.") + "\\n\\
   // Drive the user's real browser through the extension; see browserTools.ts.
   ...BROWSER_TOOLS,
 ];
-
-/** Built-in media-generation tool ids, dispatched to the media engines. */
-export const MEDIA_TOOL_IDS = ["generate_image", "generate_speech", "generate_video", "generate_3d"] as const;
 
 const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
 

@@ -16,7 +16,7 @@
     "web:dev": "vite --config web/vite.config.ts",
     "web:build": "vite build --config web/vite.config.ts",
     "web:preview": "vite preview --config web/vite.config.ts",
-    "stress": "node scripts/stress-media.mjs && node scripts/stress-gateway.mjs"
+    "stress": "node scripts/stress-media.mjs && node scripts/stress-gateway.mjs && node scripts/stress-memory.mjs"
   },
   "dependencies": {
     "@babel/standalone": "^7.29.8",

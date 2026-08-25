@@ -31,6 +31,8 @@ export interface ModelFacts {
   out?: string[];
   /** Context window in tokens. */
   ctx?: number;
+  /** Published maximum output tokens (Anthropic's max_tokens ceiling). */
+  maxOut?: number;
   /** Whether the model supports tool calling. */
   tools?: boolean;
 }
@@ -42,6 +44,7 @@ export interface FactsSourceModel {
     inputModalities?: string[];
     outputModalities?: string[];
     contextWindow?: number;
+    maxOutputTokens?: number;
     supportsTools?: boolean;
   };
 }
@@ -59,6 +62,10 @@ function build(models: FactsSourceModel[]): Record<string, ModelFacts> {
     if (c.inputModalities?.length) facts.in = c.inputModalities;
     if (c.outputModalities?.length) facts.out = c.outputModalities;
     if (typeof c.contextWindow === "number" && c.contextWindow > 0) facts.ctx = c.contextWindow;
+    // Both sources publish an output cap when they know one (models.dev's
+    // limit.output, OpenRouter's max_completion_tokens). The Anthropic request
+    // path uses it to size max_tokens instead of a hidden constant.
+    if (typeof c.maxOutputTokens === "number" && c.maxOutputTokens > 0) facts.maxOut = c.maxOutputTokens;
     if (typeof c.supportsTools === "boolean") facts.tools = c.supportsTools;
     if (Object.keys(facts).length === 0) continue;
 

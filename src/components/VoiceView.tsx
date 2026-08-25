@@ -20,8 +20,6 @@ const MmdAvatar = lazy(() => import("./MmdAvatar").then((m) => ({ default: m.Mmd
 const DEFAULT_VOICE_TOOLS = [
   "web_search",
   "fetch_page",
-  "wikipedia",
-  "calculate",
   "get_current_time",
   "http_request",
 ];
