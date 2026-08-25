@@ -53,9 +53,17 @@ as connecting one.
 **Device mesh** — pair the machines you own so they can share models, tools and
 knowledge. Discovery over the LAN, pairing by a code that never crosses the wire.
 
-**Models** — any OpenAI-compatible endpoint plus Anthropic. Compare models side
-by side, score them against your own eval set, and check public benchmarks before
-paying for one.
+**Models** — any OpenAI-compatible endpoint plus Anthropic. Connect a
+subscription you already pay for (Claude Pro/Max, GitHub Copilot) as a backend,
+chain providers into combos that fail over on their own, and see which ones
+are rate-limiting you before you wonder why replies got slow. Compare models
+side by side, score them against your own eval set, and check public
+benchmarks before paying for one.
+
+**Open API** — the app is also a server: an OpenAI- and Anthropic-compatible
+endpoint on loopback, so Claude Code, opencode, Aider or any SDK can drive
+your models, agents and combos — local ones included. `hs endpoint` prints
+the configs; Settings → Devices shows them with copy buttons.
 
 **Value** — live prices for ~6,600 AI models, plus VPS and GPU compute, read
 straight from the providers' own public price lists. No key and no account: these

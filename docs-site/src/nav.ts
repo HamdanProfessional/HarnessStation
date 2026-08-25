@@ -99,6 +99,7 @@ export const NAV: NavSection[] = [
     title: "Models",
     items: [
       { slug: "models/providers", label: "Providers & keys" },
+      { slug: "models/local-api", label: "Use it from other tools" },
       { slug: "models/local", label: "Running models locally" },
       { slug: "models/in-browser", label: "In-browser models" },
       { slug: "models/comparing", label: "Comparing & evaluating" },

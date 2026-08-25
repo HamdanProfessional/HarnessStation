@@ -7,14 +7,14 @@ name: Release
 # Required repository secrets:
 #   TAURI_SIGNING_PRIVATE_KEY           contents of the updater private key
 #   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  its password
+#   (the compromised dev key was retired in 1ccaf4e; the current
+#    plugins.updater.pubkey is the replacement — see docs/release.md)
 # Optional (Windows Authenticode — without it users see SmartScreen):
 #   WINDOWS_CERTIFICATE                 base64 of the .pfx
 #   WINDOWS_CERTIFICATE_PASSWORD        its password
-#
-# NOTE: `plugins.updater.pubkey` is the placeholder REPLACE_WITH_UPDATER_PUBLIC_KEY
-# (the old dev key was compromised — see SECURITY.md). Generate a fresh keypair,
-# paste its PUBLIC key into tauri.conf.json, and add the private key + password as
-# the two TAURI_SIGNING_* secrets before the first signed release.
+# When the certificate secrets are set, this workflow imports the .pfx into the
+# runner's user cert store and passes its thumbprint to the Tauri bundler via a
+# --config override, so the NSIS/MSI artifacts are Authenticode-signed.
 
 on:
   push:
@@ -89,6 +89,24 @@ jobs:
           [IO.File]::WriteAllBytes("$env:RUNNER_TEMP\cert.pfx", $bytes)
           "WINDOWS_CERTIFICATE_PATH=$env:RUNNER_TEMP\cert.pfx" >> $env:GITHUB_ENV
 
+      - name: Import the signing certificate and point the bundler at it
+        # Decoding alone signs nothing — the Tauri Windows bundler needs the
+        # certificate in a store and its thumbprint in the config. The merge
+        # config is written to a file so no JSON has to survive shell quoting.
+        if: matrix.platform == 'windows-latest' && env.WINDOWS_CERTIFICATE_PATH != ''
+        env:
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        shell: pwsh
+        run: |
+          $secure = ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText
+          $cert = Import-PfxCertificate -FilePath $env:WINDOWS_CERTIFICATE_PATH `
+            -CertStoreLocation Cert:\CurrentUser\My -Password $secure
+          $config = @{
+            bundle = @{ windows = @{ certificateThumbprint = $cert.Thumbprint } }
+          } | ConvertTo-Json -Depth 5 -Compress
+          Set-Content -Path "$env:RUNNER_TEMP\win-sign.json" -Value $config
+          "WIN_SIGN_CONFIG=$env:RUNNER_TEMP\win-sign.json" >> $env:GITHUB_ENV
+
       - name: Build and publish
         uses: tauri-apps/tauri-action@v0
         env:
@@ -103,4 +121,4 @@ jobs:
           prerelease: false
           # Writes latest.json alongside the artifacts — the endpoint the app polls.
           includeUpdaterJson: true
-          args: ${{ matrix.args }}
+          args: ${{ matrix.args }} ${{ env.WIN_SIGN_CONFIG && format('--config {0}', env.WIN_SIGN_CONFIG) || '' }}

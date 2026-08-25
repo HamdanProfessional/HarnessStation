@@ -254,3 +254,77 @@ describe("an explicitly named port", () => {
     expect(cli.diagnose({ settings, target, reachable: true })).toMatch(/switched off/i);
   });
 });
+
+describe("repl lines", () => {
+  it("treats plain text as a prompt", () => {
+    expect(cli.parseReplLine("hello there")).toEqual({ type: "prompt", text: "hello there" });
+  });
+
+  it("parses slash commands with and without a rest argument", () => {
+    expect(cli.parseReplLine("/new")).toEqual({ type: "command", name: "new", rest: "" });
+    expect(cli.parseReplLine("/model groq/llama-3.3-70b")).toEqual({
+      type: "command",
+      name: "model",
+      rest: "groq/llama-3.3-70b",
+    });
+  });
+
+  it("aliases /quit to exit", () => {
+    expect(cli.parseReplLine("/quit").name).toBe("exit");
+  });
+
+  it("an unknown slash-word is a prompt, not a command", () => {
+    // The model gets asked about /etc/hosts and /usr/bin more often than the
+    // REPL grows a new command; guessing a command here would eat the prompt.
+    expect(cli.parseReplLine("/etc/hosts explains?")).toEqual({
+      type: "prompt",
+      text: "/etc/hosts explains?",
+    });
+  });
+
+  it("empty lines are their own kind", () => {
+    expect(cli.parseReplLine("   ")).toEqual({ type: "empty" });
+  });
+});
+
+describe("repl body", () => {
+  it("keeps the system message first and the new prompt last", () => {
+    const b = cli.replBody({
+      history: [
+        { role: "user", content: "one" },
+        { role: "assistant", content: "two" },
+      ],
+      prompt: "three",
+      system: "be terse",
+    });
+    expect(b.messages.map((m) => m.role)).toEqual(["system", "user", "assistant", "user"]);
+    expect(b.messages.at(-1).content).toBe("three");
+    expect(b.stream).toBe(true);
+  });
+
+  it("an agent contributes its instructions once, ahead of the system text", () => {
+    const b = cli.replBody({
+      history: [],
+      prompt: "go",
+      system: "extra",
+      agent: { name: "Critic", model: "opus", instructions: "You critique." },
+    });
+    expect(b.messages[0].content).toBe("You critique.\n\nextra");
+    expect(b.model).toBe("opus");
+  });
+});
+
+describe("claude code snippet", () => {
+  it("strips the /v1 suffix the SDK appends itself", () => {
+    const s = cli.claudeEnvSnippet("http://127.0.0.1:11435/v1", "groq/llama-3.3-70b");
+    expect(s).toContain("ANTHROPIC_BASE_URL=http://127.0.0.1:11435");
+    expect(s).toContain("ANTHROPIC_MODEL=groq/llama-3.3-70b");
+    expect(s).toContain("ANTHROPIC_AUTH_TOKEN=hs-local");
+  });
+
+  it("leaves a bare base URL alone and placeholders the model", () => {
+    const s = cli.claudeEnvSnippet("http://127.0.0.1:11435");
+    expect(s).toContain("ANTHROPIC_BASE_URL=http://127.0.0.1:11435");
+    expect(s).toContain("ANTHROPIC_MODEL=provider/model");
+  });
+});

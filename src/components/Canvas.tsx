@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Artifact } from "../lib/attach";
 
 const BASE_STYLE =
@@ -21,6 +21,7 @@ svg{max-width:100%;max-height:calc(100vh - 32px);height:auto}`;
 const LABEL: Record<Artifact["kind"], string> = {
   html: "HTML canvas — runnable",
   svg: "SVG drawing",
+  react: "React component — runnable",
 };
 
 export function Canvas({ artifact }: { artifact: Artifact }) {
@@ -28,10 +29,32 @@ export function Canvas({ artifact }: { artifact: Artifact }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"preview" | "code">("preview");
   const [reloadKey, setReloadKey] = useState(0);
+  // React artifacts compile off the render path (Babel is a lazy ~2.7 MB
+  // import) and their document arrives async; the others build synchronously.
+  const [reactDoc, setReactDoc] = useState<string | null>(null);
   const doc = useMemo(
-    () => (kind === "svg" ? svgDocument(code) : toDocument(code)),
+    () => (kind === "svg" ? svgDocument(code) : kind === "html" ? toDocument(code) : null),
     [kind, code],
   );
+
+  useEffect(() => {
+    if (kind !== "react") return;
+    let cancelled = false;
+    setReactDoc(null);
+    void (async () => {
+      // Dynamic import: reactArtifact inlines the 189 kB runtime bundle as a
+      // string, so it must never ride along with the entry chunk — it loads
+      // (once) only when a React artifact is actually previewed.
+      const m = await import("../lib/reactArtifact");
+      const build = await m.compileReactArtifact(code, artifact.lang === "tsx");
+      if (!cancelled) setReactDoc(m.reactDocument(build));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [kind, code, artifact.lang, reloadKey]);
+
+  const srcDoc = kind === "react" ? reactDoc : doc;
 
   return (
     <div className="canvas">
@@ -59,14 +82,18 @@ export function Canvas({ artifact }: { artifact: Artifact }) {
             </button>
           </div>
           {tab === "preview" ? (
-            <iframe
-              key={reloadKey}
-              className="canvas-frame"
-              title={kind === "svg" ? "SVG preview" : "canvas"}
-              // SVG is static content, so it needs no script privileges at all.
-              sandbox={kind === "svg" ? "" : "allow-scripts allow-modals allow-forms allow-popups"}
-              srcDoc={doc}
-            />
+            srcDoc ? (
+              <iframe
+                key={reloadKey}
+                className="canvas-frame"
+                title={kind === "svg" ? "SVG preview" : "canvas"}
+                // SVG is static content, so it needs no script privileges at all.
+                sandbox={kind === "svg" ? "" : "allow-scripts allow-modals allow-forms allow-popups"}
+                srcDoc={srcDoc}
+              />
+            ) : (
+              <div className="hint canvas-loading">Compiling…</div>
+            )
           ) : (
             <pre className="code-view" style={{ maxHeight: 340 }}>
               {code}

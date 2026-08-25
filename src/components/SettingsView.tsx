@@ -9,6 +9,7 @@ import { SecretsPanel } from "./SecretsPanel";
 import { HooksPanel } from "./HooksPanel";
 import { ChannelsPanel } from "./ChannelsPanel";
 import { CloudSyncPanel } from "./CloudSyncPanel";
+import { SubscriptionsPanel } from "./SubscriptionsPanel";
 import { WebLlmCard } from "./WebLlmCard";
 import { useStore } from "../lib/store";
 import { useModal } from "../lib/useModal";
@@ -35,6 +36,8 @@ import type {
 } from "../lib/types";
 import { NAV_VIEWS } from "../lib/views";
 import { IconX } from "./icons";
+import { slugifyName } from "../lib/format";
+import { isWeb } from "../lib/web";
 
 /**
  * Settings is long; these split it into panels rather than one endless scroll.
@@ -93,6 +96,27 @@ const TABS = [
     label: "Providers",
     blurb: "Models, keys, embeddings",
     keywords: "api key openai anthropic ollama local model endpoint base url embeddings gateway benchmarks",
+  },
+  {
+    id: "combos",
+    section: "core",
+    label: "Combos",
+    blurb: "Fallback chains usable as one model",
+    keywords: "combo chain fallback route provider model failover subscription cheap free order combo/slug",
+  },
+  {
+    id: "subscriptions",
+    section: "core",
+    label: "Subscriptions",
+    blurb: "Claude & Copilot as backends",
+    keywords: "subscription oauth claude copilot github login account pro max quota connect token backend",
+  },
+  {
+    id: "acp",
+    section: "core",
+    label: "ACP agents",
+    blurb: "Run registry agents in chats",
+    keywords: "acp agent registry claude code gemini subprocess host external",
   },
   {
     id: "profiles",
@@ -780,6 +804,248 @@ export function SettingsView() {
             onChange={(e) => setDraft({ ...draft, embedModel: e.target.value })}
           />
         </div>
+      </section>
+
+      <section hidden={tab !== "combos"}>
+        <h2>Combos</h2>
+        <p className="hint">
+          A combo chains providers into one model id — <code>combo/&lt;name&gt;</code> — that tries each
+          step in order and moves on when one fails before replying: subscription first, cheap key
+          second, free tier last. It appears in every model picker and on the local API, so Claude
+          Code or opencode can use the whole chain as one model.
+        </p>
+        {(draft.combos ?? []).length === 0 && <p className="hint">No combos yet.</p>}
+        {(draft.combos ?? []).map((combo) => (
+          <div className="provider-card" key={combo.id} style={{ marginBottom: 12 }}>
+            <div className="provider-row">
+              <input
+                className="grow"
+                value={combo.name}
+                placeholder="Combo name, e.g. Cheap first"
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    combos: draft.combos!.map((c) => (c.id === combo.id ? { ...c, name: e.target.value } : c)),
+                  })
+                }
+              />
+              <button
+                className="icon-btn"
+                title="Delete combo"
+                aria-label={`Delete combo ${combo.name}`}
+                onClick={() => setDraft({ ...draft, combos: draft.combos!.filter((c) => c.id !== combo.id) })}
+              >
+                <IconX size={13} />
+              </button>
+            </div>
+            {combo.steps.map((step, si) => {
+              const p = draft.providers.find((x) => x.id === step.providerId);
+              const setStep = (patch: Partial<typeof step>) =>
+                setDraft({
+                  ...draft,
+                  combos: draft.combos!.map((c) =>
+                    c.id === combo.id
+                      ? { ...c, steps: c.steps.map((s, k) => (k === si ? { ...s, ...patch } : s)) }
+                      : c,
+                  ),
+                });
+              const move = (dir: -1 | 1) => {
+                const to = si + dir;
+                if (to < 0 || to >= combo.steps.length) return;
+                const steps = [...combo.steps];
+                [steps[si], steps[to]] = [steps[to], steps[si]];
+                setDraft({ ...draft, combos: draft.combos!.map((c) => (c.id === combo.id ? { ...c, steps } : c)) });
+              };
+              return (
+                <div className="provider-row" key={si}>
+                  <select
+                    value={step.providerId}
+                    aria-label={`Step ${si + 1} provider`}
+                    onChange={(e) => {
+                      const np = draft.providers.find((x) => x.id === e.target.value);
+                      setStep({ providerId: e.target.value, model: np?.models[0] ?? step.model });
+                    }}
+                  >
+                    <option value="" disabled>
+                      Select provider
+                    </option>
+                    {draft.providers.map((x) => (
+                      <option key={x.id} value={x.id}>
+                        {x.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className="grow"
+                    value={step.model}
+                    aria-label={`Step ${si + 1} model`}
+                    disabled={!p || !p.models.length}
+                    onChange={(e) => setStep({ model: e.target.value })}
+                  >
+                    {p && p.models.length ? (
+                      p.models.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))
+                    ) : (
+                      <option value={step.model}>{step.model || "(no models)"}</option>
+                    )}
+                  </select>
+                  <button className="icon-btn" title="Move up" disabled={si === 0} onClick={() => move(-1)}>
+                    ↑
+                  </button>
+                  <button
+                    className="icon-btn"
+                    title="Move down"
+                    disabled={si === combo.steps.length - 1}
+                    onClick={() => move(1)}
+                  >
+                    ↓
+                  </button>
+                  <button
+                    className="icon-btn"
+                    title="Remove step"
+                    aria-label={`Remove step ${si + 1}`}
+                    onClick={() =>
+                      setDraft({
+                        ...draft,
+                        combos: draft.combos!.map((c) =>
+                          c.id === combo.id ? { ...c, steps: c.steps.filter((_, k) => k !== si) } : c,
+                        ),
+                      })
+                    }
+                  >
+                    <IconX size={12} />
+                  </button>
+                </div>
+              );
+            })}
+            <div className="provider-row" style={{ alignItems: "center" }}>
+              <button
+                className="btn small"
+                onClick={() => {
+                  const first = draft.providers[0];
+                  setDraft({
+                    ...draft,
+                    combos: draft.combos!.map((c) =>
+                      c.id === combo.id
+                        ? {
+                            ...c,
+                            steps: [
+                              ...c.steps,
+                              { providerId: first?.id ?? "", model: first?.models[0] ?? "" },
+                            ],
+                          }
+                        : c,
+                    ),
+                  });
+                }}
+              >
+                Add step
+              </button>
+              <small className="hint">
+                id: <code>combo/{slugifyName(combo.name) || "…"}</code>
+              </small>
+            </div>
+          </div>
+        ))}
+        <button
+          className="btn"
+          onClick={() =>
+            setDraft({
+              ...draft,
+              combos: [...(draft.combos ?? []), { id: `combo-${Date.now()}`, name: "New combo", steps: [] }],
+            })
+          }
+        >
+          New combo
+        </button>
+      </section>
+
+      <section hidden={tab !== "subscriptions"}>
+        <SubscriptionsPanel />
+      </section>
+
+      <section hidden={tab !== "acp"}>
+        <h2>ACP agents</h2>
+        {isWeb() ? (
+          <p className="hint">
+            ACP agents run as subprocesses of the desktop app, which the browser build can't do.
+          </p>
+        ) : (
+          <>
+            <p className="hint">
+              Agents from the <b>ACP registry</b> run here as subprocesses and appear in the
+              &ldquo;ACP agents&rdquo; view — their file edits, terminal commands and permission
+              requests surface in the conversation. Add one per agent; the command is what an
+              editor would launch.
+            </p>
+            {(draft.acpAgents ?? []).length === 0 && <p className="hint">No ACP agents configured.</p>}
+            {(draft.acpAgents ?? []).map((a) => {
+              const setAgent = (patch: Partial<typeof a>) =>
+                setDraft({
+                  ...draft,
+                  acpAgents: draft.acpAgents!.map((x) => (x.id === a.id ? { ...x, ...patch } : x)),
+                });
+              return (
+                <div className="provider-card" key={a.id} style={{ marginBottom: 12 }}>
+                  <div className="provider-row">
+                    <input
+                      className="grow"
+                      value={a.name}
+                      placeholder="Display name, e.g. Claude Code (ACP)"
+                      aria-label={`Name for ${a.name}`}
+                      onChange={(e) => setAgent({ name: e.target.value })}
+                    />
+                    <button
+                      className="icon-btn"
+                      title="Remove agent"
+                      aria-label={`Remove ACP agent ${a.name}`}
+                      onClick={() =>
+                        setDraft({ ...draft, acpAgents: draft.acpAgents!.filter((x) => x.id !== a.id) })
+                      }
+                    >
+                      <IconX size={13} />
+                    </button>
+                  </div>
+                  <div className="provider-row">
+                    <input
+                      className="grow"
+                      value={a.command}
+                      placeholder="Command, e.g. node or npx"
+                      aria-label={`Command for ${a.name}`}
+                      onChange={(e) => setAgent({ command: e.target.value })}
+                    />
+                    <textarea
+                      rows={2}
+                      value={(a.args ?? []).join("\n")}
+                      placeholder={"Arguments, one per line:\npath/to/agent.mjs\n--model\nsonnet"}
+                      aria-label={`Arguments for ${a.name}`}
+                      onChange={(e) =>
+                        setAgent({ args: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })
+                      }
+                    />
+                  </div>
+                </div>
+              );
+            })}
+            <button
+              className="btn"
+              onClick={() =>
+                setDraft({
+                  ...draft,
+                  acpAgents: [
+                    ...(draft.acpAgents ?? []),
+                    { id: `acp-${Date.now()}`, name: "New ACP agent", command: "" },
+                  ],
+                })
+              }
+            >
+              Add agent
+            </button>
+          </>
+        )}
       </section>
 
       <section hidden={tab !== "memory"}>

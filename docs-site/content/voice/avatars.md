@@ -36,9 +36,14 @@ is fine.
 
 ## What it does
 
-The avatar breathes, blinks, and its mouth moves while speaking. Expression is
-currently simple — the mouth follows speech volume rather than the actual sounds
-being made. Proper viseme lip-sync is on the roadmap.
+The avatar breathes, blinks, and its mouth moves while speaking; the head also
+eases toward where your pointer is, over a slow idle sway.
+
+Lip-sync is driven by the *measured* loudness of the voice you're actually
+hearing — an audio analyser sits on playback for Kokoro, Piper, data-URL system
+voices and cloud engines. The native Windows voice (which plays outside the
+app's audio graph) and any moment the analyser can't run fall back to a
+synthetic jaw movement, so the mouth always moves with something.
 
 ## Licensing
 

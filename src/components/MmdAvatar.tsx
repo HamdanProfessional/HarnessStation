@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "./Loading";
 import { createMotionDriver, MMD_MORPHS } from "../lib/avatarMotion";
+import { currentSpeechLevel } from "../lib/tts";
+import { pointerPosition } from "../lib/pointerTrack";
 import type { VoiceState } from "../lib/voice";
 
 /**
@@ -147,7 +149,10 @@ export function MmdAvatar({ bundle, modelPath, state, level, onError }: Props) {
 
         const tick = () => {
           raf = requestAnimationFrame(tick);
-          const f = driver.update(Math.min(clock.getDelta(), 0.1), stateRef.current, levelRef.current);
+          const f = driver.update(Math.min(clock.getDelta(), 0.1), stateRef.current, levelRef.current, {
+            speechLevel: currentSpeechLevel(),
+            pointer: pointerPosition(),
+          });
 
           setMorph(idx.mouth, f.mouth);
           setMorph(idx.blink, f.blink);

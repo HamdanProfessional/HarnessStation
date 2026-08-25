@@ -20,6 +20,8 @@ import {
 } from "../lib/mesh";
 import { saveMeshPeers, startMesh, stopMesh } from "../lib/meshRuntime";
 import { DEFAULT_LOCAL_API_PORT, localApiStatus } from "../lib/localApi";
+import { claudeEnvSnippet, endpointSnippet } from "../lib/endpointDocs";
+import { toast } from "../lib/toast";
 import { useStore } from "../lib/store";
 import { Spinner } from "./Loading";
 import { IconX } from "./icons";
@@ -481,12 +483,61 @@ function LocalApiCard() {
       </div>
 
       {running && (
-        <p className="hint ok-note">
-          Point a client's base URL at <code>http://127.0.0.1:{running}/v1</code> (any API key). Use
-          a model id like <code>openai/gpt-5</code> or an agent as <code>agent/&lt;name&gt;</code>.
-          <code> GET /v1/models</code> lists them.
-        </p>
+        <>
+          <p className="hint ok-note">
+            Point a client's base URL at <code>http://127.0.0.1:{running}/v1</code> (any API key). Use
+            a model id like <code>openai/gpt-5</code>, an agent as <code>agent/&lt;name&gt;</code>, or
+            a combo as <code>combo/&lt;name&gt;</code>. <code>GET /v1/models</code> lists them.
+          </p>
+          <EndpointConfigs running={running} />
+        </>
       )}
+    </>
+  );
+}
+
+/**
+ * The two paste-ready blocks most people actually want — Claude Code's
+ * environment and an OpenAI-compatible provider entry — shown while the server
+ * runs, with a copy button each. These used to live only in `hs endpoint`,
+ * which meant the endpoint's best trick was invisible to anyone who never
+ * opened a terminal.
+ */
+function EndpointConfigs({ running }: { running: number }) {
+  const base = `http://127.0.0.1:${running}/v1`;
+  const blocks: { title: string; body: string }[] = [
+    {
+      title: "Claude Code — set these, then run `claude`",
+      body: claudeEnvSnippet(base),
+    },
+    {
+      title: "OpenAI-compatible tools (opencode, Aider, SDKs)",
+      body: endpointSnippet(base, ["provider/model", "agent/assistant", "combo/cheap-first"]),
+    },
+  ];
+  const copy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied.");
+    } catch {
+      toast.error("Copy failed — select the text manually.");
+    }
+  };
+  return (
+    <>
+      {blocks.map((b) => (
+        <div key={b.title} className="provider-card" style={{ marginBottom: 8 }}>
+          <div className="provider-row" style={{ alignItems: "center" }}>
+            <span className="hint grow">{b.title}</span>
+            <button className="link-btn" onClick={() => void copy(b.body)}>
+              copy
+            </button>
+          </div>
+          <pre className="code-view" style={{ maxHeight: 140, userSelect: "all" }}>
+            {b.body}
+          </pre>
+        </div>
+      ))}
     </>
   );
 }

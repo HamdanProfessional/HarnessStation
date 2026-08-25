@@ -10,6 +10,7 @@ import {
   winrtSpeakToDataUrl,
 } from "./sysvoice";
 import { toast } from "./toast";
+import { bandLevel } from "./loudness";
 
 /** Only warn once per language, not once per sentence. */
 let lastMissingLang: string | null = null;
@@ -40,6 +41,76 @@ let queue: Promise<string>[] = [];
 let draining = false;
 let cancelled = false;
 let currentAudio: HTMLAudioElement | null = null;
+
+// ---------- real-time speech loudness (avatar lip-sync) ----------
+//
+// While a data-URL utterance plays, its <audio> element is routed through an
+// AnalyserNode so the avatar can drive the mouth from what is actually being
+// heard. The native SAPI engine plays inside Rust with no element to analyse —
+// currentSpeechLevel() returns null there and the caller falls back to the
+// synthetic envelope.
+
+let audioCtx: AudioContext | null = null;
+let activeAnalyser: AnalyserNode | null = null;
+let levelBuf: Uint8Array | null = null;
+
+function getCtx(): AudioContext {
+  if (!audioCtx) {
+    const Ctor = window.AudioContext ?? (window as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    audioCtx = new Ctor!();
+  }
+  return audioCtx;
+}
+
+/**
+ * Route `audio` through the analyser and to the speakers.
+ *
+ * The context only runs after the user has interacted with the page (sticky
+ * activation), so this can refuse: before the first click, wiring would both
+ * mute playback (a suspended graph swallows the element's output) and give no
+ * levels. Refusing keeps speech working; lip-sync just waits a sentence.
+ */
+async function routeThroughAnalyser(
+  audio: HTMLAudioElement,
+): Promise<{ analyser: AnalyserNode; source: MediaElementAudioSourceNode } | null> {
+  try {
+    const ctx = getCtx();
+    if (ctx.state !== "running") {
+      // Re-read via a widened local: TS keeps the pre-await narrowing on
+      // ctx.state, but resuming is exactly what may have changed it.
+      await Promise.race([ctx.resume(), new Promise((r) => setTimeout(r, 300))]);
+      if ((ctx.state as string) !== "running") return null;
+    }
+    const source = ctx.createMediaElementSource(audio);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.6; // steadier mouth, less strobing
+    source.connect(analyser);
+    analyser.connect(ctx.destination);
+    return { analyser, source };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Loudness of the currently playing utterance, 0..1 — or null when nothing is
+ * playing or the current engine cannot be analysed. Polled once per animation
+ * frame by the avatar loop; deliberately cheap.
+ */
+export function currentSpeechLevel(): number | null {
+  const audio = currentAudio;
+  const analyser = activeAnalyser;
+  if (!audio || !analyser || audio.paused || audio.ended) return null;
+  try {
+    const bins = analyser.frequencyBinCount;
+    if (!levelBuf || levelBuf.length !== bins) levelBuf = new Uint8Array(bins);
+    analyser.getByteFrequencyData(levelBuf as Uint8Array<ArrayBuffer>);
+    return bandLevel(levelBuf, analyser.context.sampleRate);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Everyone waiting for the queue to drain. A single callback slot used to be
@@ -72,13 +143,31 @@ function playDataUrl(url: string): Promise<void> {
   return new Promise((resolve) => {
     const audio = new Audio(url);
     currentAudio = audio;
+    let wired: { analyser: AnalyserNode; source: MediaElementAudioSourceNode } | null = null;
     const finish = () => {
-      if (currentAudio === audio) currentAudio = null;
+      if (currentAudio === audio) {
+        currentAudio = null;
+        activeAnalyser = null;
+      }
+      // A long call plays hundreds of sentences; without this each one leaves
+      // a connected source node on the shared context forever.
+      try {
+        wired?.source.disconnect();
+        wired?.analyser.disconnect();
+      } catch {
+        /* already gone */
+      }
       resolve();
     };
-    audio.onended = finish;
-    audio.onerror = finish;
-    void audio.play().catch(finish);
+    // Lip-sync when the graph can run; plain playback when it can't. Wiring
+    // happens before play() so no audio escapes un-analysed mid-utterance.
+    void routeThroughAnalyser(audio).then((w) => {
+      wired = w;
+      activeAnalyser = w?.analyser ?? null;
+      audio.onended = finish;
+      audio.onerror = finish;
+      void audio.play().catch(finish);
+    });
   });
 }
 

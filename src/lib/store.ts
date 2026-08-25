@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { ProviderError, streamChat } from "./providers";
+import { ProviderError, streamChain, streamChat } from "./providers";
+import { slugifyName } from "./format";
 import * as storage from "./storage";
 import { composeSystemPrompt } from "./styles";
 import { environmentNote } from "./environment";
@@ -99,6 +100,7 @@ export type View =
   | "community"
   | "browser"
   | "claudecode"
+  | "acp"
   | "files";
 
 /** What `deleteItem` removes: a whole message, its text, its reasoning, or one tool call. */
@@ -217,7 +219,7 @@ interface AppState {
   applyPreset: (id: string) => void;
   deletePreset: (id: string) => Promise<void>;
 
-  saveTemplate: (name: string, content: string) => Promise<void>;
+  saveTemplate: (name: string, content: string, kind?: Template["kind"]) => Promise<void>;
   deleteTemplate: (id: string) => Promise<void>;
 
   saveTool: (tool: Tool) => Promise<void>;
@@ -980,10 +982,10 @@ export const useStore = create<AppState>((set, get) => ({
     set({ presets: get().presets.filter((p) => p.id !== id) });
   },
 
-  // ---------- instruction templates ----------
+  // ---------- instruction templates & prompt snippets ----------
 
-  saveTemplate: async (name, content) => {
-    const t: Template = { id: uid(), name, content };
+  saveTemplate: async (name, content, kind = "instruction") => {
+    const t: Template = { id: uid(), name, content, kind };
     await storage.saveTemplate(t);
     set({ templates: [...get().templates, t].sort((a, b) => a.name.localeCompare(b.name)) });
   },
@@ -1279,13 +1281,26 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
   const { settings } = get();
   const chat = get().chats.find((c) => c.id === get().currentId);
   if (!chat) return;
-  const provider = settings.providers.find((p) => p.id === chat.providerId);
+  // A combo model id (`combo/<slug>`) addresses a chain, not a provider+model
+  // pair; its steps carry the providers instead. Guard before the model check
+  // below: a legacy chat with no model must not crash on startsWith.
+  const combo =
+    (chat.model ?? "").startsWith("combo/")
+      ? (settings.combos ?? []).find((c) => slugifyName(c.name) === (chat.model ?? "").slice("combo/".length))
+      : undefined;
+  const provider = combo
+    ? settings.providers.find((p) => p.id === combo.steps[0]?.providerId) ?? settings.providers[0]
+    : settings.providers.find((p) => p.id === chat.providerId);
   if (!provider) {
     set({ error: "No provider selected — pick one in the panel on the right." });
     return;
   }
   if (!chat.model) {
     set({ error: "No model selected — pick or type one in the panel on the right." });
+    return;
+  }
+  if (combo && combo.steps.length < 1) {
+    set({ error: `Combo "${combo.name}" has no steps — add one in Settings → Combos.` });
     return;
   }
 
@@ -1487,20 +1502,45 @@ async function runCompletion(set: Set, get: Get): Promise<void> {
       // Captured once per round: moving the call into a closure loses the
       // narrowing the surrounding code already did on abortController.
       const ac = abortController;
+      const comboSteps = combo
+        ? combo.steps
+            .map((s) => ({
+              provider: settings.providers.find((p) => p.id === s.providerId),
+              model: s.model,
+            }))
+            .filter((s): s is { provider: Provider; model: string } => !!s.provider)
+        : undefined;
       const send = () =>
-        streamChat({
-          provider,
-          model: chat.model,
-          system: systemStr,
-          messages: history,
-          temperature: chat.temperature,
-          maxTokens: chat.maxTokens,
-          tools: enabledTools,
-          jsonSchema: chat.jsonSchema,
-          signal: ac.signal,
-          onDelta: (delta) => patchLast((m) => ({ ...m, content: m.content + delta })),
-          onReasoning: (delta) => patchLast((m) => ({ ...m, reasoning: (m.reasoning ?? "") + delta })),
-        });
+        comboSteps
+          ? streamChain(
+              comboSteps,
+              {
+                provider,
+                model: chat.model,
+                system: systemStr,
+                messages: history,
+                temperature: chat.temperature,
+                maxTokens: chat.maxTokens,
+                tools: enabledTools,
+                jsonSchema: chat.jsonSchema,
+                signal: ac.signal,
+                onDelta: (delta) => patchLast((m) => ({ ...m, content: m.content + delta })),
+                onReasoning: (delta) => patchLast((m) => ({ ...m, reasoning: (m.reasoning ?? "") + delta })),
+              },
+            )
+          : streamChat({
+              provider,
+              model: chat.model,
+              system: systemStr,
+              messages: history,
+              temperature: chat.temperature,
+              maxTokens: chat.maxTokens,
+              tools: enabledTools,
+              jsonSchema: chat.jsonSchema,
+              signal: ac.signal,
+              onDelta: (delta) => patchLast((m) => ({ ...m, content: m.content + delta })),
+              onReasoning: (delta) => patchLast((m) => ({ ...m, reasoning: (m.reasoning ?? "") + delta })),
+            });
 
       let result;
       try {

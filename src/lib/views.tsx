@@ -69,6 +69,7 @@ export const VIEWS: ViewDef[] = [
   { id: "mcp", label: "MCP Servers", loadLabel: "Loading MCP servers…", section: "automation", Icon: IconPlug, Component: L(() => import("../components/McpView"), "McpView") },
   { id: "community", label: "Community", loadLabel: "Opening the community library…", section: "automation", Icon: IconGrid, Component: L(() => import("../components/CommunityView"), "CommunityView") },
   { id: "claudecode", label: "Coding CLIs", loadLabel: "Opening the coding CLIs…", section: "automation", Icon: IconBolt, Component: L(() => import("../components/ClaudeCodeView"), "ClaudeCodeView") },
+  { id: "acp", label: "ACP agents", loadLabel: "Opening ACP agents…", section: "automation", Icon: IconPlug, Component: L(() => import("../components/AcpView"), "AcpView") },
   { id: "files", label: "Files", loadLabel: "Opening files…", section: "automation", Icon: IconFolder, Component: L(() => import("../components/FilesView"), "FilesView") },
 
   // ---- Reachable but not in the sidebar nav ----

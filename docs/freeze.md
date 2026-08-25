@@ -86,6 +86,16 @@ this is frozen at "works" rather than removed.
 > instead of two. If the positioning argument ever stops convincing, there is
 > nothing else holding it.
 
+> **Unfrozen 2026-08-23.** The maintainer reviewed this entry and chose to
+> ship rather than wait for adoption evidence. §2.1 landed the same day:
+> viseme lip-sync driven by *measured* speech loudness — an AnalyserNode on
+> data-URL playback (`lib/loudness.ts`, wired in `lib/tts.ts`) feeding the
+> motion driver, which keeps its synthetic envelope for engines it cannot
+> hear (native SAPI) — and pointer head tracking (`lib/pointerTrack.ts`),
+> shared by VRM and MMD rigs. Scope note recorded honestly: **mouse**
+> tracking only; camera-based tracking was not built and remains out unless
+> re-frozen entries say otherwise.
+
 ### The 74-lecture course
 
 **State:** 74 HTML episodes, 74 storyboards, 74 narration scripts, 148 subtitle
@@ -114,6 +124,15 @@ change is an app release; as a server, it versions and fails independently.
 
 **Unfreeze when:** migrated to MCP, at which point it isn't app surface at all.
 
+> **Migration target exists (2026-08-23).** `mcp-media/` is a standalone,
+> zero-dependency MCP server exposing `generate_image` / `generate_speech` /
+> `generate_video` / `generate_3d` over stdio — the same four engines as the
+> built-ins, reading the same config shape (point `MEDIA_CONFIG` at your
+> `settings.json`). It is additive: the in-tree tools remain until the
+> maintainer decides to flip the default, which is the decision this note
+> leaves with them. The freeze on *new* engines/modalities in-tree still
+> holds; new work belongs in the server now.
+
 ### React artifacts in the canvas
 
 **State:** the canvas renders HTML, SVG and Mermaid. JSX/TSX falls back to a code
@@ -127,6 +146,16 @@ deliberately". This is that decision: no. Lazy-loading limits the startup cost
 but not the maintenance cost, and the feature is narrow.
 
 **Unfreeze when:** users are actually asking for it.
+
+> **Unfrozen 2026-08-23.** The maintainer made the deliberate decision this
+> entry was waiting for, in the other direction. Two of the original premises
+> had also aged: React 19 has no UMD builds to inline (the runtime is now a
+> 189 kB IIFE bundled from the app's own react/react-dom by
+> `scripts/build-react-runtime.mjs`, committed under `src/vendor/`), and the
+> bundle argument had already been withdrawn for the avatars entry — Babel is
+> a lazy chunk that loads only when a React artifact is previewed. The
+> transform runs in the app; only compiled classic script crosses into the
+> sandbox. Shipped as `lib/reactArtifact.ts` + `Canvas.tsx`.
 
 ### `packages/ui-kit`
 

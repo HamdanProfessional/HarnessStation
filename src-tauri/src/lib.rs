@@ -1,3 +1,4 @@
+mod acp;
 mod audio;
 mod browser;
 mod claudecode;
@@ -117,6 +118,7 @@ pub fn run() {
         .manage(local::LocalServer(Mutex::new(None)))
         .manage(claudecode::ClaudeCode::default())
         .manage(opencode::Opencode::default())
+        .manage(acp::AcpState::default())
         .manage(local::SttServer(Mutex::new(None)))
         .manage(mcp::McpState(Mutex::new(HashMap::new())))
         .manage(audio::Recorder(Mutex::new(None)))
@@ -192,6 +194,10 @@ pub fn run() {
             opencode::opencode_run,
             opencode::opencode_stop,
             opencode::opencode_probe,
+            acp::acp_spawn,
+            acp::acp_write,
+            acp::acp_kill,
+            acp::acp_running,
             local::stop_server,
             local::server_status,
             local::transcribe,
@@ -265,6 +271,7 @@ pub fn run() {
                 local::kill_on_exit(app);
                 claudecode::kill_on_exit(app);
                 opencode::kill_on_exit(app);
+                acp::kill_on_exit(app);
                 local::kill_stt(app);
                 let state: tauri::State<mcp::McpState> = tauri::Manager::state(app);
                 mcp::kill_all(&state);

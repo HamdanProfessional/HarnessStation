@@ -74,6 +74,18 @@ export function FirstRunKey() {
           Get one from Anthropic
         </button>
         {" · "}
+        <button
+          className="link-btn"
+          onClick={() => {
+            // Same deep-link mechanism as the local-model link below: the
+            // Settings view restores its tab from this key.
+            localStorage.setItem("hs-settings-tab", "subscriptions");
+            setView("settings");
+          }}
+        >
+          Already have Claude Pro or Copilot?
+        </button>
+        {" · "}
         <button className="link-btn" onClick={() => setView("discover")}>
           Use a different provider
         </button>

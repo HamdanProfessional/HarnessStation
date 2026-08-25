@@ -1,7 +1,7 @@
 import { IconChevron, IconPanelRight, IconX } from "./icons";
 import { useEffect, useState } from "react";
 import { promptDialog } from "../lib/dialog";
-import { prettyName } from "../lib/format";
+import { prettyName, slugifyName } from "../lib/format";
 import { listModels } from "../lib/providers";
 import { useStore } from "../lib/store";
 import { STYLE_PRESETS } from "../lib/styles";
@@ -209,6 +209,15 @@ export function ConfigPanel() {
                     hidden model looks like the provider dropped it. The ones a
                     chat cannot send to say so in the heading instead. */}
                 <ModelOptions models={provider.models} />
+                {(settings.combos?.length ?? 0) > 0 && (
+                  <optgroup label="Combos — fallback chains">
+                    {settings.combos!.map((c) => (
+                      <option key={c.id} value={`combo/${slugifyName(c.name)}`}>
+                        {c.name} ({c.steps.length} steps)
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
             ) : (
               <input
@@ -332,18 +341,20 @@ export function ConfigPanel() {
               }}
             >
               <option value="">Apply a template...</option>
-              {templates.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
+              {templates
+                .filter((t) => t.kind !== "snippet")
+                .map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
             </select>
             <button
               className="icon-btn"
-              title="Delete a template"
+              title="Delete a template or snippet"
               onClick={async () => {
                 const name = await promptDialog("Delete template", {
-                  message: `Type the template name to delete: ${templates.map((t) => t.name).join(", ")}`,
+                  message: `Type the name to delete: ${templates.map((t) => t.name).join(", ")}`,
                 });
                 const target = templates.find((t) => t.name === name?.trim());
                 if (target) void deleteTemplate(target.id);
@@ -353,7 +364,10 @@ export function ConfigPanel() {
             </button>
           </div>
         )}
-        <small className="hint">Templates are JSON files in ~\.harnessx\templates (drop files there to import).</small>
+        <small className="hint">
+          Templates are JSON files in ~\.harnessx\templates (drop files there to import). Prompt
+          snippets live here too — type / in the composer to insert one.
+        </small>
       </div>
 
       {provider?.kind === "openai-compatible" &&

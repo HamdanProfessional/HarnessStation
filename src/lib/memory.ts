@@ -1,5 +1,5 @@
 import { loadAgentMemory, saveAgentMemory } from "./storage";
-import { embed } from "./rag";
+import { tryEmbed } from "./embeddings";
 import { chatOnce } from "./providers";
 import type { MemoryEntry, Provider } from "./types";
 
@@ -28,24 +28,6 @@ function jaccard(a: Set<string>, b: Set<string>): number {
   let inter = 0;
   for (const t of a) if (b.has(t)) inter++;
   return inter / (a.size + b.size - inter);
-}
-
-async function embedConfig(): Promise<{ provider?: Provider; model?: string }> {
-  const { useStore } = await import("./store");
-  const s = useStore.getState().settings;
-  const provider = s.providers.find((p) => p.id === s.embedProviderId);
-  return { provider, model: s.embedModel };
-}
-
-/** Embed texts if an embedding provider/model is configured; else null (keyword fallback). */
-async function tryEmbed(texts: string[]): Promise<number[][] | null> {
-  const { provider, model } = await embedConfig();
-  if (!provider || !model?.trim()) return null;
-  try {
-    return await embed(provider, model, texts);
-  } catch {
-    return null;
-  }
 }
 
 /** READ PATH — return only the top-K most relevant memories for the current task. */

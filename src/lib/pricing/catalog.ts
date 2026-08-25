@@ -225,6 +225,13 @@ export interface ModelQuery {
   requireCaching?: boolean;
   requireOpenWeights?: boolean;
   /**
+   * Only listings the feed explicitly classifies as free — a `:free` variant,
+   * or a provider tier published at $0. Deliberately stricter than
+   * `maxBlendedPrice: 0`, which also admits anything the feed simply left
+   * unpriced.
+   */
+  requireFree?: boolean;
+  /**
    * Hide $0 listings that are not verifiably free — seat-licensed models and
    * ones the feed leaves ambiguous.
    *
@@ -266,6 +273,7 @@ export function matches(model: PricedModel, q: ModelQuery): boolean {
   if (q.requireReasoning && model.capabilities.supportsReasoning !== true) return false;
   if (q.requireCaching && model.capabilities.supportsCaching !== true) return false;
   if (q.requireOpenWeights && model.capabilities.openWeights !== true) return false;
+  if (q.requireFree && model.pricing.model !== "free") return false;
   if (q.onlyConfigured && !q.onlyConfigured.includes(model.providerSlug)) return false;
 
   if (q.maxBlendedPrice !== undefined) {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import { createPortal } from "react-dom";
 import { confirmDialog, promptDialog } from "../lib/dialog";
 import { toast } from "../lib/toast";
@@ -6,6 +6,7 @@ import { useStore, type View } from "../lib/store";
 import { useModal } from "../lib/useModal";
 import * as storage from "../lib/storage";
 import type { SnapshotInfo } from "../lib/storage";
+import { searchChats, type ChatSearchHit } from "../lib/chatSearch";
 import { NAV_VIEWS, type NavSection } from "../lib/views";
 import {
   IconChat,
@@ -101,7 +102,8 @@ export function Sidebar() {
   }, [snapsFor]);
 
   // Transcripts load on demand, so searching content needs them all in memory.
-  // Paid once, on the first search of the session.
+  // Paid once, on the first search of the session — and it also feeds the
+  // semantic pass, which builds its snippets from the same bodies.
   useEffect(() => {
     if (query.trim()) void hydrateAllChats();
   }, [query, hydrateAllChats]);
@@ -123,12 +125,50 @@ export function Sidebar() {
     .slice()
     .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
 
+  // ---------- semantic search ----------
+  //
+  // The substring list above is the fast path and stays authoritative. Behind
+  // it, once the transcripts are in memory, chats that mean what you typed but
+  // don't literally say it are ranked by embedding similarity. Debounced so
+  // typing doesn't queue a model call per keystroke; cancelled on unmount or
+  // query change so a slow pass can't land stale results.
+  const [semHits, setSemHits] = useState<ChatSearchHit[]>([]);
+  const [semEmbedded, setSemEmbedded] = useState(true);
+
+  useEffect(() => {
+    const needle = query.trim();
+    if (!needle) {
+      setSemHits([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void (async () => {
+        await hydrateAllChats();
+        // Read fresh state: the component's `chats` is a render-time snapshot,
+        // and hydration just filled in the bodies we're about to embed.
+        const { chats: fresh } = useStore.getState();
+        const scope = activeProjectId
+          ? fresh.filter((c) => c.projectId === activeProjectId)
+          : fresh;
+        const res = await searchChats(scope, needle);
+        if (cancelled) return;
+        setSemHits(res.semantic);
+        setSemEmbedded(res.embedded);
+      })();
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query, activeProjectId, hydrateAllChats]);
+
   const rootChats = filtered.filter((c) => !c.folder);
   const byFolder: Record<string, typeof filtered> = {};
   for (const c of filtered) if (c.folder) (byFolder[c.folder] ??= []).push(c);
   const folderNames = Object.keys(byFolder).sort();
 
-  const chatItem = (c: (typeof filtered)[number]) => (
+  const chatItem = (c: (typeof filtered)[number], badge?: string) => (
     // Not a <button>: it contains the options button, and nested buttons are
     // invalid HTML. role + tabIndex + a key handler gets the same behaviour.
     <div
@@ -166,6 +206,11 @@ export function Sidebar() {
             ` · ${c.messages.length || messageCounts[c.id]} msg`}
         </span>
       </span>
+      {badge && (
+        <span className="sem-score" title="Semantic similarity">
+          {badge}
+        </span>
+      )}
       <button
         className="icon-btn chat-menu-btn"
         title="Chat options"
@@ -323,6 +368,7 @@ export function Sidebar() {
           placeholder="Search chats..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          title="Matches titles and message text. Also searches by meaning once an embeddings model is set (Settings → Providers)."
         />
       </div>
 
@@ -420,7 +466,8 @@ export function Sidebar() {
       {!collapsed.chats && (
       <div className="chat-list">
         {filtered.length === 0 && <div className="hint chat-empty">No chats found.</div>}
-        {rootChats.map(chatItem)}
+        {/* Explicit arrow: .map(chatItem) would pass the array index as the badge. */}
+        {rootChats.map((c) => chatItem(c))}
         {folderNames.map((f) => {
           const open = !collapsed[`folder:${f}`];
           return (
@@ -436,10 +483,31 @@ export function Sidebar() {
                 {f}
                 <span className="tool-group-count">{byFolder[f].length}</span>
               </button>
-              {open && byFolder[f].map(chatItem)}
+              {open && byFolder[f].map((c) => chatItem(c))}
             </div>
           );
         })}
+        {q.trim() && semHits.length > 0 && (
+          <>
+            <div className="sem-head">Semantic matches</div>
+            {semHits.map((h) => {
+              const c = chats.find((x) => x.id === h.id);
+              if (!c) return null;
+              return (
+                <Fragment key={h.id}>
+                  {chatItem(c, `${Math.round(h.score * 100)}%`)}
+                </Fragment>
+              );
+            })}
+          </>
+        )}
+        {/* Only speak up when the fast path came up empty — otherwise this would
+            nag everyone whose provider was never configured, on every search. */}
+        {q.trim() && filtered.length === 0 && !semEmbedded && (
+          <div className="hint chat-empty">
+            No matches. Set an embeddings model in Settings → Models for meaning-based search.
+          </div>
+        )}
       </div>
       )}
 

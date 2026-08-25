@@ -44,6 +44,16 @@ describe("the auth badge", () => {
     // revoked, and saying "Connected" here would be an unverified claim.
     expect(authBadge({ localish: false, hasKey: true })).toMatchObject({ label: "Key set", tone: "ok" });
   });
+
+  it("names a subscription provider as a subscription, not a key", () => {
+    // The apiKey field holds the "oauth" marker on these, so without this rule
+    // the card would claim "Key set" about a provider that has no API key.
+    expect(authBadge({ localish: false, hasKey: true, auth: "oauth-claude" })).toMatchObject({
+      label: "Subscription",
+      tone: "ok",
+    });
+    expect(authBadge({ localish: false, hasKey: true, auth: "oauth-copilot" }).title).toContain("keychain");
+  });
 });
 
 describe("the probe badge", () => {

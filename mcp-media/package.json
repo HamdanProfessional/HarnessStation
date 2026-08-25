@@ -1,0 +1,17 @@
+{
+  "name": "@harnessstation/mcp-media",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server: image / speech / video / 3D generation through OpenAI-compatible, A1111 or Replicate endpoints you configure.",
+  "type": "module",
+  "main": "index.mjs",
+  "bin": {
+    "harnessstation-mcp-media": "./index.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node index.mjs"
+  }
+}

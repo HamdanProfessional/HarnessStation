@@ -110,6 +110,27 @@ One JSON file per chat under `~/.harnessx/conversations/`, plus an index for the
 sidebar. Plain text, readable, and yours to back up or grep.
 → [Where your data lives](../advanced/data)
 
+## Finding a conversation
+
+The sidebar search box matches titles and message text as you type. Behind it,
+if an embeddings model is set (**Settings › Models**), chats that are *about*
+what you typed but don't contain the words appear below the exact matches under
+**Semantic matches**, each with a similarity score.
+
+The first semantic search embeds your conversations once and caches the vectors
+in `~/.harnessx/conversations/vectors.json`; after that only changed chats are
+re-embedded, so it stays quick. Without an embeddings model configured, search
+is substring-only — nothing else changes.
+
+## The `/` prompt library
+
+Type `/` at the start of the composer for saved templates and snippets: arrow
+keys to move, Enter to insert, Esc to close. Snippets you use often can be
+saved straight from the picker ("Save draft as snippet…"), and templates saved
+from **Config › System prompt** appear here too. See also
+[presets](#per-chat-settings) for saving full parameter combinations rather
+than text.
+
 ## Pulling in context with @-references
 
 You can inject content straight into a message with an `@`-reference:

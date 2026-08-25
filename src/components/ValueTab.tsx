@@ -65,6 +65,7 @@ export function ValueTab() {
   const [preset, setPreset] = useState<keyof typeof PRESETS>("bestValue");
   const [onlyConfigured, setOnlyConfigured] = useState(false);
   const [requireTools, setRequireTools] = useState(false);
+  const [requireFree, setRequireFree] = useState(false);
   const [requireVision, setRequireVision] = useState(false);
   const [minContext, setMinContext] = useState(0);
   const [showUnpriceable, setShowUnpriceable] = useState(false);
@@ -149,11 +150,12 @@ export function ValueTab() {
       modality: "llm",
       requireTools: requireTools || undefined,
       requireVision: requireVision || undefined,
+      requireFree: requireFree || undefined,
       minContext: minContext || undefined,
       excludeUnpriceable: !showUnpriceable,
       onlyConfigured: onlyConfigured ? configuredSlugs : undefined,
     }),
-    [text, requireTools, requireVision, minContext, showUnpriceable, onlyConfigured, configuredSlugs],
+    [text, requireTools, requireVision, requireFree, minContext, showUnpriceable, onlyConfigured, configuredSlugs],
   );
 
   const modelRows = useMemo(
@@ -270,6 +272,10 @@ export function ValueTab() {
             <label className="hint">
               <input type="checkbox" checked={requireVision} onChange={(e) => setRequireVision(e.target.checked)} />{" "}
               Vision
+            </label>
+            <label className="hint" title="Only listings the feed explicitly marks free — :free variants and $0 tiers">
+              <input type="checkbox" checked={requireFree} onChange={(e) => setRequireFree(e.target.checked)} />{" "}
+              Free only
             </label>
             <label className="hint">
               <input

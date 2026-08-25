@@ -410,10 +410,19 @@ export function DiscoverView() {
             provider; paste an API key when prompted or set it later in Settings.
           </p>
           {cloudNotice && <p className="hint">{cloudNotice}</p>}
-          {CLOUD_CATEGORY_ORDER.map((cat) => {
-            const inCat = CLOUD_PROVIDERS.filter((p) => (CLOUD_CATEGORY[p.id] ?? "Frontier APIs") === cat);
-            if (!inCat.length) return null;
-            return (
+          {(() => {
+            // Free providers get their own section at the top — the zero-card
+            // onboarding path should be the first thing a new user sees, not a
+            // badge scattered across categories.
+            const free = CLOUD_PROVIDERS.filter((p) => p.free);
+            const rest = CLOUD_CATEGORY_ORDER.map((cat) => ({
+              cat,
+              inCat: CLOUD_PROVIDERS.filter(
+                (p) => !p.free && (CLOUD_CATEGORY[p.id] ?? "Frontier APIs") === cat,
+              ),
+            })).filter((g) => g.inCat.length);
+            const groups = free.length ? [{ cat: "Free tier", inCat: free }, ...rest] : rest;
+            return groups.map(({ cat, inCat }) => (
               <section key={cat}>
                 <h2>{cat}</h2>
                 <div className="card-grid">
@@ -443,21 +452,21 @@ export function DiscoverView() {
                         <IconPlus size={16} />
                       </button>
                     )}
-                  </div>
-                  <div className="cloud-blurb">{p.blurb}</div>
-                  <div className="cloud-foot">
-                    <span className="hint">{p.models.length} models</span>
-                    <button className="link-btn" onClick={() => void openUrl(p.keyUrl)}>
-                      Get API key
-                    </button>
-                  </div>
-                </div>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
+                   </div>
+                   <div className="cloud-blurb">{p.blurb}</div>
+                   <div className="cloud-foot">
+                     <span className="hint">{p.models.length} models</span>
+                     <button className="link-btn" onClick={() => void openUrl(p.keyUrl)}>
+                       Get API key
+                     </button>
+                   </div>
+                 </div>
+                     );
+                   })}
+                 </div>
+               </section>
+            ));
+          })()}
         </>
       )}
 

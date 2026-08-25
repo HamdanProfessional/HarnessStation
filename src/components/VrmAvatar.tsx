@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "./Loading";
 import { createMotionDriver } from "../lib/avatarMotion";
+import { currentSpeechLevel } from "../lib/tts";
+import { pointerPosition } from "../lib/pointerTrack";
 import type { VoiceState } from "../lib/voice";
 
 /**
@@ -124,8 +126,13 @@ export function VrmAvatar({ data, state, level, onError }: Props) {
         const tick = () => {
           raf = requestAnimationFrame(tick);
           const dt = Math.min(clock.getDelta(), 0.1);
-          const f = driver.update(dt, stateRef.current, levelRef.current);
           const st = stateRef.current;
+          // Real lip-sync when the playing voice can be measured; pointer
+          // tracking so the character watches where you work.
+          const f = driver.update(dt, st, levelRef.current, {
+            speechLevel: currentSpeechLevel(),
+            pointer: pointerPosition(),
+          });
 
           setExp("aa", f.mouth);
           setExp("ih", f.mouth * 0.25);

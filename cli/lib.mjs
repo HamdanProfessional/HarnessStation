@@ -195,6 +195,73 @@ export function chatBody({ prompt, model, system, agent, stream = true }) {
   return body;
 }
 
+/**
+ * The REPL's request body: prior turns ride along so the conversation has
+ * memory across lines. The system message stays first, exactly where the
+ * server expects it to fold into the effective instructions.
+ */
+export function replBody({ history, prompt, model, system, agent }) {
+  const messages = [];
+  const sys = [agent?.instructions?.trim(), system?.trim()].filter(Boolean).join("\n\n");
+  if (sys) messages.push({ role: "system", content: sys });
+  for (const m of history) messages.push({ role: m.role, content: m.content });
+  messages.push({ role: "user", content: prompt });
+
+  const body = { messages, stream: true };
+  const chosen = model || agent?.model || "";
+  if (chosen) body.model = chosen;
+  return body;
+}
+
+const REPL_COMMANDS = ["exit", "quit", "new", "model", "agent", "system", "history", "help"];
+
+/**
+ * A REPL input line is either a slash command or a prompt.
+ * Unknown "/words" are prompts — a model may well be asked about "/etc/hosts".
+ */
+export function parseReplLine(line) {
+  const text = String(line ?? "").trim();
+  if (!text) return { type: "empty" };
+  const m = /^\/([a-z]+)(?:\s+([\s\S]*))?$/.exec(text);
+  if (!m) return { type: "prompt", text };
+  const name = m[1].toLowerCase();
+  if (!REPL_COMMANDS.includes(name)) return { type: "prompt", text };
+  return { type: "command", name: name === "quit" ? "exit" : name, rest: (m[2] ?? "").trim() };
+}
+
+/**
+ * A ready-to-paste provider block for tools that accept OpenAI-compatible
+ * endpoints (opencode, Aider, LangChain…). Emitted rather than documented so
+ * it can never drift from the actual port.
+ */
+export function endpointSnippet(base, models, indent = "") {
+  const list = models.map((m) => `${indent}      "${m}"`).join(",\n");
+  return `${indent}{
+${indent}  "provider": {
+${indent}    "api": "openai",
+${indent}    "baseUrl": "${base}",
+${indent}    "models": [
+${list}
+${indent}    ]
+${indent}  }
+${indent}}`;
+}
+
+/**
+ * Environment for pointing Claude Code at the app. The Anthropic SDK appends
+ * /v1/messages itself, so the base URL must not include it.
+ */
+export function claudeEnvSnippet(base, model) {
+  const root = base.replace(/\/v1\/?$/, "");
+  const m = model || "provider/model — see `hs models`";
+  return [
+    `ANTHROPIC_BASE_URL=${root}`,
+    "ANTHROPIC_AUTH_TOKEN=hs-local",
+    `ANTHROPIC_MODEL=${m}`,
+    `ANTHROPIC_SMALL_FAST_MODEL=${m}`,
+  ].join("\n");
+}
+
 /** Find an agent by name, case- and space-insensitively. */
 export function findAgent(agents, name) {
   const want = String(name ?? "").trim().toLowerCase().replace(/\s+/g, "");
@@ -263,7 +330,20 @@ Usage
   hs agents                     list agents defined in the app
   hs skills                     list skills in ~/.harnessx/skills
   hs chat <prompt>              send a prompt and stream the reply
+  hs chat                       interactive session (see below)
+  hs endpoint                   print the API base URL and a ready-to-paste
+                                provider config for opencode / Aider / SDKs
   hs doctor                     explain why chat is not working
+
+Interactive session
+  Running \`hs chat\` with no prompt opens a multi-turn session. Slash commands:
+
+    /new            start over (keeps model and agent)
+    /model [id]     show or switch the model
+    /agent [name]   show or switch the agent
+    /system <text>  replace the extra system prompt
+    /history        show the turns sent so far
+    /exit           leave (Ctrl+D also works; Ctrl+C stops a running reply)
 
 Options
   -m, --model <id>              model to use
@@ -273,6 +353,11 @@ Options
   -j, --json                    machine-readable output
       --no-stream               wait for the whole reply
   -h, --help                    this text
+
+Tools note
+  The local API passes OpenAI function-calling through to openai-compatible
+  providers, so agents like opencode can drive the models configured here —
+  including local GGUFs — with their own tools.
 
 Commands that need a model go through the app's local API server, so the
 desktop app must be running with that server enabled. Inventory commands

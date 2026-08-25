@@ -36,8 +36,28 @@ export function speechEnvelope(t: number): number {
 
 export interface MotionDriver {
   /** Advance by `dt` seconds and return what the rig should be set to. */
-  update(dt: number, state: VoiceState, micLevel: number): MotionFrame;
+  update(dt: number, state: VoiceState, micLevel: number, inputs?: MotionInputs): MotionFrame;
 }
+
+/**
+ * Optional per-frame inputs beyond the mic level.
+ *
+ * `speechLevel` is the measured loudness of the voice actually playing (see
+ * tts.currentSpeechLevel). When present it replaces the synthetic jaw
+ * envelope; when null — native SAPI playback, or a suspended audio graph —
+ * the envelope fallback keeps the mouth moving convincingly.
+ *
+ * `pointer` is the normalized mouse position (pointerTrack); the head eases
+ * toward it so the character watches where you're working.
+ */
+export interface MotionInputs {
+  speechLevel?: number | null;
+  pointer?: { x: number; y: number } | null;
+}
+
+/** How far the head will turn to follow the pointer, in radians. */
+const TRACK_YAW = 0.4;
+const TRACK_PITCH = 0.25;
 
 /**
  * `random` is injectable so tests get deterministic blink timing.
@@ -48,16 +68,22 @@ export function createMotionDriver(random: () => number = Math.random): MotionDr
   let nextBlink = 1 + random() * 3;
   let happy = 0;
   let elapsed = 0;
+  let trackX = 0; // smoothed pointer-follow angles
+  let trackY = 0;
 
   return {
-    update(dt, state, micLevel) {
+    update(dt, state, micLevel, inputs: MotionInputs = {}) {
       elapsed += dt;
 
-      // Listening shows the user's own level; speaking uses a synthetic envelope,
-      // because none of the speech engines give us visemes.
+      // Speaking uses measured loudness when it exists, modulated by the
+      // syllable envelope so openings keep their rhythm; otherwise the
+      // envelope alone. Listening shows the user's own level.
+      const env = speechEnvelope(elapsed);
       const target =
         state === "speaking"
-          ? speechEnvelope(elapsed) * 0.75
+          ? inputs.speechLevel != null
+            ? Math.min(1, inputs.speechLevel * 2.4 * (0.3 + 0.7 * env)) * 0.9
+            : env * 0.75
           : state === "listening"
             ? Math.min(1, micLevel * 7) * 0.35
             : 0;
@@ -80,13 +106,20 @@ export function createMotionDriver(random: () => number = Math.random): MotionDr
       happy += (happyTarget - happy) * Math.min(1, dt * 3);
 
       const think = state === "thinking" ? 1 : 0;
+      // Head tracking eases toward the pointer and back; the idle sway stays
+      // underneath, so resting the mouse never freezes the pose.
+      const px = inputs.pointer?.x ?? 0;
+      const py = inputs.pointer?.y ?? 0;
+      trackX += (px * TRACK_YAW - trackX) * Math.min(1, dt * 2.5);
+      trackY += (-py * TRACK_PITCH - trackY) * Math.min(1, dt * 2.5);
+
       return {
         mouth,
         blink,
         happy,
         // Attentive tilt while listening, a glance up while thinking.
-        headX: Math.sin(elapsed * 0.7) * 0.02 - think * 0.09,
-        headY: Math.sin(elapsed * 0.45) * 0.05 + think * 0.12,
+        headX: Math.sin(elapsed * 0.7) * 0.02 - think * 0.09 + trackY,
+        headY: Math.sin(elapsed * 0.45) * 0.05 + think * 0.12 + trackX,
         headZ: Math.sin(elapsed * 0.33) * 0.02 + (state === "listening" ? 0.05 : 0),
         breath: Math.sin(elapsed * 1.15) * 0.012,
       };

@@ -1,15 +1,15 @@
 /// <reference types="vite/client" />
 
-interface ImportMetaEnv {
-  /**
-   * Gateway that serves the shared third-party data (benchmarks, MCP directory).
-   * Set when building a release so the app needs no API key of its own:
-   *   VITE_GATEWAY_URL=https://gateway.example.com npm run tauri build
-   * Left empty in dev, where the app falls back to direct calls.
-   */
-  readonly VITE_GATEWAY_URL?: string;
-}
-
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
+// Minimal surface of @babel/standalone — it ships no types of its own and the
+// app only transforms JSX/TSX for canvas artifacts.
+declare module "@babel/standalone" {
+  export interface BabelTransformOptions {
+    filename?: string;
+    sourceType?: "script" | "module" | "unambiguous";
+    presets?: (string | [string, Record<string, unknown>?])[] | null;
+    plugins?: (string | [string, Record<string, unknown>?])[] | null;
+    compact?: boolean | "auto";
+  }
+  export const availablePlugins: Record<string, unknown>;
+  export function transform(code: string, options: BabelTransformOptions): { code: string | null | undefined };
 }

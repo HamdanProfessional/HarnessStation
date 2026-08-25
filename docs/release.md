@@ -1,16 +1,15 @@
 # Building & Releasing HarnessStation
 
-The app is wired for a real Windows installer with self-update. Two one-time manual steps are
+The app is wired for a real Windows installer with self-update. Two one-time manual steps were
 required (they need secrets that can't live in the repo): an **updater signing keypair** and,
 ideally, a **code-signing certificate**.
 
-> ⚠️ **SECURITY — the old dev keypair is COMPROMISED.** An early throwaway updater keypair (and its
-> password) was committed to this repo's history and must be treated as public. **Never sign a
-> release with it.** `tauri.conf.json` → `plugins.updater.pubkey` is now the placeholder
-> `REPLACE_WITH_UPDATER_PUBLIC_KEY`, so a build won't ship with the compromised key by accident —
-> generate a fresh keypair (below), paste its public key, and keep the private key in a secrets
-> manager. The old key in git history should be purged during the pre-launch history scrub
-> (see the launch plan), but purging history does **not** un-leak it — rotation is what protects you.
+> **Updater keypair: rotated.** The early throwaway keypair that was committed to this repo's
+> history is retired — commit `1ccaf4e` installed the replacement public key in
+> `tauri.conf.json → plugins.updater.pubkey`, keeps the private key outside the repo, and set the
+> `TAURI_SIGNING_PRIVATE_KEY` / `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` secrets.
+> Never sign with anything matching the leaked key, and treat any future private key as
+> manager-of-last-resort material only.
 
 ## 1. Generate the updater keypair (one-time)
 

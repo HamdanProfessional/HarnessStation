@@ -1,11 +1,19 @@
 export type ProviderKind = "openai-compatible" | "anthropic" | "webllm";
 
+/**
+ * How a provider authenticates. The default (undefined) is a static API key in
+ * `apiKey`. Subscription OAuth providers hold no static key: their tokens live
+ * in the OS keychain and are brokered at call time by lib/oauthProviders.
+ */
+export type ProviderAuth = "oauth-claude" | "oauth-copilot";
+
 export interface Provider {
   id: string;
   name: string;
   kind: ProviderKind;
   baseUrl: string; // e.g. http://localhost:1234/v1 or https://api.anthropic.com
   apiKey: string;
+  auth?: ProviderAuth;
   /** Extra keys tried in turn when the main one is rate-limited or rejected. */
   apiKeys?: string[];
   /** Provider ids to fall back to, in order, if this one errors before replying. */
@@ -17,6 +25,38 @@ export interface Provider {
    * params, routing hints) without waiting for a dedicated setting.
    */
   extraBody?: Record<string, unknown>;
+}
+
+/** One hop in a combo chain: a provider and the exact model to use on it. */
+export interface ComboStep {
+  providerId: string;
+  model: string;
+}
+
+/**
+ * An external ACP (Agent Client Protocol) agent HarnessStation hosts in its
+ * chat: launched as a subprocess, spoken to over newline-delimited JSON-RPC.
+ * Config only — the process is spawned on demand and nothing about it is
+ * stored beyond these fields.
+ */
+export interface AcpAgentConfig {
+  id: string;
+  name: string;
+  command: string;
+  args?: string[];
+  env?: Record<string, string>;
+}
+
+/**
+ * A named, ordered chain of provider+model pairs, usable as a model id
+ * (`combo/<slug>`) anywhere a model is — the chat picker, the local API,
+ * agents. Requests try each step in order and move on when one fails before
+ * replying, so "subscription → cheap → free" becomes one selectable model.
+ */
+export interface Combo {
+  id: string;
+  name: string;
+  steps: ComboStep[];
 }
 
 export interface Chunk {
@@ -92,6 +132,10 @@ export interface Settings {
    * Never changes which provider serves the turn. See lib/rotation.ts.
    */
   roundRobin?: boolean;
+  /** Named provider+model chains, usable as `combo/<slug>` model ids. */
+  combos?: Combo[];
+  /** External ACP agents (from the ACP registry) hostable in the chat. */
+  acpAgents?: AcpAgentConfig[];
   /**
    * Prepend the built-in house rules (tone, objectivity, tool-usage policy) to
    * every chat. Default on. Off for anyone who has tuned their own prompt and
@@ -440,11 +484,17 @@ export interface StylePreset {
   snippet: string;
 }
 
-/** A named system-instruction template, saveable/importable as a JSON file. */
+/** A named, saveable/importable piece of reusable text, stored as a JSON file. */
 export interface Template {
   id: string;
   name: string;
   content: string;
+  /**
+   * "instruction" replaces a chat's system prompt (ConfigPanel);
+   * "snippet" is prompt text inserted into the composer via "/". Files saved
+   * before kinds existed are instructions.
+   */
+  kind?: "instruction" | "snippet";
 }
 
 /** A user tool: JS async function body executed with (args, ctx), or a Python function run via the system Python. */

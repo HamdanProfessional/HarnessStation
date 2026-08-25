@@ -7,6 +7,7 @@ import { isWeb } from "../web";
 import { keysOf, rotateKeys } from "../rotation";
 import { backoffMs, retryAfterMs, shouldWait } from "./backoff";
 import { withCacheBreakpoint } from "./cache";
+import * as quota from "../quota";
 
 // Some providers' HTTPS APIs send no CORS headers, so a browser can't call them
 // directly (Ollama Cloud, notably). On the web build we route those through the
@@ -131,6 +132,38 @@ function streamOnce(p: ChatParams): Promise<ChatResult> {
  * duplicated. Falls back to a single attempt when nothing is configured.
  */
 export async function streamChat(p: ChatParams): Promise<ChatResult> {
+  // A combo model id resolves to a chain here, once, so every caller — voice,
+  // evals, workflows, agents, the store — gets combos without knowing about
+  // them. Callers that already expanded (the local API, runCompletion) pass a
+  // step's concrete model, which never starts with "combo/", so this is a
+  // no-op for them and cannot recurse: streamChain's steps bypass it.
+  if (p.model.startsWith("combo/")) {
+    try {
+      const { useStore } = await import("../store");
+      const { slugifyName } = await import("../format");
+      const combo = (useStore.getState().settings.combos ?? []).find(
+        (c) => slugifyName(c.name) === p.model.slice("combo/".length),
+      );
+      const steps = (combo?.steps ?? [])
+        .map((s) => ({
+          provider: useStore.getState().settings.providers.find((x) => x.id === s.providerId),
+          model: s.model,
+        }))
+        .filter((s): s is { provider: Provider; model: string } => !!s.provider);
+      if (steps.length) return streamChain(steps, p);
+    } catch {
+      /* fall through and let the provider surface the unknown model */
+    }
+  }
+
+  // Subscription OAuth providers carry no static key: broker a live access
+  // token out of the keychain first (refreshing if needed), then run as a
+  // normal provider whose apiKey is that token.
+  let baseProvider = p.provider;
+  if (baseProvider.auth) {
+    const { ensureAccessToken } = await import("../oauthProviders");
+    baseProvider = { ...baseProvider, apiKey: await ensureAccessToken(baseProvider) };
+  }
   let all: Provider[] = [];
   let roundRobin = false;
   try {
@@ -145,7 +178,7 @@ export async function streamChat(p: ChatParams): Promise<ChatResult> {
   // the provider: the turn goes where the user pointed it, and failover still
   // owns what happens after an error. Keeping those separate means a rotation
   // can never mask a provider that is down.
-  const entry = roundRobin ? rotateKeys(p.provider) : p.provider;
+  const entry = roundRobin ? rotateKeys(baseProvider) : baseProvider;
   const attempts = buildAttempts(entry, all);
   let lastErr: unknown;
   // Counts only the attempts we actually paused for, so the exponential curve
@@ -156,13 +189,17 @@ export async function streamChat(p: ChatParams): Promise<ChatResult> {
     let emitted = false;
     const mark = <T>(fn?: (t: T) => void) => (fn ? (t: T) => { emitted = true; fn(t); } : undefined);
     try {
-      return await streamOnce({
+      const result = await streamOnce({
         ...p,
         provider: a.provider,
         model: a.model ?? p.model,
         onDelta: mark(p.onDelta)!,
         onReasoning: mark(p.onReasoning),
       });
+      // The wall came down — a success right after a 429 means the limit
+      // lifted (or this key's pool differs), so the record should say so.
+      quota.recordSuccess(a.provider.id);
+      return result;
     } catch (e) {
       lastErr = e;
       // Once tokens have reached the user, or the error isn't transient, or
@@ -175,6 +212,10 @@ export async function streamChat(p: ChatParams): Promise<ChatResult> {
       // wait. Auth failures fall through with no delay — waiting on a bad key
       // helps nobody.
       const status = e instanceof ProviderError ? e.status : undefined;
+      if (status === 429) {
+        const headers = e instanceof ProviderError ? e.headers : undefined;
+        quota.recordRateLimit(a.provider.id, retryAfterMs(headers) ?? undefined);
+      }
       if (shouldWait(status)) {
         const headers = e instanceof ProviderError ? e.headers : undefined;
         const delay = backoffMs(waited, retryAfterMs(headers));
@@ -183,6 +224,59 @@ export async function streamChat(p: ChatParams): Promise<ChatResult> {
         await new Promise((r) => setTimeout(r, delay));
         if (p.signal?.aborted) throw e;
       }
+    }
+  }
+  throw lastErr;
+}
+
+/**
+ * Run a request across a combo chain: ordered provider+model pairs, first
+ * success wins. The rule that keeps this honest is the same one streamChat
+ * uses internally — once any token has reached the user, a failure is
+ * *yours*, and advancing would duplicate or truncate a reply the user is
+ * already reading. Only silent failures advance the chain.
+ *
+ * Each step gets the full streamChat treatment (its own keys, its own
+ * fallbacks, Retry-After backoff), so a combo composes with everything the
+ * per-provider layer already does.
+ */
+export async function streamChain(
+  steps: { provider: Provider; model: string }[],
+  p: ChatParams,
+  send: (p: ChatParams) => Promise<ChatResult> = streamChat,
+): Promise<ChatResult> {
+  if (!steps.length) throw new Error("The combo chain is empty.");
+
+  // Measured exhaustion reorders, never removes: a step the provider just 429'd
+  // goes to the back of the line so the chain burns its wall-clock on providers
+  // that are actually up first. If every step is limited, the original order
+  // stands — somebody has to be tried, and the user's order is the best guess.
+  const limited = quota.isLimited;
+  const ordered = (() => {
+    const up = steps.filter((s) => !limited(s.provider.id));
+    if (!up.length || up.length === steps.length) return steps;
+    return [...up, ...steps.filter((s) => limited(s.provider.id))];
+  })();
+
+  let streamed = false;
+  const wrapped: ChatParams = {
+    ...p,
+    onDelta: (t) => {
+      streamed = true;
+      p.onDelta(t);
+    },
+  };
+  let lastErr: unknown;
+  for (let i = 0; i < ordered.length; i++) {
+    const s = ordered[i];
+    try {
+      return await send({ ...wrapped, provider: s.provider, model: s.model || p.model });
+    } catch (e) {
+      lastErr = e;
+      if (p.signal?.aborted || streamed) throw e;
+      // Chain advance is deliberately more forgiving than key rotation: a
+      // step that fails for any reason before replying is a step the user
+      // would rather skip than have the whole combo fail over.
     }
   }
   throw lastErr;
@@ -339,6 +433,11 @@ async function streamOpenAI(p: ChatParams): Promise<ChatResult> {
   const base = p.provider.baseUrl.replace(/\/+$/, "");
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (p.provider.apiKey) headers.Authorization = `Bearer ${p.provider.apiKey}`;
+  // Copilot's chat endpoint is OpenAI-compatible but expects an editor identity.
+  if (p.provider.auth === "oauth-copilot") {
+    const { applyOAuthHeaders } = await import("../oauthProviders");
+    Object.assign(headers, applyOAuthHeaders("oauth-copilot", p.provider.apiKey));
+  }
   const body: Record<string, unknown> = {
     model: p.model,
     messages: toOpenAIMessages(p.system, p.messages),
@@ -480,8 +579,18 @@ async function streamAnthropic(p: ChatParams): Promise<ChatResult> {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": p.provider.apiKey,
-      "anthropic-version": "2023-06-01",
+      // Subscription OAuth authenticates with Bearer + the OAuth beta flag;
+      // API-key providers use x-api-key. Same endpoint, two doorways.
+      ...(p.provider.auth === "oauth-claude"
+        ? {
+            Authorization: `Bearer ${p.provider.apiKey}`,
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "oauth-2025-04-20",
+          }
+        : {
+            "x-api-key": p.provider.apiKey,
+            "anthropic-version": "2023-06-01",
+          }),
     },
     body: JSON.stringify({
       model: p.model,

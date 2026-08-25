@@ -9,3 +9,16 @@ export function prettyName(name: string): string {
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
     .join(" ");
 }
+
+/**
+ * A name safe to use as an id segment: "Research Chain" -> "research-chain".
+ * Same rules the local API uses for agent slugs, so `combo/<slug>` ids stay
+ * consistent everywhere a model id can appear.
+ */
+export function slugifyName(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}

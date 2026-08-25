@@ -69,8 +69,10 @@ export function extractHtml(content: string): string | null {
 
 /** A renderable artifact found in an assistant message. */
 export interface Artifact {
-  kind: "html" | "svg";
+  kind: "html" | "svg" | "react";
   code: string;
+  /** For React artifacts: the fence language, which picks the Babel preset. */
+  lang?: string;
 }
 
 /** Detect a standalone ```svg block (or a bare <svg> document). */
@@ -86,13 +88,27 @@ function extractSvg(content: string): string | null {
 }
 
 /**
+ * Detect a ```jsx / ```tsx block. Unlike HTML, this must come fenced: JSX is
+ * not valid prose-adjacent markup, and a bare fragment of it in ordinary text
+ * is far more likely to be an inline example than something to mount.
+ */
+function extractReact(content: string): { code: string; lang: string } | null {
+  const fence = /```(jsx|tsx)\n([\s\S]*?)```/i.exec(content);
+  if (!fence || !fence[2].trim()) return null;
+  return { code: fence[2].trim(), lang: fence[1].toLowerCase() };
+}
+
+/**
  * Find the renderable artifact in an assistant message, if any.
  * SVG is checked first: an `<svg>` document would otherwise be swallowed by the
- * HTML fragment rule and rendered as a bare body.
+ * HTML fragment rule and rendered as a bare body. React fences come before
+ * HTML because a ```jsx block is unambiguous about what it wants to be.
  */
 export function extractArtifact(content: string): Artifact | null {
   const svg = extractSvg(content);
   if (svg) return { kind: "svg", code: svg };
+  const react = extractReact(content);
+  if (react) return { kind: "react", code: react.code, lang: react.lang };
   const html = extractHtml(content);
   return html ? { kind: "html", code: html } : null;
 }

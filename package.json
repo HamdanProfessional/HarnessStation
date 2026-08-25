@@ -15,9 +15,11 @@
     "docs:preview": "vite preview --config docs-site/vite.config.ts",
     "web:dev": "vite --config web/vite.config.ts",
     "web:build": "vite build --config web/vite.config.ts",
-    "web:preview": "vite preview --config web/vite.config.ts"
+    "web:preview": "vite preview --config web/vite.config.ts",
+    "stress": "node scripts/stress-media.mjs && node scripts/stress-gateway.mjs"
   },
   "dependencies": {
+    "@babel/standalone": "^7.29.8",
     "@mlc-ai/web-llm": "^0.2.84",
     "@pixiv/three-vrm": "^3.5.5",
     "@tauri-apps/api": "^2",
@@ -49,7 +51,8 @@
     "vitest": "^3.2.7"
   },
   "bin": {
-    "hs": "./cli/hs.mjs"
+    "hs": "./cli/hs.mjs",
+    "hs-acp": "./cli/acp.mjs"
   },
   "files": [
     "cli"

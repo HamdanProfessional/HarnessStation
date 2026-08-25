@@ -33,6 +33,8 @@ export interface ProviderFacts {
   localish: boolean;
   hasKey: boolean;
   probe?: ProbeState;
+  /** Subscription OAuth marker, when the provider is a connected subscription. */
+  auth?: "oauth-claude" | "oauth-copilot";
 }
 
 /**
@@ -51,7 +53,15 @@ export function dotState(probe?: ProbeState): "on" | "bad" | "checking" | "unkno
 }
 
 /** How a provider authenticates. Always present — it is never "unknown". */
-export function authBadge({ localish, hasKey }: ProviderFacts): Badge {
+export function authBadge({ localish, hasKey, auth }: ProviderFacts): Badge {
+  if (auth) {
+    const what = auth === "oauth-claude" ? "Claude subscription" : "Copilot subscription";
+    return {
+      label: "Subscription",
+      tone: "ok",
+      title: `${what} connected — tokens live in the OS keychain`,
+    };
+  }
   if (localish) return { label: "Local", tone: "neutral", title: "A local server — no API key needed" };
   if (hasKey) return { label: "Key set", tone: "ok", title: "An API key is stored in the OS keychain" };
   return { label: "No key", tone: "warn", title: "Add an API key before this provider can be used" };

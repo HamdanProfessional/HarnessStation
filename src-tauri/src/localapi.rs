@@ -88,6 +88,7 @@ async fn ask_frontend(
 async fn ask_frontend_stream(
     api: &Arc<LocalApi>,
     app: &AppHandle,
+    method: &str,
     params: Value,
 ) -> Result<(u64, mpsc::UnboundedReceiver<Value>), String> {
     let rid = api.next_rid.fetch_add(1, Ordering::Relaxed) + 1;
@@ -95,7 +96,7 @@ async fn ask_frontend_stream(
     api.streams.lock().await.insert(rid, tx);
     app.emit(
         "localapi-request",
-        json!({ "rid": rid, "method": "chat_stream", "params": params }),
+        json!({ "rid": rid, "method": method, "params": params }),
     )
     .map_err(|e| e.to_string())?;
     Ok((rid, rx))
@@ -120,17 +121,20 @@ fn sse_headers() -> String {
 
 /// Relay a streaming completion to the socket as SSE, then close it.
 ///
-/// Rust stays a dumb pipe here: the frontend pushes fully-formed OpenAI chunk
-/// objects and this only wraps them in `data: ...` framing. Keeping the shape
-/// on the frontend means the side that knows what a model is also decides what
-/// a chunk looks like.
+/// Rust stays a dumb pipe here. In the OpenAI style the frontend pushes
+/// fully-formed chunk objects and this wraps them in `data: ...` framing. In
+/// the Anthropic style the frontend pushes *preformatted frames as strings*
+/// (named events can't be reconstructed from a JSON blob), which are written
+/// verbatim. Either way, the shape lives on the side that knows what a model
+/// is.
 async fn stream_chat(
     api: Arc<LocalApi>,
     app: AppHandle,
+    method: &str,
     params: Value,
     stream: &mut tokio::net::TcpStream,
 ) {
-    let (rid, mut rx) = match ask_frontend_stream(&api, &app, params).await {
+    let (rid, mut rx) = match ask_frontend_stream(&api, &app, method, params).await {
         Ok(v) => v,
         Err(e) => {
             let _ = stream.write_all(http_error("500 Internal Server Error", &e).as_bytes()).await;
@@ -143,6 +147,10 @@ async fn stream_chat(
         return;
     }
 
+    let anthropic = method == "anthropic_messages_stream";
+    // Not a `while let`: the timeout arm must still tell the client why the
+    // stream stopped before breaking.
+    #[allow(clippy::while_let_loop)]
     loop {
         let next = tokio::time::timeout(
             std::time::Duration::from_secs(HANDLER_TIMEOUT_SECS),
@@ -154,19 +162,22 @@ async fn stream_chat(
             // Channel closed by local_api_end, or the frontend went away.
             Ok(None) => break,
             Err(_) => {
-                let _ = stream
-                    .write_all(
-                        format!(
-                            "data: {}\n\n",
-                            json!({ "error": { "message": format!("timed out after {HANDLER_TIMEOUT_SECS}s") } })
-                        )
-                        .as_bytes(),
+                let msg = format!("timed out after {HANDLER_TIMEOUT_SECS}s");
+                let frame = if anthropic {
+                    format!(
+                        "event: error\ndata: {}\n\n",
+                        json!({ "type": "error", "error": { "type": "api_error", "message": msg } })
                     )
-                    .await;
+                } else {
+                    format!("data: {}\n\n", json!({ "error": { "message": msg } }))
+                };
+                let _ = stream.write_all(frame.as_bytes()).await;
                 break;
             }
         };
-        let frame = format!("data: {chunk}\n\n");
+        // A string chunk on the Anthropic path is a preformatted named-event
+        // frame, written verbatim; everything else gets OpenAI `data:` framing.
+        let frame = sse_frame(&chunk, anthropic);
         // A write failure means the client hung up. Dropping the sender is what
         // tells the frontend to stop generating, via local_api_push's return.
         if stream.write_all(frame.as_bytes()).await.is_err() {
@@ -176,8 +187,20 @@ async fn stream_chat(
     }
 
     api.streams.lock().await.remove(&rid);
-    let _ = stream.write_all(b"data: [DONE]\n\n").await;
+    if !anthropic {
+        let _ = stream.write_all(b"data: [DONE]\n\n").await;
+    }
     let _ = stream.flush().await;
+}
+
+/// One SSE frame. On the Anthropic path a string chunk is already a complete
+/// `event:` + `data:` frame from the frontend; everything else — and every
+/// chunk on the OpenAI path — is a JSON value wrapped in `data:` framing.
+fn sse_frame(chunk: &Value, anthropic: bool) -> String {
+    match (anthropic, chunk) {
+        (true, Value::String(s)) => s.clone(),
+        (_, other) => format!("data: {other}\n\n"),
+    }
 }
 
 fn find_subslice(haystack: &[u8], needle: &[u8]) -> Option<usize> {
@@ -191,18 +214,24 @@ fn http_json(status: &str, body: &str) -> String {
          Content-Type: application/json\r\n\
          Access-Control-Allow-Origin: *\r\n\
          Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n\
-         Access-Control-Allow-Headers: Authorization, Content-Type\r\n\
+         Access-Control-Allow-Headers: Authorization, Content-Type, x-api-key, anthropic-version, anthropic-beta\r\n\
          Content-Length: {len}\r\n\
          Connection: close\r\n\
          \r\n\
          {body}",
-        len = body.as_bytes().len(),
+        len = body.len(),
     )
 }
 
 /// An OpenAI-shaped error object, so clients that parse it show a sensible message.
 fn http_error(status: &str, message: &str) -> String {
     let body = json!({ "error": { "message": message, "type": "harnessstation_error" } });
+    http_json(status, &body.to_string())
+}
+
+/// Anthropic-shaped error: `{ type: "error", error: { type, message } }`.
+fn http_error_anthropic(status: &str, message: &str) -> String {
+    let body = json!({ "type": "error", "error": { "type": "api_error", "message": message } });
     http_json(status, &body.to_string())
 }
 
@@ -265,10 +294,20 @@ async fn handle_conn(api: Arc<LocalApi>, app: AppHandle, mut stream: tokio::net:
     // Streaming completions keep the socket open and write SSE frames, so they
     // cannot go through `route`, which returns one finished response string.
     let clean_path = path.split('?').next().unwrap_or(&path);
-    if method == "POST" && matches!(clean_path, "/v1/chat/completions" | "/chat/completions") {
+    let stream_method = if method == "POST" {
+        match clean_path {
+            "/v1/chat/completions" | "/chat/completions" => Some("chat_stream"),
+            // The Anthropic Messages protocol — what Claude Code speaks.
+            "/v1/messages" | "/messages" => Some("anthropic_messages_stream"),
+            _ => None,
+        }
+    } else {
+        None
+    };
+    if let Some(stream_method) = stream_method {
         if let Ok(params) = serde_json::from_slice::<Value>(&body) {
             if params.get("stream").and_then(Value::as_bool) == Some(true) {
-                stream_chat(api, app, params, &mut stream).await;
+                stream_chat(api, app, stream_method, params, &mut stream).await;
                 return;
             }
         }
@@ -312,9 +351,34 @@ async fn route(
                 Err(e) => http_error("502 Bad Gateway", &e),
             }
         }
+        // The Anthropic Messages protocol (Claude Code, and anything speaking
+        // anthropic-sdk). Errors use Anthropic's error shape on this route —
+        // its SDKs read `error.type`, not OpenAI's `error.message`.
+        ("POST", "/v1/messages") | ("POST", "/messages") => {
+            let params: Value = match serde_json::from_slice(body) {
+                Ok(v) => v,
+                Err(_) => return http_error_anthropic("400 Bad Request", "request body is not valid JSON"),
+            };
+            match ask_frontend(api, app, "anthropic_messages", params).await {
+                Ok(v) => http_json("200 OK", &v.to_string()),
+                Err(e) => http_error_anthropic("502 Bad Gateway", &e),
+            }
+        }
+        // Claude Code calls this before big requests; a real tokenizer we do
+        // not have, so the estimate lives on the frontend with everything else.
+        ("POST", "/v1/messages/count_tokens") | ("POST", "/messages/count_tokens") => {
+            let params: Value = match serde_json::from_slice(body) {
+                Ok(v) => v,
+                Err(_) => return http_error_anthropic("400 Bad Request", "request body is not valid JSON"),
+            };
+            match ask_frontend(api, app, "anthropic_count_tokens", params).await {
+                Ok(v) => http_json("200 OK", &v.to_string()),
+                Err(e) => http_error_anthropic("502 Bad Gateway", &e),
+            }
+        }
         ("GET", "/") | ("GET", "/v1") => http_json(
             "200 OK",
-            &json!({ "service": "harnessstation", "openai_compatible": true }).to_string(),
+            &json!({ "service": "harnessstation", "openai_compatible": true, "anthropic_compatible": true }).to_string(),
         ),
         _ => http_error("404 Not Found", "unknown endpoint"),
     }
@@ -346,17 +410,13 @@ pub async fn local_api_start(
     let app2 = app.clone();
     let handle = tauri::async_runtime::spawn(async move {
         println!("[localapi] OpenAI-compatible server on http://127.0.0.1:{port}/v1");
-        loop {
-            match listener.accept().await {
-                Ok((stream, _)) => {
-                    let a = api2.clone();
-                    let ap = app2.clone();
-                    tauri::async_runtime::spawn(async move {
-                        handle_conn(a, ap, stream).await;
-                    });
-                }
-                Err(_) => break,
-            }
+        // An accept error (EMFILE, EBADF during shutdown) ends the server.
+        while let Ok((stream, _)) = listener.accept().await {
+            let a = api2.clone();
+            let ap = app2.clone();
+            tauri::async_runtime::spawn(async move {
+                handle_conn(a, ap, stream).await;
+            });
         }
     });
     *api.task.lock().await = Some(handle);
@@ -485,5 +545,32 @@ mod tests {
     fn find_subslice_locates_the_header_break() {
         assert_eq!(find_subslice(b"GET / HTTP/1.1\r\n\r\nbody", b"\r\n\r\n"), Some(14));
         assert_eq!(find_subslice(b"no break here", b"\r\n\r\n"), None);
+    }
+
+    #[test]
+    fn anthropic_frames_pass_preformatted_strings_through_verbatim() {
+        // Named events cannot be rebuilt from a JSON blob, so the frontend
+        // sends the whole frame; Rust must not wrap it again.
+        let raw = "event: content_block_delta\ndata: {\"type\":\"content_block_delta\"}\n\n";
+        assert_eq!(sse_frame(&Value::String(raw.to_string()), true), raw);
+    }
+
+    #[test]
+    fn object_chunks_get_data_framing_on_both_paths() {
+        let c = json!({ "type": "ping" });
+        assert_eq!(sse_frame(&c, true), "data: {\"type\":\"ping\"}\n\n");
+        assert_eq!(sse_frame(&c, false), "data: {\"type\":\"ping\"}\n\n");
+        // And a string on the OpenAI path is still framed as JSON data.
+        assert_eq!(sse_frame(&Value::String("hi".into()), false), "data: \"hi\"\n\n");
+    }
+
+    #[test]
+    fn anthropic_errors_use_the_anthropic_shape() {
+        let r = http_error_anthropic("502 Bad Gateway", "boom");
+        let body = r.split("\r\n\r\n").nth(1).unwrap();
+        let v: Value = serde_json::from_str(body).unwrap();
+        assert_eq!(v["type"], "error");
+        assert_eq!(v["error"]["message"], "boom");
+        assert!(v["error"]["type"].is_string());
     }
 }

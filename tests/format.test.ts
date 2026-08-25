@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { prettyName } from "../src/lib/format";
+import { prettyName, slugifyName } from "../src/lib/format";
 
 describe("prettyName", () => {
   it("titles snake_case tool names", () => {
@@ -21,5 +21,13 @@ describe("prettyName", () => {
 
   it("returns empty for empty input", () => {
     expect(prettyName("")).toBe("");
+  });
+});
+
+describe("slugifyName", () => {
+  it("matches the agent-slug rules so combo ids are consistent everywhere", () => {
+    expect(slugifyName("Cheap first")).toBe("cheap-first");
+    expect(slugifyName("  Weird__Name!! ")).toBe("weird-name");
+    expect(slugifyName("already-slug")).toBe("already-slug");
   });
 });

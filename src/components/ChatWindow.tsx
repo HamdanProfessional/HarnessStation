@@ -1,4 +1,4 @@
-import { useEffect, useImperativeHandle, useRef, useState, type RefObject } from "react";
+import { useEffect, useImperativeHandle, useMemo, useRef, useState, type RefObject } from "react";
 import { Markdown } from "./Markdown";
 import { Canvas } from "./Canvas";
 import { prettyName } from "../lib/format";
@@ -15,6 +15,8 @@ import { InlineBrowser } from "./InlineBrowser";
 import { AskUserPrompt } from "./AskUserPrompt";
 import { MultiAgentBar } from "./MultiAgentBar";
 import { TrajectoryView } from "./TrajectoryView";
+import { SnippetPicker, SNIPPET_PICKER_MAX } from "./SnippetPicker";
+import { applySnippet, findSnippetTrigger, filterSnippets, type SnippetTrigger } from "../lib/snippets";
 import { planScroll, prefersReducedMotion } from "../lib/autoscroll";
 
 const STARTER_PROMPTS = [
@@ -596,14 +598,50 @@ export type ComposerHandle = {
  */
 function Composer({ chat, composerRef }: { chat: Chat; composerRef: RefObject<ComposerHandle | null> }) {
   const { streaming, sendMessage, regenerate, stop, compactChat, setView, updateChatById } = useStore();
+  const templates = useStore((s) => s.templates);
   const [draft, setDraft] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [recorder, setRecorder] = useState<Recorder | null>(null);
   const [voiceState, setVoiceState] = useState<string | null>(null);
   const [compacting, setCompacting] = useState(false);
+  const [trigger, setTrigger] = useState<SnippetTrigger | null>(null);
+  const [pickIndex, setPickIndex] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useImperativeHandle(composerRef, () => ({ setDraft }), []);
+
+  // "/" opens the prompt library; the options narrow as the query grows.
+  const snippetOptions = useMemo(
+    () => (trigger ? filterSnippets(templates, trigger.query) : []),
+    [templates, trigger],
+  );
+  useEffect(() => {
+    setPickIndex(0);
+  }, [trigger?.query]);
+
+  const syncTrigger = (text: string) => {
+    const caret = inputRef.current?.selectionStart;
+    if (caret == null) {
+      setTrigger(null);
+      return;
+    }
+    setTrigger(findSnippetTrigger(text.slice(0, caret)));
+  };
+
+  const acceptSnippet = (content: string) => {
+    if (!trigger) return;
+    const next = applySnippet(draft, trigger, content);
+    const caret = trigger.start + content.length;
+    setDraft(next);
+    setTrigger(null);
+    // Put the caret where the inserted text ends; rAF because the textarea
+    // hasn't re-rendered with the new value yet.
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      inputRef.current?.setSelectionRange(caret, caret);
+    });
+  };
 
   const submit = () => {
     const text = draft.trim();
@@ -611,6 +649,7 @@ function Composer({ chat, composerRef }: { chat: Chat; composerRef: RefObject<Co
     const atts = attachments;
     setDraft("");
     setAttachments([]);
+    setTrigger(null);
     void sendMessage(text, atts.length ? atts : undefined);
   };
 
@@ -699,12 +738,47 @@ function Composer({ chat, composerRef }: { chat: Chat; composerRef: RefObject<Co
             }}
           />
           <textarea
+            ref={inputRef}
             className="composer-input"
-            placeholder="Type a message...  (Enter to send, Shift+Enter for newline, drop files to attach)"
+            placeholder="Type a message — / for saved prompts  (Enter to send, Shift+Enter for newline, drop files to attach)"
             value={draft}
             rows={2}
-            onChange={(e) => setDraft(e.target.value)}
+            aria-expanded={!!trigger}
+            role="combobox"
+            aria-controls="snippet-picker"
+            onChange={(e) => {
+              setDraft(e.target.value);
+              syncTrigger(e.target.value);
+            }}
+            onSelect={(e) => syncTrigger((e.target as HTMLTextAreaElement).value)}
             onKeyDown={(e) => {
+              // The picker eats navigation keys while it's open; typing still
+              // falls through so the query keeps narrowing the list.
+              if (trigger && snippetOptions.length > 0) {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setPickIndex((i) => (i + 1) % Math.min(snippetOptions.length, SNIPPET_PICKER_MAX));
+                  return;
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  const n = Math.min(snippetOptions.length, SNIPPET_PICKER_MAX);
+                  setPickIndex((i) => (i - 1 + n) % n);
+                  return;
+                }
+                if (e.key === "Enter" || e.key === "Tab") {
+                  e.preventDefault();
+                  // Clamp: options can shrink under a stale index for one tick.
+                  const i = Math.min(pickIndex, snippetOptions.length - 1);
+                  acceptSnippet(snippetOptions[i]?.content ?? "");
+                  return;
+                }
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setTrigger(null);
+                  return;
+                }
+              }
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 submit();
@@ -718,6 +792,19 @@ function Composer({ chat, composerRef }: { chat: Chat; composerRef: RefObject<Co
               }
             }}
           />
+          {trigger && (
+            <div id="snippet-picker">
+              <SnippetPicker
+                options={snippetOptions}
+                index={pickIndex}
+                trigger={trigger}
+                draft={draft}
+                onHover={setPickIndex}
+                onPick={acceptSnippet}
+                onDismiss={() => setTrigger(null)}
+              />
+            </div>
+          )}
           <div className="composer-actions">
             <div className="composer-left">
               <button className="btn ghost" onClick={() => fileRef.current?.click()} title="Attach files or images">

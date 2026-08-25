@@ -15,6 +15,7 @@ import { fitFor, fitCaveat, FIT_LABEL } from "../lib/catalog";
 import { chatCapable, classifyModel, groupByModality, MODALITY_LABEL, MODALITY_TAG } from "../lib/modality";
 import { toast } from "../lib/toast";
 import { dotState, pageStats, providerBadges } from "../lib/providerStatus";
+import { rateLimitBadge } from "../lib/quota";
 import { keyCount } from "../lib/rotation";
 import {
   hwInfo,
@@ -769,11 +770,21 @@ export function ModelsView() {
                   <span className="pill">
                     {p.models.length} model{p.models.length === 1 ? "" : "s"}
                   </span>
-                  {providerBadges({ localish, hasKey, probe }).map((b) => (
+                  {providerBadges({ localish, hasKey, probe, auth: p.auth }).map((b) => (
                     <span key={b.label} className={`pill ${b.tone}`} title={b.title}>
                       {b.label}
                     </span>
                   ))}
+                  {(() => {
+                    // Measured exhaustion: the provider 429'd us recently and
+                    // its Retry-After hasn't run out yet.
+                    const b = rateLimitBadge(p.id);
+                    return b ? (
+                      <span className={`pill ${b.tone}`} title={b.title}>
+                        {b.label}
+                      </span>
+                    ) : null;
+                  })()}
                   {/* Only once there is something to rotate. A "1 key" pill on
                       every card would be noise. */}
                   {keys > 1 && (

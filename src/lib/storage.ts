@@ -50,6 +50,9 @@ export const ESSENTIALS_HIDDEN = [
   // you have agents or skills worth injecting — both of which live in views
   // that are themselves hidden here.
   "claudecode",
+  // Means nothing until an ACP agent is configured in Settings, which itself
+  // presumes the user knows what the ACP registry is.
+  "acp",
 ] as const;
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -179,6 +182,16 @@ async function setSecret(id: string, value: string): Promise<void> {
 export const vaultGet = (ref: string) => getSecret(`vault:${ref}`);
 export const vaultSet = (ref: string, value: string) => setSecret(`vault:${ref}`, value);
 export const vaultDelete = (ref: string) => setSecret(`vault:${ref}`, "");
+
+// ---------- subscription OAuth tokens ----------
+// Same keychain, `oauth:` namespace. A provider's settings entry carries only
+// the marker (`auth: "oauth-claude"`, apiKey "oauth"); the access/refresh
+// tokens never touch settings.json. Desktop only — on web the keychain calls
+// are unavailable, and so are subscriptions.
+
+export const oauthLoad = async (id: string): Promise<string | null> => getSecret(`oauth:${id}`);
+export const oauthSave = (id: string, json: string) => setSecret(`oauth:${id}`, json);
+export const oauthClear = (id: string) => setSecret(`oauth:${id}`, "");
 
 export async function loadSettings(): Promise<Settings> {
   await ensureDirs();
@@ -622,6 +635,41 @@ export async function listEngines(): Promise<string[]> {
     .map((e) => `engines/${e.name}`)
     .sort()
     .reverse();
+}
+
+// ---------- semantic search vectors ----------
+
+/**
+ * Per-chat embeddings for sidebar search, cached next to the conversations
+ * they describe. Like the chat index this is a cache, never truth: a stale or
+ * missing entry just costs one embed call, and deleting the file is safe.
+ * `n` (message count) + `u` (updatedAt) detect changed transcripts.
+ */
+const VECTORS_PATH = `${CONV}/vectors.json`;
+
+export interface ChatVectorEntry {
+  n: number;
+  u: string;
+  v: number[];
+}
+
+export async function loadChatVectors(): Promise<Record<string, ChatVectorEntry>> {
+  try {
+    const raw = JSON.parse(await readTextFile(VECTORS_PATH, opts));
+    return raw && typeof raw === "object" && !Array.isArray(raw)
+      ? (raw as Record<string, ChatVectorEntry>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+export async function saveChatVectors(map: Record<string, ChatVectorEntry>): Promise<void> {
+  try {
+    await writeTextFile(VECTORS_PATH, JSON.stringify(map), opts);
+  } catch {
+    /* a failed cache write only means re-embedding next session */
+  }
 }
 
 export async function deleteChat(id: string): Promise<void> {
