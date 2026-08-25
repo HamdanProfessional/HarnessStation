@@ -315,7 +315,6 @@ export function Sidebar() {
       <div className="sidebar-header">
         <LogoMark />
         <span className="logo">HarnessStation</span>
-        <NotificationBell />
         <button
           className="icon-btn"
           title={themeLabel}
@@ -332,6 +331,7 @@ export function Sidebar() {
         >
           <IconPanelLeft size={15} />
         </button>
+        <NotificationBell />
       </div>
 
       {/* The privacy claim is the product's one uncopyable differentiator, so it

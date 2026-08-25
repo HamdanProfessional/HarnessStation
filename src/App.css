@@ -377,9 +377,12 @@ select:focus {
   padding: 2px 4px 6px;
 }
 
-/* Pin the chrome buttons (theme, collapse) to the right edge of the header.
-   The NotificationBell is the first one so a margin-left:auto there pushes the
-   whole cluster while the logo stays where it is. */
+/* Pin the chrome buttons (theme, collapse, bell) to the right edge of the
+   header. Theme is the first one so a margin-left:auto there pushes the
+   whole cluster while the logo stays where it is. NotificationBell is last
+   in the cluster (flush against the right edge) because its dropdown is
+   right-anchored to the bell — anywhere else in the cluster, the sidebar's
+   backdrop-filter clips the dropdown's left side before it can show. */
 .sidebar-header > .icon-btn {
   margin-left: auto;
 }
@@ -2288,7 +2291,12 @@ select:focus {
 /* ---------- Config panel ---------- */
 .config-panel {
   width: 272px;
-  min-width: 272px;
+  /* Below 272px, shrink instead of forcing the flex row wider than the
+     window — .app clips overflow-x rather than scrolling it, so a rigid
+     min-width here just chopped the panel off-screen when Battle/Collaborate's
+     wider participant bar left it less room. */
+  min-width: 200px;
+  flex-shrink: 1;
   background: var(--bg-glass);
   backdrop-filter: blur(14px);
   border-left: 1px solid var(--border);
@@ -3314,7 +3322,6 @@ select:focus {
 /* ---------- Notification bell ---------- */
 .bell-wrap {
   position: relative;
-  margin-left: auto;
 }
 
 .bell-btn {
@@ -5983,7 +5990,7 @@ textarea {
 .bundle-row .grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Battle: user turns full width, participant answers laid out side by side. */
-.messages.battle { display: flex; flex-wrap: wrap; gap: 12px; align-content: flex-start; }
+.messages.battle { display: flex; flex-wrap: wrap; gap: 12px; align-content: flex-start; justify-content: center; }
 .messages.battle > * { flex: 1 1 100%; }
 .messages.battle > .battle-col {
   flex: 1 1 calc(50% - 8px);
